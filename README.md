@@ -13,7 +13,7 @@ to do the training. A slight modified version is included in this repo.
 
 Train:
 ```shell
-python train_imagenet.py
+python train_imagenet.py --model ShuffleNas_fixArch
 ```
 
 ## Results

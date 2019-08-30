@@ -62,7 +62,7 @@ def parse_args():
                         help='whether to init gamma of the last BN layer in each bottleneck to 0.')
     parser.add_argument('--mode', type=str,
                         help='mode in which to train the model. options are symbolic, imperative, hybrid')
-    parser.add_argument('--model', type=str, required=False,
+    parser.add_argument('--model', type=str, required=True,
                         help='type of model to use. see vision_model for options.')
     parser.add_argument('--input-size', type=int, default=224,
                         help='size of the input image size. default is 224')
@@ -170,7 +170,11 @@ def main():
     if opt.dtype != 'float32':
         optimizer_params['multi_precision'] = True
 
-    net = get_shufflenas_oneshot_fixarch()
+    if model_name == 'ShuffleNas_fixArch':
+        net = get_shufflenas_oneshot_fixarch()
+    else:
+        net = get_model(model_name, **kwargs)
+
     net.cast(opt.dtype)
     if opt.resume_params is not '':
         net.load_parameters(opt.resume_params, ctx = context)
@@ -447,7 +451,6 @@ def main():
         if save_frequency and save_dir:
             net.save_parameters('%s/imagenet-%s-%d.params'%(save_dir, model_name, opt.num_epochs-1))
             trainer.save_states('%s/imagenet-%s-%d.states'%(save_dir, model_name, opt.num_epochs-1))
-
 
     if opt.mode == 'hybrid':
         net.hybridize(static_alloc=True, static_shape=True)
