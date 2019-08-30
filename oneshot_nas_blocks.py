@@ -156,7 +156,7 @@ class ShuffleNasBlockFixArch(HybridBlock):
 class ShuffleNasBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
                  block_mode='ShuffleNetV2', **kwargs):
-        super(ShuffleNasBlockFixArch, self).__init__()
+        super(ShuffleNasBlock, self).__init__()
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
         assert block_mode in ['ShuffleNetV2', 'ShuffleXception']
