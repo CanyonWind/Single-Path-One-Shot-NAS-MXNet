@@ -140,7 +140,7 @@ class ShuffleNasBlockFixArch(HybridBlock):
                     nn.Activation('relu')
                 )
 
-    def hybrid_forward(self, F, old_x, block_choice, *args, **kwargs):
+    def hybrid_forward(self, F, old_x, *args, **kwargs):
 
         if self.stride == 2:
             x_project = old_x
