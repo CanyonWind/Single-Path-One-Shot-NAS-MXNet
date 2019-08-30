@@ -3,7 +3,7 @@ from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
 
 
-__all__ = ['ShuffleChannels', 'ShuffleNasBlock']
+__all__ = ['ShuffleChannels', 'ShuffleNasBlockFixArch']
 
 
 class ShuffleChannels(HybridBlock):

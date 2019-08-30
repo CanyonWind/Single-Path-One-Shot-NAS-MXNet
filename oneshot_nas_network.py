@@ -4,6 +4,9 @@ from mxnet import nd
 from oneshot_nas_blocks import ShuffleNasBlockFixArch
 
 
+__all__ = ['get_shufflenas_oneshot_fixarch']
+
+
 class ShuffleNasOneShotFixArch(HybridBlock):
     def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None):
         """
