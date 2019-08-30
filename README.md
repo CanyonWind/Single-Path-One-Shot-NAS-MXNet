@@ -4,20 +4,16 @@ This repository contains single path one-shot NAS searched networks implementati
 
 
 ## Requirements
-Download the ImageNet dataset and move validation images to labeled subfolders. To do this, you can use the following script:
+Download the ImageNet dataset, move validation images to labeled subfolders and(or) create MXNet RecordIO files. To do these, you can use the following script:
 https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset
 
 ## Usage
-Follow https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py
-to download the train script.
+Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
+to do the training. A slight modified version is included in this repo.
 
 Train:
 ```shell
-python train_imagenet.py ...
-```
-Eval:
-```shell
-python train_imagenet.py ...
+python train_imagenet.py
 ```
 
 ## Results

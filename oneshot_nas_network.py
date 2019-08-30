@@ -180,14 +180,18 @@ class ShuffleNasOneShot(HybridBlock):
         return x
 
 
-def main():
-    architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+def get_shufflenas_oneshot_fixarch(architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2],
+                                   scale_ids=[6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]):
     scale_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]
-    scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
     channel_scales = []
     for i in range(len(scale_ids)):
         channel_scales.append(scale_list[scale_ids[i]])
     net = ShuffleNasOneShotFixArch(architecture=architecture, channel_scales=channel_scales)
+    return net
+
+
+def main():
+    net = get_shufflenas_oneshot_fixarch()
     net.initialize()
     print(net)
 
