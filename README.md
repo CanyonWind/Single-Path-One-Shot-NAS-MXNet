@@ -9,7 +9,7 @@ https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imag
 
 ## Usage
 Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
-to do the training. A slight modified version is included in this repo.
+to do the training. A slightly modified version is included in this repo.
 
 Train:
 ```shell
@@ -21,7 +21,7 @@ python train_imagenet.py --model ShuffleNas_fixArch
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot |  ?M |  ?M |  **?**   |   ?   |
+|    OneShot |  -M |  -M |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  26.0   |   8.4   |
 |    PNASNET|  588M |  5.1M |  25.8   |   8.1   |
 |    MnasNet|  317M |  4.2M |  26.0   |  8.2   |
