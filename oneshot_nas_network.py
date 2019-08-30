@@ -1,7 +1,7 @@
 from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
-from oneshot_nas_blocks import ShuffleNasBlockFixArch
+from oneshot_nas_blocks import ShuffleNasBlockFixArch, ShuffleNasBlock
 
 
 class ShuffleNasOneShotFixArch(HybridBlock):
@@ -137,20 +137,20 @@ class ShuffleNasOneShot(HybridBlock):
                         block_id += 1
                         if block_choice == 0:
                             print('Shuffle3x3')
-                            self.features.add(ShuffleNasBlockFixArch(input_channel, output_channel, mid_channel,
-                                                                     block_mode='ShuffleNetV2', ksize=3, stride=stride))
+                            self.features.add(ShuffleNasBlock(input_channel, output_channel, mid_channel,
+                                                              block_mode='ShuffleNetV2', ksize=3, stride=stride))
                         elif block_choice == 1:
                             print('Shuffle5x5')
-                            self.features.add(ShuffleNasBlockFixArch(input_channel, output_channel, mid_channel,
-                                                                     block_mode='ShuffleNetV2', ksize=5, stride=stride))
+                            self.features.add(ShuffleNasBlock(input_channel, output_channel, mid_channel,
+                                                              block_mode='ShuffleNetV2', ksize=5, stride=stride))
                         elif block_choice == 2:
                             print('Shuffle7x7')
-                            self.features.add(ShuffleNasBlockFixArch(input_channel, output_channel, mid_channel,
-                                                                     block_mode='ShuffleNetV2', ksize=7, stride=stride))
+                            self.features.add(ShuffleNasBlock(input_channel, output_channel, mid_channel,
+                                                              block_mode='ShuffleNetV2', ksize=7, stride=stride))
                         elif block_choice == 3:
                             print('ShuffleXception3x3')
-                            self.features.add(ShuffleNasBlockFixArch(input_channel, output_channel, mid_channel,
-                                                                     block_mode='ShuffleXception', ksize=3, stride=stride))
+                            self.features.add(ShuffleNasBlock(input_channel, output_channel, mid_channel,
+                                                              block_mode='ShuffleXception', ksize=3, stride=stride))
                         else:
                             raise NotImplementedError
                         # update input_channel for next block

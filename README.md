@@ -2,6 +2,7 @@
 This repository contains single path one-shot NAS searched networks implementation by MXNet (Gluon), modified from
 [the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series).
 
+No fix branch
 
 ## Requirements
 Download the ImageNet dataset, move validation images to labeled subfolders and(or) create MXNet RecordIO files. To do these, you can use the following script:
