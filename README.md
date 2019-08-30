@@ -1,5 +1,6 @@
 # [One-Shot NAS](https://arxiv.org/abs/1904.00420)
-This repository contains single path one-shot NAS searched networks implementation by MXNet (Gluon). [Official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series)
+This repository contains single path one-shot NAS searched networks implementation by MXNet (Gluon), modified from
+[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series).
 
 
 ## Requirements
@@ -9,6 +10,7 @@ https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imag
 ## Usage
 Follow https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py
 to download the train script.
+
 Train:
 ```shell
 python train_imagenet.py ...
