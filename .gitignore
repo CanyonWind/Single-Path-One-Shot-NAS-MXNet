@@ -1,0 +1,7 @@
+/mxnetenv/*
+/.vscode/*
+/__pycache__/*
+/.idea/*
+
+*.pyc
+
