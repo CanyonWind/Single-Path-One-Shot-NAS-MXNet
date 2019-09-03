@@ -1,3 +1,4 @@
+/nasenv/*
 /mxnetenv/*
 /.vscode/*
 /__pycache__/*
