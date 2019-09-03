@@ -9,7 +9,7 @@ from oneshot_nas_blocks import *
 __all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot']
 
 
-class ShuffleNasOneShot(HybridBlock):
+class ShuffleNasOneShotFixArch(HybridBlock):
     def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None):
         """
         scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
@@ -17,7 +17,7 @@ class ShuffleNasOneShot(HybridBlock):
         stage_repeats = [4, 4, 8, 4]
         len(scale_cand_ids) == sum(stage_repeats) == # feature blocks == 20
         """
-        super(ShuffleNasOneShot, self).__init__()
+        super(ShuffleNasOneShotFixArch, self).__init__()
         # Predefined
         self.stage_repeats = [4, 4, 8, 4]
         self.stage_out_channels = [64, 160, 320, 640]

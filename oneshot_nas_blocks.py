@@ -3,6 +3,7 @@ from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
 import random
 
+
 __all__ = ['ShuffleChannels', 'ShuffleNetBlock', 'ShuffleNasBlock', 'NasHybridSequential',
            'random_block_choices', 'random_channel_mask']
 
@@ -175,7 +176,7 @@ class ShuffleNetBlock(HybridBlock):
             # [64 // 2 -> 32] + [64 // 2 -> 32] -> 64 output channel
             return F.concat(x_project, self.main_branch(x, channel_choice), dim=1)
 
-
+          
 class ShuffleNasBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, stride, max_channel_scale=2.0, **kwargs):
         super(ShuffleNasBlock, self).__init__()
@@ -244,6 +245,7 @@ class NasHybridSequential(nn.HybridSequential):
         assert (nas_index == full_arch.shape[0] == full_channel_mask.shape[0] or
                 base_index == full_arch.shape[0] == full_channel_mask.shape[0])
         return x
+
 
 
 def random_block_choices(stage_repeats=None, num_of_block_choices=4):
