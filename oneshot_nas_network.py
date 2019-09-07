@@ -1,3 +1,4 @@
+import mxnet as mx
 from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
@@ -9,7 +10,7 @@ from oneshot_nas_blocks import *
 __all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot']
 
 
-class ShuffleNasOneShotFixArch(HybridBlock):
+class ShuffleNasOneShot(HybridBlock):
     def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None):
         """
         scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
@@ -17,7 +18,7 @@ class ShuffleNasOneShotFixArch(HybridBlock):
         stage_repeats = [4, 4, 8, 4]
         len(scale_cand_ids) == sum(stage_repeats) == # feature blocks == 20
         """
-        super(ShuffleNasOneShotFixArch, self).__init__()
+        super(ShuffleNasOneShot, self).__init__()
         # Predefined
         self.stage_repeats = [4, 4, 8, 4]
         self.stage_out_channels = [64, 160, 320, 640]
@@ -102,7 +103,7 @@ class ShuffleNasOneShotFixArch(HybridBlock):
                     nn.Flatten()
                 )
 
-    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False):
+    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False, ctx=mx.cpu()):
         if select_predefined_block:
             block_choices = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         else:
@@ -110,9 +111,9 @@ class ShuffleNasOneShotFixArch(HybridBlock):
             block_choices = []
             for i in range(block_number):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
-        return nd.array(block_choices)
+        return nd.array(block_choices, ctx)
 
-    def random_channel_mask(self, select_all_channels=False):
+    def random_channel_mask(self, select_all_channels=False, ctx=mx.cpu()):
         """
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         """
@@ -132,7 +133,7 @@ class ShuffleNasOneShotFixArch(HybridBlock):
                     for j in range(random_select_channel):
                         local_mask[j] = 1
                 channel_mask.append(local_mask)
-        return nd.array(channel_mask)
+        return nd.array(channel_mask, ctx)
 
     def hybrid_forward(self, F, x, full_arch, full_scale_mask, *args, **kwargs):
         x = self.features(x, full_arch, full_scale_mask)
@@ -168,8 +169,8 @@ def main():
     """ Test ShuffleNasOneShot """
     test_data = nd.ones([5, 3, 224, 224])
     # for fixed arch, block_choices is (required for forward but) actually ignored in using
-    block_choices = net.random_block_choices(select_predefined_block=False)
-    full_channel_mask = net.random_channel_mask(select_all_channels=False)
+    block_choices = net.random_block_choices(select_predefined_block=False, ctx=mx.cpu())
+    full_channel_mask = net.random_channel_mask(select_all_channels=False, ctx=mx.cpu())
     test_outputs = net(test_data, block_choices, full_channel_mask)
     print(test_outputs.shape)
 

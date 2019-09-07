@@ -12,7 +12,7 @@ from gluoncv.data import imagenet
 from gluoncv.model_zoo import get_model
 from gluoncv.utils import makedirs, LRSequential, LRScheduler
 
-from oneshot_nas_network import get_shufflenas_oneshot_fixarch
+from oneshot_nas_network import get_shufflenas_oneshot
 
 
 # CLI
@@ -20,9 +20,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
     parser.add_argument('--data-dir', type=str, default='~/.mxnet/datasets/imagenet',
                         help='training and validation pictures to use.')
-    parser.add_argument('--rec-train', type=str, default='~/.mxnet/datasets/imagenet/rec/train.rec',
+    parser.add_argument('--rec-train', type=str, default='.//imagenet/rec/train.rec',
                         help='the training data')
-    parser.add_argument('--rec-train-idx', type=str, default='~/.mxnet/datasets/imagenet/rec/train.idx',
+    parser.add_argument('--rec-train-idx', type=str, default='./imagenet/rec/train.idx',
                         help='the index of training data')
     parser.add_argument('--rec-val', type=str, default='~/.mxnet/datasets/imagenet/rec/val.rec',
                         help='the validation data')
@@ -171,7 +171,11 @@ def main():
         optimizer_params['multi_precision'] = True
 
     if model_name == 'ShuffleNas_fixArch':
-        net = get_shufflenas_oneshot_fixarch()
+        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+        scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        net = get_shufflenas_oneshot(architecture, scale_ids)
+    elif model_name == 'ShuffleNas':
+        net = get_shufflenas_oneshot()
     else:
         net = get_model(model_name, **kwargs)
 
@@ -336,7 +340,10 @@ def main():
         acc_top5.reset()
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
-            outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+            block_choices = net.random_block_choices(select_predefined_block=True, ctx=ctx)
+            full_channel_mask = net.random_channel_mask(select_all_channels=True, ctx=ctx)
+            outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+            # outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
             acc_top1.update(label, outputs)
             acc_top5.update(label, outputs)
 
@@ -402,7 +409,10 @@ def main():
                                     for X in data]
 
                 with ag.record():
-                    outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+                    block_choices = net.random_block_choices(select_predefined_block=True, ctx=ctx)
+                    full_channel_mask = net.random_channel_mask(select_all_channels=True, ctx=ctx)
+                    outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+                    # outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
                     if distillation:
                         loss = [L(yhat.astype('float32', copy=False),
                                   y.astype('float32', copy=False),
