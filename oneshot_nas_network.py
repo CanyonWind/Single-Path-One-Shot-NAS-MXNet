@@ -103,7 +103,7 @@ class ShuffleNasOneShot(HybridBlock):
                     nn.Flatten()
                 )
 
-    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False, ctx=mx.cpu()):
+    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False, dtype='float32'):
         if select_predefined_block:
             block_choices = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         else:
@@ -111,9 +111,9 @@ class ShuffleNasOneShot(HybridBlock):
             block_choices = []
             for i in range(block_number):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
-        return nd.array(block_choices, ctx)
+        return nd.array(block_choices).astype(dtype, copy=False)
 
-    def random_channel_mask(self, select_all_channels=False, ctx=mx.cpu()):
+    def random_channel_mask(self, select_all_channels=False, dtype='float32'):
         """
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         """
@@ -133,7 +133,7 @@ class ShuffleNasOneShot(HybridBlock):
                     for j in range(random_select_channel):
                         local_mask[j] = 1
                 channel_mask.append(local_mask)
-        return nd.array(channel_mask, ctx)
+        return nd.array(channel_mask).astype(dtype, copy=False)
 
     def hybrid_forward(self, F, x, full_arch, full_scale_mask, *args, **kwargs):
         x = self.features(x, full_arch, full_scale_mask)

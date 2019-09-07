@@ -48,7 +48,7 @@ class ChannelSelector(HybridBlock):
         # TODO: fixed arch channel size is not 'max_channel' anymore. Dynamically slice the [all one mask]
         block_channel_mask = F.slice(block_channel_mask, begin=(None, None), end=(None, self.channel_number))
         block_channel_mask = F.reshape(block_channel_mask, shape=(1, self.channel_number, 1, 1))
-        x = F.broadcast_mul(x, block_channel_mask)
+        x = F.broadcast_mul(x, block_channel_mask.as_in_context(x.context))
         return x
 
 
