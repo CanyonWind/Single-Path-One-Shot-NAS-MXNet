@@ -14,21 +14,22 @@ class ShuffleChannels(HybridBlock):
     For reshape 0, -1, -2, -3, -4 meaning:
     https://mxnet.incubator.apache.org/api/python/ndarray/ndarray.html?highlight=reshape#mxnet.ndarray.NDArray.reshape
     """
-    def __init__(self, groups=2, **kwargs):
+    def __init__(self, mid_channel, groups=2, **kwargs):
         super(ShuffleChannels, self).__init__()
         # For ShuffleNet v2, groups is always set 2
         assert groups == 2
         self.groups = groups
+        self.mid_channel = mid_channel
 
     def hybrid_forward(self, F, x, *args, **kwargs):
-        batch_size, channels, height, width = x.shape
-        assert channels % 2 == 0
-        mid_channels = channels // 2
+        # batch_size, channels, height, width = x.shape
+        # assert channels % 2 == 0
+        # mid_channels = channels // 2
         data = F.reshape(x, shape=(0, -4, self.groups, -1, -2))
         data = F.swapaxes(data, 1, 2)
         data = F.reshape(data, shape=(0, -3, -2))
-        data_project = F.slice(data, begin=(None, None, None, None), end=(None, mid_channels, None, None))
-        data_x = F.slice(data, begin=(None, mid_channels, None, None), end=(None, None, None, None))
+        data_project = F.slice(data, begin=(None, None, None, None), end=(None, self.mid_channel, None, None))
+        data_x = F.slice(data, begin=(None, self.mid_channel, None, None), end=(None, None, None, None))
         return data_project, data_x
 
 
@@ -54,7 +55,7 @@ class ChannelSelector(HybridBlock):
 
 class ShuffleNetBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', **kwargs):
+                 block_mode='ShuffleNetV2', fix_arch=False, **kwargs):
         super(ShuffleNetBlock, self).__init__()
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
@@ -91,14 +92,17 @@ class ShuffleNetBlock(HybridBlock):
 
             Since scale ~ (0, 2), this is guaranteed: main mid channel < final output channel
             """
-            self.channel_shuffle_and_split = ShuffleChannels(groups=2)
+            self.channel_shuffle_and_split = ShuffleChannels(mid_channel=input_channel // 2, groups=2)
             self.main_branch = NasBaseHybridSequential()
             if block_mode == 'ShuffleNetV2':
                 self.main_branch.add(
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_input_channel, kernel_size=1, strides=1,
-                              padding=0, use_bias=False),
-                    ChannelSelector(channel_number=self.main_mid_channel),
+                              padding=0, use_bias=False))
+                if not fix_arch:
+                    self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
+                
+                self.main_branch.add(
                     nn.BatchNorm(momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
@@ -119,8 +123,11 @@ class ShuffleNetBlock(HybridBlock):
                     nn.BatchNorm(momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_input_channel, kernel_size=1, strides=1,
-                              padding=0, use_bias=False),
-                    ChannelSelector(channel_number=self.main_mid_channel),
+                              padding=0, use_bias=False))
+                if not fix_arch:
+                    self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
+                    
+                self.main_branch.add(
                     nn.BatchNorm(momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
@@ -129,8 +136,11 @@ class ShuffleNetBlock(HybridBlock):
                     nn.BatchNorm(momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
-                              padding=0, use_bias=False),
-                    ChannelSelector(channel_number=self.main_mid_channel),
+                              padding=0, use_bias=False))
+                if not fix_arch:
+                    self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
+                    
+                self.main_branch.add(
                     nn.BatchNorm(momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
@@ -232,18 +242,18 @@ class NasHybridSequential(nn.HybridSequential):
         base_index = 0
         for block in self._children.values():
             if isinstance(block, ShuffleNasBlock):
-                block_choice = nd.slice(full_arch, begin=nas_index, end=nas_index + 1)
-                block_channel_mask = nd.slice(full_channel_mask, begin=(nas_index, None), end=(nas_index + 1, None))
+                block_choice = F.slice(full_arch, begin=nas_index, end=nas_index + 1)
+                block_channel_mask = F.slice(full_channel_mask, begin=(nas_index, None), end=(nas_index + 1, None))
                 x = block(x, block_choice, block_channel_mask)
                 nas_index += 1
             elif isinstance(block, ShuffleNetBlock):
-                block_channel_mask = nd.slice(full_channel_mask, begin=(base_index, None), end=(base_index + 1, None))
+                block_channel_mask = F.slice(full_channel_mask, begin=(base_index, None), end=(base_index + 1, None))
                 x = block(x, block_channel_mask)
                 base_index += 1
             else:
                 x = block(x)
-        assert (nas_index == full_arch.shape[0] == full_channel_mask.shape[0] or
-                base_index == full_arch.shape[0] == full_channel_mask.shape[0])
+        # assert (nas_index == full_arch.shape[0] == full_channel_mask.shape[0] or
+        #         base_index == full_arch.shape[0] == full_channel_mask.shape[0])
         return x
 
 

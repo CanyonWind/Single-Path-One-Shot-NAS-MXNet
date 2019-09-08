@@ -61,19 +61,19 @@ class ShuffleNasOneShot(HybridBlock):
                             block_id += 1
                             if block_choice == 0:
                                 print('Shuffle3x3')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
                                                                     block_mode='ShuffleNetV2', ksize=3, stride=stride))
                             elif block_choice == 1:
                                 print('Shuffle5x5')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
                                                                     block_mode='ShuffleNetV2', ksize=5, stride=stride))
                             elif block_choice == 2:
                                 print('Shuffle7x7')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
                                                                     block_mode='ShuffleNetV2', ksize=7, stride=stride))
                             elif block_choice == 3:
                                 print('ShuffleXception3x3')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
                                                                     block_mode='ShuffleXception', ksize=3,
                                                                     stride=stride))
                             else:

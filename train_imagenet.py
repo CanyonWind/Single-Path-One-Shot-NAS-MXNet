@@ -340,10 +340,12 @@ def main():
         acc_top5.reset()
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
-            block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
-            full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
-            outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
-            # outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+            if model_name == 'ShuffleNas_fixArch': 
+                block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
+                full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
+                outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+            else:
+                outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
             acc_top1.update(label, outputs)
             acc_top5.update(label, outputs)
 
@@ -409,10 +411,12 @@ def main():
                                     for X in data]
 
                 with ag.record():
-                    block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
-                    full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
-                    outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
-                    # outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+                    if model_name == 'ShuffleNas_fixArch':
+                        block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
+                        full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
+                        outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+                    else:
+                        outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
                     if distillation:
                         loss = [L(yhat.astype('float32', copy=False),
                                   y.astype('float32', copy=False),
