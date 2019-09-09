@@ -2,7 +2,7 @@
 This repository contains single path one-shot NAS searched networks implementation by MXNet (Gluon), modified from
 [the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series).
 
-Support both pre-defined fixed structure net and random structure net.
+Support both pre-defined fixed structure net and random structure with block selecting and channel selecting.
 
 ## Requirements
 Download the ImageNet dataset, move validation images to labeled subfolders and(or) create MXNet RecordIO files. To do these, you can use the following script:
@@ -14,7 +14,7 @@ to do the training. A slightly modified version is included in this repo.
 
 Train:
 ```shell
-python train_imagenet.py --model ShuffleNas_fixArch
+sh ./train_fixArch.sh
 ```
 
 ## Results
