@@ -340,7 +340,7 @@ def main():
         acc_top5.reset()
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
-            if model_name == 'ShuffleNas_fixArch': 
+            if model_name == 'ShuffleNas':
                 block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
                 full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
@@ -411,7 +411,7 @@ def main():
                                     for X in data]
 
                 with ag.record():
-                    if model_name == 'ShuffleNas_fixArch':
+                    if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
                         full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]

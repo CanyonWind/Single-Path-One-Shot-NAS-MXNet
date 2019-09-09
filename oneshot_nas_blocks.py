@@ -55,7 +55,7 @@ class ChannelSelector(HybridBlock):
 
 class ShuffleNetBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', fix_arch=False, **kwargs):
+                 block_mode='ShuffleNetV2', fix_arch=True, **kwargs):
         super(ShuffleNetBlock, self).__init__()
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
@@ -74,6 +74,7 @@ class ShuffleNetBlock(HybridBlock):
         self.main_input_channel = input_channel // 2 if stride == 1 else input_channel
         self.main_mid_channel = mid_channel
         self.main_output_channel = output_channel - self.project_channel
+        self.fix_arch = fix_arch
 
         with self.name_scope():
             """
@@ -93,7 +94,8 @@ class ShuffleNetBlock(HybridBlock):
             Since scale ~ (0, 2), this is guaranteed: main mid channel < final output channel
             """
             self.channel_shuffle_and_split = ShuffleChannels(mid_channel=input_channel // 2, groups=2)
-            self.main_branch = NasBaseHybridSequential()
+            self.main_branch = nn.HybridSequential() if fix_arch else NasBaseHybridSequential()
+
             if block_mode == 'ShuffleNetV2':
                 self.main_branch.add(
                     # pw
@@ -175,18 +177,36 @@ class ShuffleNetBlock(HybridBlock):
                     nn.Activation('relu')
                 )
 
+    def hybrid_forward(self, F, old_x, *args, **kwargs):
+        if self.stride == 2:
+            x_project = old_x
+            x = old_x
+            return F.concat(self.proj_branch(x_project), self.main_branch(x), dim=1)
+
+        elif self.stride == 1:
+            x_project, x = self.channel_shuffle_and_split(old_x)
+            return F.concat(x_project, self.main_branch(x), dim=1)
+
+
+class ShuffleNetCSBlock(ShuffleNetBlock):
+    """
+    ShuffleNetBlock with Channel Selecting
+    """
+    def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
+                 block_mode='ShuffleNetV2', fix_arch=False, **kwargs):
+        super(ShuffleNetCSBlock, self).__init__(input_channel, output_channel, mid_channel, ksize, stride,
+                 block_mode=block_mode, fix_arch=fix_arch, **kwargs)
+
     def hybrid_forward(self, F, old_x, channel_choice, *args, **kwargs):
         if self.stride == 2:
             x_project = old_x
             x = old_x
-            # [16 -> 16] + [16 -> 48] -> 64 output channel
             return F.concat(self.proj_branch(x_project), self.main_branch(x, channel_choice), dim=1)
         elif self.stride == 1:
             x_project, x = self.channel_shuffle_and_split(old_x)
-            # [64 // 2 -> 32] + [64 // 2 -> 32] -> 64 output channel
             return F.concat(x_project, self.main_branch(x, channel_choice), dim=1)
 
-          
+
 class ShuffleNasBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, stride, max_channel_scale=2.0, **kwargs):
         super(ShuffleNasBlock, self).__init__()
@@ -197,14 +217,14 @@ class ShuffleNasBlock(HybridBlock):
             Four pre-defined blocks
             """
             max_mid_channel = int(output_channel // 2 * max_channel_scale)
-            self.block_sn_3x3 = ShuffleNetBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleNetV2', channel_selection=True)
-            self.block_sn_5x5 = ShuffleNetBlock(input_channel, output_channel, max_mid_channel,
-                                                  5, stride, 'ShuffleNetV2', channel_selection=True)
-            self.block_sn_7x7 = ShuffleNetBlock(input_channel, output_channel, max_mid_channel,
-                                                  7, stride, 'ShuffleNetV2', channel_selection=True)
-            self.block_sx_3x3 = ShuffleNetBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleXception', channel_selection=True)
+            self.block_sn_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
+                                                  3, stride, 'ShuffleNetV2')
+            self.block_sn_5x5 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
+                                                  5, stride, 'ShuffleNetV2')
+            self.block_sn_7x7 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
+                                                  7, stride, 'ShuffleNetV2')
+            self.block_sx_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
+                                                  3, stride, 'ShuffleXception')
 
     def hybrid_forward(self, F, x, block_choice, block_channel_mask, *args, **kwargs):
         # TODO: ShuffleNasBlock will have three inputs

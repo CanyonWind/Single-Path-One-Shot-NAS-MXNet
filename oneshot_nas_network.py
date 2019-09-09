@@ -28,15 +28,18 @@ class ShuffleNasOneShot(HybridBlock):
 
         if architecture is None and channel_scales is None:
             fix_arch = False
-        else:
+        elif architecture is not None and channel_scales is not None:
             fix_arch = True
             assert len(architecture) == len(channel_scales)
+        else:
+            raise ValueError("architecture and scale_ids should be both None or not None.")
+        self.fix_arch = fix_arch
 
         assert input_size % 32 == 0
         assert len(self.stage_repeats) == len(self.stage_out_channels)
 
         with self.name_scope():
-            self.features = NasHybridSequential(prefix='features_')
+            self.features = nn.HybridSequential() if fix_arch else NasHybridSequential(prefix='features_')
             with self.features.name_scope():
                 # first conv
                 self.features.add(
@@ -61,21 +64,20 @@ class ShuffleNasOneShot(HybridBlock):
                             block_id += 1
                             if block_choice == 0:
                                 print('Shuffle3x3')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
-                                                                    block_mode='ShuffleNetV2', ksize=3, stride=stride))
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                                                  block_mode='ShuffleNetV2', ksize=3, stride=stride))
                             elif block_choice == 1:
                                 print('Shuffle5x5')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
-                                                                    block_mode='ShuffleNetV2', ksize=5, stride=stride))
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                                                  block_mode='ShuffleNetV2', ksize=5, stride=stride))
                             elif block_choice == 2:
                                 print('Shuffle7x7')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
-                                                                    block_mode='ShuffleNetV2', ksize=7, stride=stride))
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                                                  block_mode='ShuffleNetV2', ksize=7, stride=stride))
                             elif block_choice == 3:
                                 print('ShuffleXception3x3')
-                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, fix_arch=fix_arch,
-                                                                    block_mode='ShuffleXception', ksize=3,
-                                                                    stride=stride))
+                                self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
+                                                                  block_mode='ShuffleXception', ksize=3, stride=stride))
                             else:
                                 raise NotImplementedError
                         else:
@@ -141,19 +143,40 @@ class ShuffleNasOneShot(HybridBlock):
         return x
 
 
+class ShuffleNasOneShotFix(ShuffleNasOneShot):
+    def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None):
+        """
+        scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        scale_candidate_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+        stage_repeats = [4, 4, 8, 4]
+        len(scale_cand_ids) == sum(stage_repeats) == # feature blocks == 20
+        """
+        super(ShuffleNasOneShotFix, self).__init__(input_size=input_size, n_class=n_class,
+                                                   architecture=architecture, channel_scales=channel_scales)
+
+    def hybrid_forward(self, F, x, *args, **kwargs):
+        x = self.features(x)
+        x = self.output(x)
+        return x
+
+
 def get_shufflenas_oneshot(architecture=None, scale_ids=None):
     if architecture is None and scale_ids is None:
-        net = ShuffleNasOneShot(architecture=None, channel_scales=None)
-    else:
+        # Nothing is specified, do random block selecting and channel selecting.
+        net = ShuffleNasOneShot()
+    elif architecture is not None and scale_ids is not None:
+        # Create the specified structure
         scale_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         channel_scales = []
         for i in range(len(scale_ids)):
             channel_scales.append(scale_list[scale_ids[i]])
-        net = ShuffleNasOneShot(architecture=architecture, channel_scales=channel_scales)
+        net = ShuffleNasOneShotFix(architecture=architecture, channel_scales=channel_scales)
+    else:
+        raise ValueError("architecture and scale_ids should be both None or not None.")
     return net
 
 
-FIX_ARCH = False
+FIX_ARCH = True
 
 
 def main():
@@ -168,10 +191,17 @@ def main():
 
     """ Test ShuffleNasOneShot """
     test_data = nd.ones([5, 3, 224, 224])
-    # for fixed arch, block_choices is (required for forward but) actually ignored in using
-    block_choices = net.random_block_choices(select_predefined_block=False, ctx=mx.cpu())
-    full_channel_mask = net.random_channel_mask(select_all_channels=False, ctx=mx.cpu())
-    test_outputs = net(test_data, block_choices, full_channel_mask)
+    if FIX_ARCH:
+        _ = net(test_data)
+        net.summary(test_data)
+        net.hybridize()
+        test_outputs = net(test_data)
+        net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+    else:
+        block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
+        full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
+        test_outputs = net(test_data, block_choices, full_channel_mask)
+        net.summary(test_data, block_choices, full_channel_mask)
     print(test_outputs.shape)
 
 
