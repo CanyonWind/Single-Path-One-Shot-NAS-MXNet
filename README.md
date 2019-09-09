@@ -22,7 +22,7 @@ python train_imagenet.py --model ShuffleNas_fixArch
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot |  -M |  -M |  **-**   |   -   |
+|    OneShot |  -M |  2.99M (official 3.4M) |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  26.0   |   8.4   |
 |    PNASNET|  588M |  5.1M |  25.8   |   8.1   |
 |    MnasNet|  317M |  4.2M |  26.0   |  8.2   |
