@@ -5,7 +5,9 @@
 /.idea/*
 /params_shufflenas_fixarch/*
 /imagenet/*
+/symbols/*
 *log*
 
-*.pyc
 
+*.pyc
+*.json
