@@ -13,7 +13,7 @@ https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imag
 - Fixed-structure model can be hybridized and (hopefully) accelerated
 - Support both random block selection and random channel selection
 - Fuse the original "Shufflenet" and "Shuffle_Xception" blocks into one "ShuffleNetBlock"
-- Add a customized super tiny model with **1.9M parameters and 67.02% top-1 accuracy**.
+- Add a customized super tiny model with 1.9M parameters and 67.02% top-1 accuracy.
 
 ## Usage
 Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
