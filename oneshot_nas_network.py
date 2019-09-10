@@ -25,7 +25,7 @@ class ShuffleNasOneShot(HybridBlock):
         self.stage_out_channels = [64, 160, 320, 640]
         self.candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         first_conv_out_channel = 16
-        last_conv_out_channel = 1024
+        last_conv_out_channel = 100
 
         if architecture is None and channel_scales is None:
             fix_arch = False
