@@ -2,12 +2,13 @@ import mxnet as mx
 from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
+import os
 
 import random
 from oneshot_nas_blocks import *
 
 
-__all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot']
+__all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot', 'ShuffleNasOneShotFix']
 
 
 class ShuffleNasOneShot(HybridBlock):
@@ -24,7 +25,7 @@ class ShuffleNasOneShot(HybridBlock):
         self.stage_out_channels = [64, 160, 320, 640]
         self.candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         first_conv_out_channel = 16
-        last_conv_out_channel = 100
+        last_conv_out_channel = 1024
 
         if architecture is None and channel_scales is None:
             fix_arch = False
@@ -196,6 +197,8 @@ def main():
         net.summary(test_data)
         net.hybridize()
         test_outputs = net(test_data)
+        if not os.path.exists('./symbols'):
+            os.makedirs('./symbols')
         net.export("./symbols/ShuffleNas_fixArch", epoch=1)
     else:
         block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')

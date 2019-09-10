@@ -6,7 +6,7 @@ mail: liangdepeng@gmail.com
 Cloned from https://github.com/Ldpe2G/DeepLearningForFun/tree/master/MXNet-Python/CalculateFlopsTool
 
 Usage:
-   python calculate_flops.py -s symbols/caffenet-symbol.json -ds  data,1,3,224,224 -ls prob_label,1,1000
+   python calculate_flops.py -s symbols/ShuffleNas_fixArch-symbol.json -ds  data,1,3,224,224 -ls prob_label,1,1000
 """
 
 import mxnet as mx
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     if len(label_names) == 0:
         label_names = None
     model = mx.mod.Module(context=devs, symbol=sym, data_names=data_names, label_names=None)
-    model.bind(data_shapes=data_shapes, label_shapes=label_shapes, for_training=False)
+    model.bind(data_shapes=data_shapes, for_training=False)
 
     arg_params = model._exec_group.execs[0].arg_dict
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     for node in nodes:
         op = node["op"]
-        layer_name = node["name"]
+        layer_name = node["name"][:-4]
         attrs = None
         if "param" in node:
             attrs = node["param"]
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             attrs = {}
 
         if op == 'Convolution':
-            internal_sym = sym.get_internals()[layer_name + '_output']
+            internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
             internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
 
             shape_dict = {}
@@ -109,8 +109,7 @@ if __name__ == '__main__':
 
             # support conv1d NCW and conv2d NCHW layout
             out_shape_produt = out_shape[2] if len(out_shape) == 3 else out_shape[2] * out_shape[3]
-            total_flops += out_shape_produt * product(arg_params[layer_name + '_weight'].shape) * data_shapes[0][1][
-                0] / num_group
+            total_flops += out_shape_produt * product(arg_params[layer_name + '_weight'].shape) * data_shapes[0][1][0] / num_group
 
             if layer_name + "_bias" in arg_params:
                 total_flops += product(out_shape)
@@ -143,7 +142,7 @@ if __name__ == '__main__':
             del shape_dict
 
             if layer_name + "_bias" in arg_params:
-                internal_sym = sym.get_internals()[layer_name + '_output']
+                internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym,
                                                                                       internal_label_shapes)
 
@@ -187,7 +186,7 @@ if __name__ == '__main__':
 
                 total_flops += product(input_shape)
             else:
-                internal_sym = sym.get_internals()[layer_name + '_output']
+                internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
 
                 shape_dict = {}
@@ -209,7 +208,7 @@ if __name__ == '__main__':
 
         if op == 'Activation':
             if attrs['act_type'] == 'relu':
-                internal_sym = sym.get_internals()[layer_name + '_output']
+                internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
 
                 shape_dict = {}
