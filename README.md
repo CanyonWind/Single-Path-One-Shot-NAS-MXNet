@@ -6,17 +6,19 @@ This repository contains single path one-shot NAS searched networks implementati
 Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset)
 
 ## Comparison to the official release 
-- Support both fixed-structure model and supernet uniform selection model
-- Fixed-structure model can be hybridized, hence (hopefully) also be accelerated
-- Support both random block selection and random channel selection
-- Fuse the original "Shufflenet" and "Shuffle_Xception" blocks into one "ShuffleNetBlock"
+- Support both fixed-structure model and supernet uniform selection model.
+- Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
+- Support both random block selection and random channel selection.
 - Add a customized tiny model with 1.9M parameters and 67.02% top-1 accuracy.
+- A full functioning FLOP calculator is provided.
 
 ## Roadmap
 - [x] Implement the fixed architecture model from the official pytorch release.
 - [x] Implement the random block selection and channel selection.
 - [x] Make the fixed architecture model hybridizable.
 - [x] Train a tiny model on Imagenet to verify the feasibility.
+- [x] Modify the open source MXNet FLOP calculator to support BN
+- [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **TODO:** Train the official uniform selection supernet model on Imagenet
 - [ ] **TODO:** Build the evolution algorithm to search within the pretrained supernet model.
@@ -36,7 +38,7 @@ sh ./train_fixArch.sh
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot |  -M |  3.4M |  **-**   |   -   |
+|    OneShot |  328M (345M with considering ReLU and BN) |  3.4M |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  26.0   |   8.4   |
 |    PNASNET|  588M |  5.1M |  25.8   |   8.1   |
 |    MnasNet|  317M |  4.2M |  26.0   |  8.2   |
