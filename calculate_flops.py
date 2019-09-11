@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
             # support conv1d NCW and conv2d NCHW layout
             out_shape_produt = out_shape[2] if len(out_shape) == 3 else out_shape[2] * out_shape[3]
-            total_flops += out_shape_produt * product(arg_params[layer_name + '_weight'].shape) * data_shapes[0][1][0] / num_group
+            total_flops += out_shape_produt * product(arg_params[layer_name + '_weight'].shape) * data_shapes[0][1][0]
 
             if layer_name + "_bias" in arg_params:
                 total_flops += product(out_shape)
@@ -224,6 +224,22 @@ if __name__ == '__main__':
                 total_flops += product(out_shape)
 
                 del shape_dict
+
+        if op == 'BatchNorm':
+            internal_syms = sym.get_internals()
+            internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
+            internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
+
+            shape_dict = {}
+            for k, v in data_shapes:
+                shape_dict[k] = v
+            if internal_label_shapes != None:
+                for k, v in internal_label_shapes:
+                    shape_dict[k] = v
+
+            _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
+            out_shape = out_shapes[0]
+            total_flops += product(out_shape) * 3  # mean, variance, (blob - mean) / variance * beta + gamma
 
     model_size = 0.0
     if label_names == None:
