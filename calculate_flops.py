@@ -18,11 +18,11 @@ import re
 
 def parse_args():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-ds', '--data_shapes', type=str, nargs='+',
+    parser.add_argument('-ds', '--data_shapes', type=str, nargs='+', default=['data,1,3,224,224'],
                         help='data_shapes, format: arg_name,s1,s2,...,sn, example: data,1,3,224,224')
-    parser.add_argument('-ls', '--label_shapes', type=str, nargs='+',
+    parser.add_argument('-ls', '--label_shapes', type=str, nargs='+', default=['output,1,1000'],
                         help='label_shapes, format: arg_name,s1,s2,...,sn, example: label,1,1,224,224')
-    parser.add_argument('-s', '--symbol_path', type=str, default='./caffenet-symbol.json', help='')
+    parser.add_argument('-s', '--symbol_path', type=str, default='./symbols/ShuffleNas_fixArch-symbol.json', help='')
     return parser.parse_args()
 
 
