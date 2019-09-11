@@ -26,7 +26,6 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
 to do the training. A slightly modified version is included in this repo.
 
-Train:
 ```shell
 sh ./train_fixArch.sh
 ```
@@ -44,7 +43,7 @@ sh ./train_fixArch.sh
 |    DARTS|  574M|  4.7M |  26.7   |   8.7  |
 |    FBNet-B|  295M|  4.5M |  25.9   |   -   |
 
-**Customized super tiny model**
+**Customized tiny model**
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
