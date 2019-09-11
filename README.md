@@ -53,6 +53,7 @@ python calculate_flops.py -norelubn
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   |
 
 **Last conv channels reducted model**
+
 Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
