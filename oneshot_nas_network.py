@@ -198,15 +198,16 @@ def main():
             if step == 0:
                 net.summary(test_data)
             net.hybridize()
-            test_outputs = net(test_data)
-            if not os.path.exists('./symbols'):
-                os.makedirs('./symbols')
-            net.export("./symbols/ShuffleNas_fixArch", epoch=1)
         else:
             block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
             full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
             test_outputs = net(test_data, block_choices, full_channel_mask)
-            net.summary(test_data, block_choices, full_channel_mask)
+            if step == 0:
+                net.summary(test_data, block_choices, full_channel_mask)
+    if FIX_ARCH:
+        if not os.path.exists('./symbols'):
+            os.makedirs('./symbols')
+        net.export("./symbols/ShuffleNas_fixArch", epoch=1)
     print(test_outputs.shape)
 
 
