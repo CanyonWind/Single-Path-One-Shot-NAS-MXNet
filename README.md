@@ -10,7 +10,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
 - A full functioning FLOP calculator is provided.
-- Add a customized FC(last conv) reducted model with 1.9M parameters and 68.74% top-1 accuracy.
+- Add a last conv channels reducted model with 1.9M parameters and 68.74% top-1 accuracy.
 
 
 ## Roadmap
@@ -52,7 +52,7 @@ python calculate_flops.py -norelubn
 |    DARTS|  574M|  4.7M |  73.3   |   91.3  |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   |
 
-**FC reducted model**
+**Last conv channels reducted model**
 Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
