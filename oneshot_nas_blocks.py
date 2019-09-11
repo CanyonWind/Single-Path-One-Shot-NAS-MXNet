@@ -2,10 +2,10 @@ from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
 import random
+import numpy as np
 
 
-__all__ = ['ShuffleChannels', 'ShuffleNetBlock', 'ShuffleNasBlock', 'NasHybridSequential',
-           'random_block_choices', 'random_channel_mask']
+__all__ = ['ShuffleChannels', 'ShuffleNetBlock', 'ShuffleNetCSBlock', 'ShuffleNasBlock', 'NasHybridSequential']
 
 
 class ShuffleChannels(HybridBlock):
@@ -277,7 +277,6 @@ class NasHybridSequential(nn.HybridSequential):
         return x
 
 
-
 def random_block_choices(stage_repeats=None, num_of_block_choices=4):
     if stage_repeats is None:
         stage_repeats = [4, 4, 8, 4]
@@ -320,6 +319,65 @@ def random_channel_mask(stage_repeats=None, stage_out_channels=None, candidate_s
 
 
 def main():
+    """Test ShuffleNetCSBlock"""
+    block_mode = 'ShuffleXception'
+    dummy = nd.random.uniform(-1, 1, shape=(1, 4, 224, 224))
+    cs_block = ShuffleNetCSBlock(input_channel=4, output_channel=16, mid_channel=16, ksize=3, 
+                                 stride=1, block_mode=block_mode)
+    cs_block.initialize()
+
+    # generate channel mask
+    channel_mask = nd.array([[1] * 10 + [0] * 6])
+    from mxnet import autograd as ag
+    with ag.record():
+        rst = cs_block(dummy, channel_mask)
+    rst.backward()
+    params = cs_block.collect_params()
+    zero_grads = []
+    not_selected_channels_grad_is_zero = True
+    for param_name in params:
+        if 'weight' in param_name:
+            grad = params[param_name]._grad[0].asnumpy()
+            print("{} shape: {}".format(param_name, grad.shape))
+            if 'conv0' in param_name and block_mode == 'ShuffleNetV2':
+                zero_grad = grad[10:, :, :, :]
+                unique_grad = list(np.unique(zero_grad))
+                not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                     len(unique_grad) == 1 and unique_grad[0] == 0
+            elif 'conv1' in param_name:
+                zero_grad = grad[10:, :, :, :]
+                unique_grad = list(np.unique(zero_grad))
+                not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                     len(unique_grad) == 1 and unique_grad[0] == 0
+            elif 'conv2' in param_name:
+                if block_mode == 'ShuffleNetV2':
+                    zero_grad = grad[:, 10:, :, :]
+                    unique_grad = list(np.unique(zero_grad))
+                    not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                        len(unique_grad) == 1 and unique_grad[0] == 0
+                else:
+                    zero_grad = grad[10:, :, :, :]
+                    unique_grad = list(np.unique(zero_grad))
+                    not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                        len(unique_grad) == 1 and unique_grad[0] == 0
+            elif 'conv3' in param_name:
+                zero_grad = grad[10:, 10:, :, :]
+                unique_grad = list(np.unique(zero_grad))
+                not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                    len(unique_grad) == 1 and unique_grad[0] == 0
+            elif 'conv4' in param_name:
+                zero_grad = grad[10:, :, :, :]
+                unique_grad = list(np.unique(zero_grad))
+                not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                    len(unique_grad) == 1 and unique_grad[0] == 0
+            elif 'conv5' in param_name:
+                zero_grad = grad[:, 10:, :, :]
+                unique_grad = list(np.unique(zero_grad))
+                not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
+                                                    len(unique_grad) == 1 and unique_grad[0] == 0
+    print("Not selected channels grads are zero: {}".format(not_selected_channels_grad_is_zero))
+    print("Finished testing ShuffleNetCSBlock")
+
     """ Test ShuffleChannels """
     channel_shuffle = ShuffleChannels(mid_channel=4, groups=2)
     s = nd.ones([1, 8, 3, 3])
@@ -343,8 +401,8 @@ def main():
     temp1 = block1(temp0)
     print(temp0.shape)
     print(temp1.shape)
-    print(block0)
-    print(block1)
+    # print(block0)
+    # print(block1)
     print("Finished testing ShuffleNetV2 mode")
 
     """ Test ShuffleBlock with "ShuffleXception" mode """
@@ -360,8 +418,8 @@ def main():
     tempx1 = blockx1(temp0)
     print(tempx0.shape)
     print(tempx1.shape)
-    print(blockx0)
-    print(blockx1)
+    # print(blockx0)
+    # print(blockx1)
     print("Finished testing ShuffleXception mode")
 
     """ Test ChannelSelection """
