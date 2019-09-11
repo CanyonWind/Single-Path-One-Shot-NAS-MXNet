@@ -232,11 +232,11 @@ class ShuffleNasBlock(HybridBlock):
         if block_choice == 0:
             x = self.block_sn_3x3(x, block_channel_mask)
         elif block_choice == 1:
-            x = self.block_sn_3x3(x, block_channel_mask)
+            x = self.block_sn_5x5(x, block_channel_mask)
         elif block_choice == 2:
-            x = self.block_sn_3x3(x, block_channel_mask)
+            x = self.block_sn_7x7(x, block_channel_mask)
         elif block_choice == 3:
-            x = self.block_sn_3x3(x, block_channel_mask)
+            x = self.block_sx_3x3(x, block_channel_mask)
         return x
 
 
@@ -333,7 +333,6 @@ def main():
         rst = cs_block(dummy, channel_mask)
     rst.backward()
     params = cs_block.collect_params()
-    zero_grads = []
     not_selected_channels_grad_is_zero = True
     for param_name in params:
         if 'weight' in param_name:
