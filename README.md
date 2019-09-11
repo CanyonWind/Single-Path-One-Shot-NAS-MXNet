@@ -55,7 +55,7 @@ python calculate_flops.py -norelubn
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot (customized) |  (quite large)M |  1.93M |  **67.02**   |   -   |
+|    OneShot (customized) |  (embarrassing large)M |  1.93M |  **67.02**   |   -   |
 |    MobileNet V3 Small 0.75 | 44M | 2.4M | 65.4 | - |
 |    Mnas Small | 65.1M | 1.9M | 64.9 | - |
 |    [MobileNet V2 0.5](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet#imagenet--checkpoints) | 97.2M | 1.95M | 65.4 | - |
