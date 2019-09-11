@@ -321,7 +321,7 @@ def random_channel_mask(stage_repeats=None, stage_out_channels=None, candidate_s
 
 def main():
     """ Test ShuffleChannels """
-    channel_shuffle = ShuffleChannels(groups=2)
+    channel_shuffle = ShuffleChannels(mid_channel=4, groups=2)
     s = nd.ones([1, 8, 3, 3])
     s[:, 4:, :, :] *= 2
     s_project, s_main = channel_shuffle(s)
@@ -371,14 +371,14 @@ def main():
     tensor = nd.ones([1, max_channel, 14, 14])
     for i in range(max_channel):
         tensor[:, i, :, :] = i
-    channel_selector = ChannelSelector(block_output_channel=block_final_output_channel)
+    channel_selector = ChannelSelector(channel_number=block_final_output_channel)
     print(channel_selector)
     for i in range(4):
         global_channel_mask = random_channel_mask(stage_out_channels=[8, 160, 320, 640])
         local_channel_mask = nd.slice(global_channel_mask, begin=(i, None), end=(i + 1, None))
         selected_tensor = channel_selector(tensor, local_channel_mask)
         print(selected_tensor.shape)
-
+    print("Finished testing ChannelSelector.")
 
 if __name__ == '__main__':
     main()
