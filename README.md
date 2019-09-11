@@ -1,19 +1,26 @@
 # [One-Shot NAS](https://arxiv.org/abs/1904.00420)
 This repository contains single path one-shot NAS searched networks implementation by MXNet (Gluon), modified from
-[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series).
-
-Support both pre-defined fixed structure net and random structure supernet with block selection and channel selection.
+[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series). It supports both pre-defined fixed structure model and the supernet model with block selection and channel selection.
 
 ## Prerequisites
-Download the ImageNet dataset, move validation images to labeled subfolders and(or) create MXNet RecordIO files. To do these, you can use the following script:
-https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset
+Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset)
 
 ## Comparison to the official release 
 - Support both fixed-structure model and supernet uniform selection model
-- Fixed-structure model can be hybridized and (hopefully) accelerated
+- Fixed-structure model can be hybridized, hence (hopefully) also be accelerated
 - Support both random block selection and random channel selection
 - Fuse the original "Shufflenet" and "Shuffle_Xception" blocks into one "ShuffleNetBlock"
-- Add a customized super tiny model with 1.9M parameters and 67.02% top-1 accuracy.
+- Add a customized tiny model with 1.9M parameters and 67.02% top-1 accuracy.
+
+## Roadmap
+- [x] Implement the fixed architecture model from the official pytorch release.
+- [x] Implement the random block selection and channel selection.
+- [x] Make the fixed architecture model hybridizable.
+- [x] Train a tiny model on Imagenet to verify the feasibility.
+- [ ] **In progress:** Train the official fixed architecture model on Imagenet
+- [ ] **TODO:** Train the official uniform selection supernet model on Imagenet
+- [ ] **TODO:** Build the evolution algorithm to search within the pretrained supernet model.
+
 
 ## Usage
 Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
