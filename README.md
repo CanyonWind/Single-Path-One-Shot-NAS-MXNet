@@ -9,7 +9,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - Support both fixed-structure model and supernet uniform selection model.
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
-- Add a customized tiny model with 1.9M parameters and 67.02% top-1 accuracy.
+- Add a customized FC reducted model with 1.9M parameters and 68.74% top-1 accuracy.
 - A full functioning FLOP calculator is provided.
 
 ## Roadmap
@@ -51,11 +51,12 @@ python calculate_flops.py -norelubn
 |    DARTS|  574M|  4.7M |  26.7   |   8.7  |
 |    FBNet-B|  295M|  4.5M |  25.9   |   -   |
 
-**Customized tiny model**
+**FC reducted model**
+Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot (customized) |  (embarrassing large)M |  1.93M |  **67.02**   |   -   |
+|    OneShot (customized) |  (embarrassing large)M |  1.93M |  **68.74**   |   -   |
 |    MobileNet V3 Small 0.75 | 44M | 2.4M | 65.4 | - |
 |    Mnas Small | 65.1M | 1.9M | 64.9 | - |
 |    [MobileNet V2 0.5](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet#imagenet--checkpoints) | 97.2M | 1.95M | 65.4 | - |
