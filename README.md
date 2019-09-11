@@ -46,11 +46,11 @@ python calculate_flops.py -norelubn
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
 |    OneShot |  328M (345M with ReLU and BN) |  3.4M |  **-**   |   -   |
-|    NASNET-A|  564M |  5.3M |  26.0   |   8.4   |
-|    PNASNET|  588M |  5.1M |  25.8   |   8.1   |
-|    MnasNet|  317M |  4.2M |  26.0   |  8.2   |
-|    DARTS|  574M|  4.7M |  26.7   |   8.7  |
-|    FBNet-B|  295M|  4.5M |  25.9   |   -   |
+|    NASNET-A|  564M |  5.3M |  74.0   |   91.6   |
+|    PNASNET|  588M |  5.1M |  74.2   |   91.9   |
+|    MnasNet|  317M |  4.2M |  74.0   |  91.8   |
+|    DARTS|  574M|  4.7M |  73.3   |   91.3  |
+|    FBNet-B|  295M|  4.5M |  74.1   |   -   |
 
 **FC reducted model**
 Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
