@@ -30,8 +30,10 @@ to do the training. A slightly modified version is included in this repo.
 
 ```shell
 sh ./train_fixarch.sh
+```
 
-# For flop calculator, save the symobilc model first. Then call the calculator. You can choose to ignore relu & bn or not with the flag -norelubn
+For the flop calculator, save the symobilc model first. Then call the calculator. You can choose to ignore ReLU and BN or not with the flag -norelubn
+```python
 python oneshot_nas_network.py 
 python calculate_flops.py -norelubn
 ```
@@ -53,7 +55,7 @@ python calculate_flops.py -norelubn
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot (customized) |  -M |  1.93M |  **67.02**   |   -   |
+|    OneShot (customized) |  (quite large)M |  1.93M |  **67.02**   |   -   |
 |    MobileNet V3 Small 0.75 | 44M | 2.4M | 65.4 | - |
 |    Mnas Small | 65.1M | 1.9M | 64.9 | - |
 |    [MobileNet V2 0.5](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet#imagenet--checkpoints) | 97.2M | 1.95M | 65.4 | - |
