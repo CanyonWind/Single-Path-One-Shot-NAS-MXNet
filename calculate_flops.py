@@ -6,7 +6,7 @@ mail: liangdepeng@gmail.com
 Cloned from https://github.com/Ldpe2G/DeepLearningForFun/tree/master/MXNet-Python/CalculateFlopsTool
 
 Usage:
-   python calculate_flops.py -s symbols/ShuffleNas_fixArch-symbol.json -ds  data,1,3,224,224 -ls prob_label,1,1000
+   python calculate_flops.py -s symbols/ShuffleNas_fixArch-symbol.json -ds  data,1,3,224,224 -ls prob_label,1,1000 (-norelubn)
 """
 
 import mxnet as mx
@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('-ls', '--label_shapes', type=str, nargs='+', default=['output,1,1000'],
                         help='label_shapes, format: arg_name,s1,s2,...,sn, example: label,1,1,224,224')
     parser.add_argument('-s', '--symbol_path', type=str, default='./symbols/ShuffleNas_fixArch-symbol.json', help='')
+    parser.add_argument('-norelubn', action='store_true', help='Whether to calculate relu and bn.')
     return parser.parse_args()
 
 
@@ -206,8 +207,29 @@ if __name__ == '__main__':
 
             del shape_dict
 
-        if op == 'Activation':
-            if attrs['act_type'] == 'relu':
+        if not args.norelubn:
+            
+            if op == 'Activation':
+                if attrs['act_type'] == 'relu':
+                    internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
+                    internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
+
+                    shape_dict = {}
+                    for k, v in data_shapes:
+                        shape_dict[k] = v
+                    if internal_label_shapes != None:
+                        for k, v in internal_label_shapes:
+                            shape_dict[k] = v
+
+                    _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
+                    out_shape = out_shapes[0]
+
+                    total_flops += product(out_shape)
+
+                    del shape_dict
+
+            if op == 'BatchNorm':
+                internal_syms = sym.get_internals()
                 internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
 
@@ -220,26 +242,8 @@ if __name__ == '__main__':
 
                 _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
                 out_shape = out_shapes[0]
-
-                total_flops += product(out_shape)
-
-                del shape_dict
-
-        if op == 'BatchNorm':
-            internal_syms = sym.get_internals()
-            internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
-            internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
-
-            shape_dict = {}
-            for k, v in data_shapes:
-                shape_dict[k] = v
-            if internal_label_shapes != None:
-                for k, v in internal_label_shapes:
-                    shape_dict[k] = v
-
-            _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
-            out_shape = out_shapes[0]
-            total_flops += product(out_shape) * 3  # mean, variance, (blob - mean) / variance * beta + gamma
+                total_flops += product(out_shape) * 3  # mean, variance, (blob - mean) / variance * beta + gamma
+            
 
     model_size = 0.0
     if label_names == None:
