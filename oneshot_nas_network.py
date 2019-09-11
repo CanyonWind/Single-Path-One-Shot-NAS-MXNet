@@ -5,7 +5,7 @@ from mxnet import nd
 import os
 
 import random
-from oneshot_nas_blocks import *
+from oneshot_nas_blocks import NasHybridSequential, ShuffleNetBlock, ShuffleNasBlock
 
 
 __all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot', 'ShuffleNasOneShotFix']
@@ -25,7 +25,7 @@ class ShuffleNasOneShot(HybridBlock):
         self.stage_out_channels = [64, 160, 320, 640]
         self.candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         first_conv_out_channel = 16
-        last_conv_out_channel = 100
+        last_conv_out_channel = 1024
 
         if architecture is None and channel_scales is None:
             fix_arch = False
@@ -177,7 +177,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None):
     return net
 
 
-FIX_ARCH = True
+FIX_ARCH = False
 
 
 def main():
@@ -192,19 +192,21 @@ def main():
 
     """ Test ShuffleNasOneShot """
     test_data = nd.ones([5, 3, 224, 224])
-    if FIX_ARCH:
-        _ = net(test_data)
-        net.summary(test_data)
-        net.hybridize()
-        test_outputs = net(test_data)
-        if not os.path.exists('./symbols'):
-            os.makedirs('./symbols')
-        net.export("./symbols/ShuffleNas_fixArch", epoch=1)
-    else:
-        block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
-        full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
-        test_outputs = net(test_data, block_choices, full_channel_mask)
-        net.summary(test_data, block_choices, full_channel_mask)
+    for step in range(10):
+        if FIX_ARCH:
+            _ = net(test_data)
+            if step == 0:
+                net.summary(test_data)
+            net.hybridize()
+            test_outputs = net(test_data)
+            if not os.path.exists('./symbols'):
+                os.makedirs('./symbols')
+            net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+        else:
+            block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
+            full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
+            test_outputs = net(test_data, block_choices, full_channel_mask)
+            net.summary(test_data, block_choices, full_channel_mask)
     print(test_outputs.shape)
 
 
