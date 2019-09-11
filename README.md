@@ -9,8 +9,9 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - Support both fixed-structure model and supernet uniform selection model.
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
-- Add a customized FC reducted model with 1.9M parameters and 68.74% top-1 accuracy.
 - A full functioning FLOP calculator is provided.
+- Add a customized FC(last conv) reducted model with 1.9M parameters and 68.74% top-1 accuracy.
+
 
 ## Roadmap
 - [x] Implement the fixed architecture model from the official pytorch release.
