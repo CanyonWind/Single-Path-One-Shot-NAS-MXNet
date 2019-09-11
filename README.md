@@ -1,5 +1,5 @@
 # [One-Shot NAS](https://arxiv.org/abs/1904.00420)
-This repository contains single path one-shot NAS networks implementation by **MXNet (Gluon)**, modified from
+This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation by, modified from
 [the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series). It supports both pre-defined fixed structure model and the supernet model with block selection and channel selection.
 
 ## Prerequisites
