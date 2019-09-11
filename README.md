@@ -29,7 +29,11 @@ Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/bu
 to do the training. A slightly modified version is included in this repo.
 
 ```shell
-sh ./train_fixArch.sh
+sh ./train_fixarch.sh
+
+# For flop calculator, save the symobilc model first. Then call the calculator. You can choose to ignore relu & bn or not with the flag -norelubn
+python oneshot_nas_network.py 
+python calculate_flops.py -norelubn
 ```
 
 ## Results
