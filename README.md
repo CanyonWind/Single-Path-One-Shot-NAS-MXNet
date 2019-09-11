@@ -42,7 +42,7 @@ python calculate_flops.py -norelubn
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot |  328M (345M with considering ReLU and BN) |  3.4M |  **-**   |   -   |
+|    OneShot |  328M (345M with ReLU and BN) |  3.4M |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  26.0   |   8.4   |
 |    PNASNET|  588M |  5.1M |  25.8   |   8.1   |
 |    MnasNet|  317M |  4.2M |  26.0   |  8.2   |
