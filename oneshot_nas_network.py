@@ -1,4 +1,3 @@
-import mxnet as mx
 from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
@@ -123,6 +122,7 @@ class ShuffleNasOneShot(HybridBlock):
         assert len(self.stage_repeats) == len(self.stage_out_channels)
 
         channel_mask = []
+        channel_choices = []
         global_max_length = int(self.stage_out_channels[-1] // 2 * self.candidate_scales[-1])
         for i in range(len(self.stage_out_channels)):
             local_max_length = int(self.stage_out_channels[i] // 2 * self.candidate_scales[-1])
@@ -132,6 +132,7 @@ class ShuffleNasOneShot(HybridBlock):
                     local_mask = [1] * global_max_length
                 else:
                     local_mask = [0] * global_max_length
+                    # TODO: shouldn't random between min and max. But select candidate scales and return it.
                     random_select_channel = random.randint(local_min_length, local_max_length)
                     for j in range(random_select_channel):
                         local_mask[j] = 1
@@ -194,19 +195,23 @@ def main():
     test_data = nd.ones([5, 3, 224, 224])
     for step in range(10):
         if FIX_ARCH:
-            _ = net(test_data)
+            test_outputs = net(test_data)
             if step == 0:
                 net.summary(test_data)
             net.hybridize()
-            test_outputs = net(test_data)
-            if not os.path.exists('./symbols'):
-                os.makedirs('./symbols')
-            net.export("./symbols/ShuffleNas_fixArch", epoch=1)
         else:
             block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
             full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
             test_outputs = net(test_data, block_choices, full_channel_mask)
             net.summary(test_data, block_choices, full_channel_mask)
+    if FIX_ARCH:
+        if not os.path.exists('./symbols'):
+            os.makedirs('./symbols')
+        net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+    else:
+        if not os.path.exists('./params'):
+            os.makedirs('./params')
+        net.save_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
     print(test_outputs.shape)
 
 

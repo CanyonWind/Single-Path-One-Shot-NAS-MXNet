@@ -6,6 +6,7 @@
 /params_shufflenas_fixarch/*
 /imagenet/*
 /symbols/*
+/params/*
 *log*
 
 

@@ -181,7 +181,7 @@ def main():
 
     net.cast(opt.dtype)
     if opt.resume_params is not '':
-        net.load_parameters(opt.resume_params, ctx = context)
+        net.load_parameters(opt.resume_params, ctx=context)
 
     # teacher model for distillation training
     if opt.teacher is not None and opt.hard_weight < 1.0:

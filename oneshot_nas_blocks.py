@@ -105,16 +105,16 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                 
                 self.main_branch.add(
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=self.stride, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_output_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
             elif block_mode == 'ShuffleXception':
@@ -122,7 +122,7 @@ class ShuffleNetBlock(HybridBlock):
                     # dw with linear output
                     nn.Conv2D(self.main_input_channel, in_channels=self.main_input_channel, kernel_size=self.ksize,
                               strides=self.stride, padding=self.padding, groups=self.main_input_channel, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_input_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_input_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False))
@@ -130,12 +130,12 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                     
                 self.main_branch.add(
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False))
@@ -143,16 +143,16 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                     
                 self.main_branch.add(
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.main_output_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
             if self.stride == 2:
@@ -169,11 +169,11 @@ class ShuffleNetBlock(HybridBlock):
                     # dw with linear output
                     nn.Conv2D(self.project_channel, in_channels=self.project_channel, kernel_size=self.ksize,
                               strides=stride, padding=self.padding, groups=self.project_channel, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.project_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.project_channel, in_channels=self.project_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(momentum=0.1),
+                    nn.BatchNorm(in_channels=self.project_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
 
