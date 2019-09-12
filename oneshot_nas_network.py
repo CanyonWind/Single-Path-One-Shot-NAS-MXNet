@@ -63,19 +63,15 @@ class ShuffleNasOneShot(HybridBlock):
                             mid_channel = int(output_channel // 2 * channel_scales[block_id])
                             block_id += 1
                             if block_choice == 0:
-                                print('Shuffle3x3')
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
                                                                   block_mode='ShuffleNetV2', ksize=3, stride=stride))
                             elif block_choice == 1:
-                                print('Shuffle5x5')
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
                                                                   block_mode='ShuffleNetV2', ksize=5, stride=stride))
                             elif block_choice == 2:
-                                print('Shuffle7x7')
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
                                                                   block_mode='ShuffleNetV2', ksize=7, stride=stride))
                             elif block_choice == 3:
-                                print('ShuffleXception3x3')
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel,
                                                                   block_mode='ShuffleXception', ksize=3, stride=stride))
                             else:
@@ -115,9 +111,11 @@ class ShuffleNasOneShot(HybridBlock):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
         return nd.array(block_choices).astype(dtype, copy=False)
 
-    def random_channel_mask(self, select_all_channels=False, dtype='float32'):
+    def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse'):
         """
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+        mode: str, "dense" or "sparse". Sparse mode select # channel from candidate scales. Dense mode selects
+              # channels between randint(min_channel, max_channel).
         """
         assert len(self.stage_repeats) == len(self.stage_out_channels)
 
@@ -133,11 +131,19 @@ class ShuffleNasOneShot(HybridBlock):
                 else:
                     local_mask = [0] * global_max_length
                     # TODO: shouldn't random between min and max. But select candidate scales and return it.
-                    random_select_channel = random.randint(local_min_length, local_max_length)
+                    if mode == 'dense':
+                        random_select_channel = random.randint(local_min_length, local_max_length)
+                        # In dense mode, channel_choices is # channel
+                        channel_choices.append(random_select_channel)
+                    elif mode == 'sparse':
+                        channel_choice = random.randint(0, len(self.candidate_scales) - 1)
+                        random_select_channel = int(self.stage_out_channels[i] // 2 * self.candidate_scales[channel_choice])
+                        # In sparse mode, channel_choices is the indices of candidate_scales
+                        channel_choices.append(channel_choice)
                     for j in range(random_select_channel):
                         local_mask[j] = 1
                 channel_mask.append(local_mask)
-        return nd.array(channel_mask).astype(dtype, copy=False)
+        return nd.array(channel_mask).astype(dtype, copy=False), channel_choices
 
     def hybrid_forward(self, F, x, full_arch, full_scale_mask, *args, **kwargs):
         x = self.features(x, full_arch, full_scale_mask)
@@ -201,7 +207,7 @@ def main():
             net.hybridize()
         else:
             block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
-            full_channel_mask = net.random_channel_mask(select_all_channels=False, dtype='float32')
+            full_channel_mask, _ = net.random_channel_mask(select_all_channels=False, dtype='float32')
             test_outputs = net(test_data, block_choices, full_channel_mask)
             net.summary(test_data, block_choices, full_channel_mask)
     if FIX_ARCH:
