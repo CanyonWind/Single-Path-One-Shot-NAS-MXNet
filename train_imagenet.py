@@ -342,7 +342,7 @@ def main():
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
                 block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
-                full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
+                full_channel_mask, _ = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -413,7 +413,7 @@ def main():
                 with ag.record():
                     if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
-                        full_channel_mask = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
+                        full_channel_mask, _ = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
