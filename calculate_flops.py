@@ -44,8 +44,10 @@ def get_internal_label_info(internal_sym, label_shapes):
     return None, None
 
 
-if __name__ == '__main__':
+def get_flops(norelubn=True):
     args = parse_args()
+    args.norelubn = norelubn
+    # print(args)
     sym = mx.sym.load(args.symbol_path)
 
     data_shapes = list()
@@ -252,6 +254,10 @@ if __name__ == '__main__':
         if k not in data_names and k not in label_names:
             model_size += product(v.shape) * np.dtype(v.dtype()).itemsize
 
-    print('flops: ', str(total_flops / 1000000), ' MFLOPS')
-    print('model size: ', str(model_size / 1024 / 1024), ' MB')
+    return total_flops / 1000000, model_size / 1024 / 1024
 
+
+if __name__ == '__main__':
+    flops, model_size = get_flops()
+    print('flops: ', str(flops), ' MFLOPS')
+    print('model size: ', str(model_size), ' MB')
