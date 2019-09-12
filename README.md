@@ -16,6 +16,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 ## Roadmap
 - [x] Implement the fixed architecture model from the official pytorch release.
 - [x] Implement the random block selection and channel selection.
+- [x] Verify conv kernel gradients would be be updated according to ChannelSelector 
 - [x] Make the fixed architecture model hybridizable.
 - [x] Train a tiny model on Imagenet to verify the feasibility.
 - [x] Modify the open source MXNet FLOP calculator to support BN
