@@ -277,6 +277,61 @@ class NasHybridSequential(nn.HybridSequential):
         return x
 
 
+class BatchNorm(HybridBlock):
+    def __init__(self, axis=1, momentum=0.9, epsilon=1e-5, center=True, scale=True,
+                 use_global_stats=False, beta_initializer='zeros', gamma_initializer='ones',
+                 running_mean_initializer='zeros', running_variance_initializer='ones',
+                 in_channels=0, inference_update_stat=False, **kwargs):
+        super(BatchNorm, self).__init__(**kwargs)
+        self._kwargs = {'axis': axis, 'eps': epsilon, 'momentum': momentum,
+                        'fix_gamma': not scale, 'use_global_stats': use_global_stats}
+        self.inference_update_stat = inference_update_stat
+        if in_channels != 0:
+            self.in_channels = in_channels
+
+        self.gamma = self.params.get('gamma', grad_req='write' if scale else 'null',
+                                     shape=(in_channels,), init=gamma_initializer,
+                                     allow_deferred_init=True,
+                                     differentiable=scale)
+        self.beta = self.params.get('beta', grad_req='write' if center else 'null',
+                                    shape=(in_channels,), init=beta_initializer,
+                                    allow_deferred_init=True,
+                                    differentiable=center)
+        self.running_mean = self.params.get('running_mean', grad_req='null',
+                                            shape=(in_channels,),
+                                            init=running_mean_initializer,
+                                            allow_deferred_init=True,
+                                            differentiable=False)
+        self.running_var = self.params.get('running_var', grad_req='null',
+                                           shape=(in_channels,),
+                                           init=running_variance_initializer,
+                                           allow_deferred_init=True,
+                                           differentiable=False)
+
+    def cast(self, dtype):
+        if np.dtype(dtype).name == 'float16':
+            dtype = 'float32'
+        super(BatchNorm, self).cast(dtype)
+
+    def hybrid_forward(self, F, x, gamma, beta, running_mean, running_var):
+        if self.inference_update_stat:
+            # TODO: update running_mean and running_var here
+            return F.BatchNorm(x, gamma, beta, running_mean, running_var,
+                           name='fwd', **self._kwargs)
+        else:
+            return F.BatchNorm(x, gamma, beta, running_mean, running_var,
+                           name='fwd', **self._kwargs)
+
+    def __repr__(self):
+        s = '{name}({content}'
+        in_channels = self.gamma.shape[0]
+        s += ', in_channels={0}'.format(in_channels if in_channels else None)
+        s += ')'
+        return s.format(name=self.__class__.__name__,
+                        content=', '.join(['='.join([k, v.__repr__()])
+                                           for k, v in self._kwargs.items()]))
+
+
 def random_block_choices(stage_repeats=None, num_of_block_choices=4):
     if stage_repeats is None:
         stage_repeats = [4, 4, 8, 4]
