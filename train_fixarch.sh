@@ -5,6 +5,6 @@ python train_imagenet.py \
     --rec-val ~/imagenet/rec/val.rec --rec-val-idx ~/imagenet/rec/val.idx \
     --model ShuffleNas_fixArch --mode hybrid \
     --lr 0.5 --wd 0.00004 --lr-mode cosine --dtype float16\
-    --num-epochs 307 --batch-size 256 --num-gpus 4 -j 4 \
+    --num-epochs 240 --batch-size 256 --num-gpus 4 -j 4 \
     --label-smoothing --no-wd --warmup-epochs 10 --use-rec \
     --save-dir params_shufflenas_fixarch1024 --logging-file shufflenas_fixarch1024.log
