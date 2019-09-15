@@ -341,7 +341,7 @@ def main():
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
-                block_choices = net.random_block_choices(select_predefined_block=True, dtype=opt.dtype)
+                block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
                 full_channel_mask, _ = net.random_channel_mask(select_all_channels=True, dtype=opt.dtype)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
@@ -357,7 +357,10 @@ def main():
         if isinstance(ctx, mx.Context):
             ctx = [ctx]
         if opt.resume_params is '':
-            net.initialize(mx.init.MSRAPrelu(), ctx=ctx)
+            if model_name == 'ShuffleNas':
+                net._initialize(ctx=ctx)
+            else:
+                net.initialize(mx.init.MSRAPrelu(), ctx=ctx)
 
         if opt.no_wd:
             for k, v in net.collect_params('.*beta|.*gamma|.*bias').items():
@@ -425,7 +428,7 @@ def main():
                         loss = [L(yhat, y.astype(opt.dtype, copy=False)) for yhat, y in zip(outputs, label)]
                 for l in loss:
                     l.backward()
-                trainer.step(batch_size)
+                trainer.step(batch_size, ignore_stale_grad=True)
 
                 if opt.mixup:
                     output_softmax = [nd.SoftmaxActivation(out.astype('float32', copy=False)) \
