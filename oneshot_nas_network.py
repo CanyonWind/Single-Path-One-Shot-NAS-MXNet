@@ -146,23 +146,23 @@ class ShuffleNasOneShot(HybridBlock):
                 channel_mask.append(local_mask)
         return nd.array(channel_mask).astype(dtype, copy=False), channel_choices
 
-    def _initialize(self, force_reinit=True):
+    def _initialize(self, force_reinit=True, ctx=mx.cpu()):
         for k, v in self.collect_params().items():
             if 'conv' in k:
                 if 'weight' in k:
                     if 'first' in k or 'output' in k:
-                        v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit)
+                        v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit, ctx=ctx)
                     else:
-                        v.initialize(mx.init.Normal(1.0 / v.shape[1]), force_reinit=force_reinit)
+                        v.initialize(mx.init.Normal(1.0 / v.shape[1]), force_reinit=force_reinit, ctx=ctx)
                 if 'bias' in k:
-                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit)
+                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit, ctx=ctx)
             elif 'batchnorm' in k:
                 if 'gamma' in k:
-                    v.initialize(mx.init.Constant(1), force_reinit=force_reinit)
+                    v.initialize(mx.init.Constant(1), force_reinit=force_reinit, ctx=ctx)
                 if 'beta' in k:
-                    v.initialize(mx.init.Constant(0.0001), force_reinit=force_reinit)
+                    v.initialize(mx.init.Constant(0.0001), force_reinit=force_reinit, ctx=ctx)
                 if 'running' in k:
-                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit)
+                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit, ctx=ctx)
 
     def hybrid_forward(self, F, x, full_arch, full_scale_mask, *args, **kwargs):
         x = self.features(x, full_arch, full_scale_mask)
