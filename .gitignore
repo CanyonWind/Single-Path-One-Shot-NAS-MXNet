@@ -3,7 +3,7 @@
 /.vscode/*
 /__pycache__/*
 /.idea/*
-/params_shufflenas_fixarch/*
+/*params*/*
 /imagenet/*
 /symbols/*
 /params/*
