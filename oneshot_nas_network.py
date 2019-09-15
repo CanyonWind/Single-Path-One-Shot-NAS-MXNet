@@ -1,3 +1,4 @@
+import mxnet as mx
 from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
@@ -44,7 +45,7 @@ class ShuffleNasOneShot(HybridBlock):
                 # first conv
                 self.features.add(
                     nn.Conv2D(first_conv_out_channel, in_channels=3, kernel_size=3, strides=2,
-                              padding=1, use_bias=False),
+                              padding=1, use_bias=False, prefix='first_conv_'),
                     nn.BatchNorm(momentum=0.1),
                     nn.Activation('relu')
                 )
@@ -87,7 +88,7 @@ class ShuffleNasOneShot(HybridBlock):
                 # last conv
                 self.features.add(
                     nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                              padding=0, use_bias=False),
+                              padding=0, use_bias=False, prefix='last_conv_'),
                     nn.BatchNorm(momentum=0.1),
                     nn.Activation('relu')
                 )
@@ -97,7 +98,7 @@ class ShuffleNasOneShot(HybridBlock):
             with self.output.name_scope():
                 self.output.add(
                     nn.Conv2D(n_class, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
-                              padding=0, use_bias=False),
+                              padding=0, use_bias=True),
                     nn.Flatten()
                 )
 
@@ -145,6 +146,24 @@ class ShuffleNasOneShot(HybridBlock):
                 channel_mask.append(local_mask)
         return nd.array(channel_mask).astype(dtype, copy=False), channel_choices
 
+    def _initialize(self, force_reinit=True):
+        for k, v in self.collect_params().items():
+            if 'conv' in k:
+                if 'weight' in k:
+                    if 'first' in k or 'output' in k:
+                        v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit)
+                    else:
+                        v.initialize(mx.init.Normal(1.0 / v.shape[1]), force_reinit=force_reinit)
+                if 'bias' in k:
+                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit)
+            elif 'batchnorm' in k:
+                if 'gamma' in k:
+                    v.initialize(mx.init.Constant(1), force_reinit=force_reinit)
+                if 'beta' in k:
+                    v.initialize(mx.init.Constant(0.0001), force_reinit=force_reinit)
+                if 'running' in k:
+                    v.initialize(mx.init.Constant(0), force_reinit=force_reinit)
+
     def hybrid_forward(self, F, x, full_arch, full_scale_mask, *args, **kwargs):
         x = self.features(x, full_arch, full_scale_mask)
         x = self.output(x)
@@ -184,7 +203,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None):
     return net
 
 
-FIX_ARCH = False
+FIX_ARCH = True
 
 
 def main():
@@ -194,16 +213,17 @@ def main():
         net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids)
     else:
         net = get_shufflenas_oneshot()
-    net.initialize()
+
+    """ Test customized initialization """
+    net._initialize(force_reinit=True)
     print(net)
 
     """ Test ShuffleNasOneShot """
     test_data = nd.ones([5, 3, 224, 224])
-    for step in range(10):
+    for step in range(1):
         if FIX_ARCH:
             test_outputs = net(test_data)
-            if step == 0:
-                net.summary(test_data)
+            net.summary(test_data)
             net.hybridize()
         else:
             block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
@@ -213,6 +233,7 @@ def main():
     if FIX_ARCH:
         if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
+        net(test_data)
         net.export("./symbols/ShuffleNas_fixArch", epoch=1)
     else:
         if not os.path.exists('./params'):
