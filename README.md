@@ -23,7 +23,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **TODO:** Train the official uniform selection supernet model on Imagenet
-- [ ] **TODO:** Build the evolution algorithm to search within the pretrained supernet model.
+- [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
     - [ ] update BN before calculate validation accuracy for each choice
     - [ ] Evolution algorithm 
