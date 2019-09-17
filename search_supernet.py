@@ -108,7 +108,7 @@ def get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
 def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
     # TODO: use a heapq here to store top-5 models
     train_data, val_data, batch_fn = get_data(num_gpus=num_gpus)
-    best_acc = 0
+    best_acc, best_acc_flop, best_acc_size = 0, 0, 0
     best_block_choices = None
     best_channel_choices = None
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
@@ -124,10 +124,7 @@ def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
         # Get validation accuracy
         val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
                                acc_top1=acc_top1, acc_top5=acc_top5, ctx=context)
-        if val_acc > best_acc:
-            best_acc = val_acc
-            best_block_choices = copy.deepcopy(block_choices)
-            best_channel_choices = copy.deepcopy(channel_choices)
+        
         # build fix_arch network and calculate flop
         fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
         fixarch_net.initialize()
@@ -138,15 +135,25 @@ def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
         fixarch_net(dummy_data)
         fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
         flops, model_size = get_flops()
+        if val_acc > best_acc:
+            best_acc = val_acc
+            best_acc_flop = flops
+            best_acc_size = model_size
+            best_block_choices = copy.deepcopy(block_choices.asnumpy())
+            best_channel_choices = copy.deepcopy(channel_choices)
         print('-' * 40)
-        print("Val accuracy: {}".format(val_acc))
-        print('flops: ', str(flops), ' MFLOPS')
-        print('model size: ', str(model_size), ' MB')
+        print("Val accuracy:      {}".format(val_acc))
+        print("Block choices:     {}".format(block_choices.asnumpy()))
+        print("Channel choices:   {}".format(channel_choices))
+        print('Flops:             {} MFLOPS'.format(flops))
+        print('Model size:        {} MB'.format(model_size))
     
     print('-' * 40)
-    print("Best val accuracy: {}".format(best_acc))
-    print("Best block choices: {}".format(best_block_choices.asnumpy()))
-    print("Best channel choices: {}".format(best_channel_choices))
+    print("Best val accuracy:    {}".format(best_acc))
+    print("Block choices:        {}".format(best_block_choices))
+    print("Channel choices:      {}".format(best_channel_choices))
+    print('Flops:                {} MFLOPS'.format(best_acc_flop))
+    print('Model size:           {} MB'.format(best_acc_size))
         
 
 def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params'):
