@@ -12,7 +12,7 @@ __all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot', 'ShuffleNasOneShotFix'
 
 
 class ShuffleNasOneShot(HybridBlock):
-    def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None):
+    def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None, use_all_blocks=False):
         """
         scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
         scale_candidate_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
@@ -24,6 +24,7 @@ class ShuffleNasOneShot(HybridBlock):
         self.stage_repeats = [4, 4, 8, 4]
         self.stage_out_channels = [64, 160, 320, 640]
         self.candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+        self.use_all_blocks = use_all_blocks
         first_conv_out_channel = 16
         last_conv_out_channel = 1024
 
@@ -80,7 +81,7 @@ class ShuffleNasOneShot(HybridBlock):
                         else:
                             block_id += 1
                             self.features.add(ShuffleNasBlock(input_channel, output_channel, stride=stride,
-                                                              max_channel_scale=self.candidate_scales[-1]))
+                                                              max_channel_scale=self.candidate_scales[-1], use_all_blocks=self.use_all_blocks))
                         # update input_channel for next block
                         input_channel = output_channel
                 assert block_id == sum(self.stage_repeats)
@@ -187,12 +188,14 @@ class ShuffleNasOneShotFix(ShuffleNasOneShot):
         return x
 
 
-def get_shufflenas_oneshot(architecture=None, scale_ids=None):
+def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=False):
     if architecture is None and scale_ids is None:
         # Nothing is specified, do random block selecting and channel selecting.
-        net = ShuffleNasOneShot()
+        net = ShuffleNasOneShot(use_all_blocks=use_all_blocks)
     elif architecture is not None and scale_ids is not None:
         # Create the specified structure
+        if use_all_blocks:
+            raise ValueError("For fixed structure, use_all_blocks should not be allowed.")
         scale_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         channel_scales = []
         for i in range(len(scale_ids)):
@@ -203,7 +206,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None):
     return net
 
 
-FIX_ARCH = True
+FIX_ARCH = False
 
 
 def main():
