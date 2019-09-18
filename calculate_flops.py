@@ -230,7 +230,7 @@ def get_flops(norelubn=True):
 
                     del shape_dict
 
-            if op == 'BatchNorm':
+            if op == 'BatchNorm' or op == 'NasBatchNorm':
                 internal_syms = sym.get_internals()
                 internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
