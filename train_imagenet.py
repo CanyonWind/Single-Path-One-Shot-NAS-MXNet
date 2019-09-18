@@ -107,7 +107,9 @@ def parse_args():
     parser.add_argument('--use-gn', action='store_true',
                         help='whether to use group norm.')
     parser.add_argument('--use-all-blocks', action='store_true',
-                        help='whether to use all the choice blocks.')         
+                        help='whether to use all the choice blocks.')
+    parser.add_argument('--use-all-channels', action='store_true',
+                        help='whether to use all the channels.')
     opt = parser.parse_args()
     return opt
 
@@ -344,7 +346,7 @@ def main():
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
                 block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                full_channel_mask, _ = net.random_channel_mask(select_all_channels=False, dtype=opt.dtype)
+                full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels, dtype=opt.dtype)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -418,7 +420,7 @@ def main():
                 with ag.record():
                     if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                        full_channel_mask, _ = net.random_channel_mask(select_all_channels=False, dtype=opt.dtype)
+                        full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels, dtype=opt.dtype)
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
