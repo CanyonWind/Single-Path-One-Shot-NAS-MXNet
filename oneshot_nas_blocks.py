@@ -227,23 +227,22 @@ class ShuffleNasBlock(HybridBlock):
                                                   3, stride, 'ShuffleXception')
 
     def hybrid_forward(self, F, x, block_choice, block_channel_mask, *args, **kwargs):
-        # TODO: ShuffleNasBlock will have three inputs
-        #       and pass two inputs to the ShuffleNetBlockII (the one for nas)
-        if block_choice == 0:
-            x = self.block_sn_3x3(x, block_channel_mask)
-        elif block_choice == 1:
-            x = self.block_sn_5x5(x, block_channel_mask)
-        elif block_choice == 2:
-            x = self.block_sn_7x7(x, block_channel_mask)
-        elif block_choice == 3:
-            x = self.block_sx_3x3(x, block_channel_mask)
-        
+        # ShuffleNasBlock has three inputs and passes two inputs to the ShuffleNetCSBlock (ShuffleNetBlock with channel selection)
         if self.use_all_blocks:
             temp1 = self.block_sn_3x3(x, block_channel_mask)
             temp2 = self.block_sn_5x5(x, block_channel_mask)
             temp3 = self.block_sn_7x7(x, block_channel_mask)
             temp4 = self.block_sx_3x3(x, block_channel_mask)
             x = temp1 + temp2 + temp3 + temp4
+        else:
+            if block_choice == 0:
+                x = self.block_sn_3x3(x, block_channel_mask)
+            elif block_choice == 1:
+                x = self.block_sn_5x5(x, block_channel_mask)
+            elif block_choice == 2:
+                x = self.block_sn_7x7(x, block_channel_mask)
+            elif block_choice == 3:
+                x = self.block_sx_3x3(x, block_channel_mask)
         return x
 
 
