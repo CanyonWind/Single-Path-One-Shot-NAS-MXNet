@@ -106,6 +106,8 @@ def parse_args():
                         help='name of training log file')
     parser.add_argument('--use-gn', action='store_true',
                         help='whether to use group norm.')
+    parser.add_argument('--use-all-blocks', action='store_true',
+                        help='whether to use all the choice blocks.')         
     opt = parser.parse_args()
     return opt
 
@@ -175,7 +177,7 @@ def main():
         scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
         net = get_shufflenas_oneshot(architecture, scale_ids)
     elif model_name == 'ShuffleNas':
-        net = get_shufflenas_oneshot()
+        net = get_shufflenas_oneshot(use_all_blocks=opt.use_all_blocks)
     else:
         net = get_model(model_name, **kwargs)
 
