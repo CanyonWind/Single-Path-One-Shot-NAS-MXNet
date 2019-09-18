@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 
-__all__ = ['ShuffleChannels', 'ShuffleNetBlock', 'ShuffleNetCSBlock', 'ShuffleNasBlock', 'NasHybridSequential']
+__all__ = [ 'ShuffleNetBlock', 'ShuffleNasBlock', 'NasBatchNorm', 'NasHybridSequential']
 
 
 class ShuffleChannels(HybridBlock):
@@ -55,7 +55,7 @@ class ChannelSelector(HybridBlock):
 
 class ShuffleNetBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', fix_arch=True, **kwargs):
+                 block_mode='ShuffleNetV2', fix_arch=True, bn=nn.BatchNorm, **kwargs):
         super(ShuffleNetBlock, self).__init__()
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
@@ -105,16 +105,16 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                 
                 self.main_branch.add(
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=self.stride, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_output_channel, momentum=0.1),
+                    bn(in_channels=self.main_output_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
             elif block_mode == 'ShuffleXception':
@@ -122,7 +122,7 @@ class ShuffleNetBlock(HybridBlock):
                     # dw with linear output
                     nn.Conv2D(self.main_input_channel, in_channels=self.main_input_channel, kernel_size=self.ksize,
                               strides=self.stride, padding=self.padding, groups=self.main_input_channel, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_input_channel, momentum=0.1),
+                    bn(in_channels=self.main_input_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_input_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False))
@@ -130,12 +130,12 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                     
                 self.main_branch.add(
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False))
@@ -143,16 +143,16 @@ class ShuffleNetBlock(HybridBlock):
                     self.main_branch.add(ChannelSelector(channel_number=self.main_mid_channel))
                     
                 self.main_branch.add(
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     nn.Activation('relu'),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_mid_channel, momentum=0.1),
+                    bn(in_channels=self.main_mid_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(in_channels=self.main_output_channel, momentum=0.1),
+                    bn(in_channels=self.main_output_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
             if self.stride == 2:
@@ -169,11 +169,11 @@ class ShuffleNetBlock(HybridBlock):
                     # dw with linear output
                     nn.Conv2D(self.project_channel, in_channels=self.project_channel, kernel_size=self.ksize,
                               strides=stride, padding=self.padding, groups=self.project_channel, use_bias=False),
-                    nn.BatchNorm(in_channels=self.project_channel, momentum=0.1),
+                    bn(in_channels=self.project_channel, momentum=0.1),
                     # pw
                     nn.Conv2D(self.project_channel, in_channels=self.project_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
-                    nn.BatchNorm(in_channels=self.project_channel, momentum=0.1),
+                    bn(in_channels=self.project_channel, momentum=0.1),
                     nn.Activation('relu')
                 )
 
@@ -193,8 +193,8 @@ class ShuffleNetCSBlock(ShuffleNetBlock):
     ShuffleNetBlock with Channel Selecting
     """
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', fix_arch=False, **kwargs):
-        super(ShuffleNetCSBlock, self).__init__(input_channel, output_channel, mid_channel, ksize, stride,
+                 block_mode='ShuffleNetV2', fix_arch=False,  bn=nn.BatchNorm, **kwargs):
+        super(ShuffleNetCSBlock, self).__init__(input_channel, output_channel, mid_channel, ksize, stride, bn=bn,
                  block_mode=block_mode, fix_arch=fix_arch, **kwargs)
 
     def hybrid_forward(self, F, old_x, channel_choice, *args, **kwargs):
@@ -208,7 +208,8 @@ class ShuffleNetCSBlock(ShuffleNetBlock):
 
 
 class ShuffleNasBlock(HybridBlock):
-    def __init__(self, input_channel, output_channel, stride, max_channel_scale=2.0, use_all_blocks=False, **kwargs):
+    def __init__(self, input_channel, output_channel, stride, max_channel_scale=2.0, 
+                 use_all_blocks=False, bn=nn.BatchNorm, **kwargs):
         super(ShuffleNasBlock, self).__init__()
         assert stride in [1, 2]
         self.use_all_blocks = use_all_blocks
@@ -218,13 +219,13 @@ class ShuffleNasBlock(HybridBlock):
             """
             max_mid_channel = int(output_channel // 2 * max_channel_scale)
             self.block_sn_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleNetV2')
+                                                  3, stride, 'ShuffleNetV2', bn=bn)
             self.block_sn_5x5 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  5, stride, 'ShuffleNetV2')
+                                                  5, stride, 'ShuffleNetV2', bn=bn)
             self.block_sn_7x7 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  7, stride, 'ShuffleNetV2')
+                                                  7, stride, 'ShuffleNetV2', bn=bn)
             self.block_sx_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleXception')
+                                                  3, stride, 'ShuffleXception', bn=bn)
 
     def hybrid_forward(self, F, x, block_choice, block_channel_mask, *args, **kwargs):
         # ShuffleNasBlock has three inputs and passes two inputs to the ShuffleNetCSBlock (ShuffleNetBlock with channel selection)
@@ -283,12 +284,12 @@ class NasHybridSequential(nn.HybridSequential):
         return x
 
 
-class BatchNorm(HybridBlock):
+class NasBatchNorm(HybridBlock):
     def __init__(self, axis=1, momentum=0.9, epsilon=1e-5, center=True, scale=True,
                  use_global_stats=False, beta_initializer='zeros', gamma_initializer='ones',
                  running_mean_initializer='zeros', running_variance_initializer='ones',
                  in_channels=0, inference_update_stat=False, **kwargs):
-        super(BatchNorm, self).__init__(**kwargs)
+        super(NasBatchNorm, self).__init__(**kwargs)
         self._kwargs = {'axis': axis, 'eps': epsilon, 'momentum': momentum,
                         'fix_gamma': not scale, 'use_global_stats': use_global_stats}
         self.inference_update_stat = inference_update_stat
@@ -317,7 +318,7 @@ class BatchNorm(HybridBlock):
     def cast(self, dtype):
         if np.dtype(dtype).name == 'float16':
             dtype = 'float32'
-        super(BatchNorm, self).cast(dtype)
+        super(NasBatchNorm, self).cast(dtype)
 
     def hybrid_forward(self, F, x, gamma, beta, running_mean, running_var):
         if self.inference_update_stat:
@@ -463,7 +464,7 @@ def main():
                 not_selected_channels_grad_is_zero = not_selected_channels_grad_is_zero and \
                                                     len(unique_grad) == 1 and unique_grad[0] == 0
     print("Not selected channels grads are zero: {}".format(not_selected_channels_grad_is_zero))
-    print("Finished testing ShuffleNetCSBlock")
+    print("Finished testing ShuffleNetCSBlock\n")
 
     """ Test ShuffleChannels """
     channel_shuffle = ShuffleChannels(mid_channel=4, groups=2)
@@ -473,7 +474,7 @@ def main():
     print(s)
     print(s_project)
     print(s_main)
-    print("Finished testing")
+    print("Finished testing ShuffleChannels\n")
 
     """ Test ShuffleBlock with "ShuffleNetV2" mode """
     tensor = nd.ones([1, 4, 14, 14])
@@ -490,7 +491,7 @@ def main():
     print(temp1.shape)
     # print(block0)
     # print(block1)
-    print("Finished testing ShuffleNetV2 mode")
+    print("Finished testing ShuffleNetV2 mode\n")
 
     """ Test ShuffleBlock with "ShuffleXception" mode """
     tensor = nd.ones([1, 4, 14, 14])
@@ -507,7 +508,7 @@ def main():
     print(tempx1.shape)
     # print(blockx0)
     # print(blockx1)
-    print("Finished testing ShuffleXception mode")
+    print("Finished testing ShuffleXception mode\n")
 
     """ Test ChannelSelection """
     block_final_output_channel = 8
@@ -523,20 +524,21 @@ def main():
         local_channel_mask = nd.slice(global_channel_mask, begin=(i, None), end=(i + 1, None))
         selected_tensor = channel_selector(tensor, local_channel_mask)
         print(selected_tensor.shape)
-    print("Finished testing ChannelSelector.")
+    print("Finished testing ChannelSelector\n")
 
     """ Test BN with inference statistic update """
-    bn = BatchNorm(inference_update_stat=True, in_channels=4)
+    bn = NasBatchNorm(inference_update_stat=True, in_channels=4)
     bn.initialize()
     bn.running_mean.set_data(bn.running_mean.data() + 1)
-    mean, var = 0, 1
+    mean, std = 5, 2
     for i in range(100):
-        dummy = nd.random.normal(mean, var, shape=(10, 4, 5, 5))
+        dummy = nd.random.normal(mean, std, shape=(10, 4, 5, 5))
         rst = bn(dummy)
         # print(dummy)
         # print(rst)
     print("Defined mean: {}, running mean: {}".format(mean, bn.running_mean.data()))
-    print("Defined var: {}, running var: {}".format(var, bn.running_var.data()))
+    print("Defined std: {}, running var: {}".format(std, bn.running_var.data()))
+    print("Finished testing NasBatchNorm\n")
 
 if __name__ == '__main__':
     main()
