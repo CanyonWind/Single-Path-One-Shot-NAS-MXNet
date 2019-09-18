@@ -28,7 +28,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
     - [x] Build random search
     - [ ] update BN before calculating the validation accuracy for each choice
         - [x] Build and do unit test on the customized BN for updating moving mean & variance during inference
-        - [ ] Replace nn.batchnorm with the customized BN
+        - [x] Replace nn.batchnorm with the customized BN
     - [ ] Evolution algorithm 
     - [ ] Evolution algorithm with flop / # parameters constraint(s)
 
