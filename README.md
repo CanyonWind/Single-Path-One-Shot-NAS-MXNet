@@ -23,9 +23,12 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **TODO:** Train the official uniform selection supernet model on Imagenet
+    - [x] Seems like training with random block & channel selection from scratch is hard to converge, add --use-all-blocks and --use-all-channels options for the supernet training.
 - [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
-    - [ ] update BN before calculate validation accuracy for each choice
+    - [ ] update BN before calculating the validation accuracy for each choice
+        - [x] Build and do unit test on the customized BN for updating moving mean & variance during inference
+        - [ ] Replace nn.batchnorm with the customized BN
     - [ ] Evolution algorithm 
     - [ ] Evolution algorithm with flop / # parameters constraint(s)
 
