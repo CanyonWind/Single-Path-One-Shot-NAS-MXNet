@@ -322,12 +322,39 @@ class BatchNorm(HybridBlock):
 
     def hybrid_forward(self, F, x, gamma, beta, running_mean, running_var):
         if self.inference_update_stat:
-            # TODO: update running_mean and running_var here
-            return F.BatchNorm(x, gamma, beta, running_mean, running_var,
-                           name='fwd', **self._kwargs)
+             # TODO: for multi gpu, generate ndarray.array and do multiplication
+            mean = x.mean(axis=(0, 2, 3))
+            mean_expanded = F.expand_dims(F.expand_dims(F.expand_dims(mean, axis=0), axis=2), axis=3)
+            var = F.square(F.broadcast_minus(x, mean_expanded)).mean(axis=(0, 2, 3))
+
+            # TODO: remove debug codes
+            # print("Passed running_mean: {}, raw running_mean: {}".format(running_mean, self.running_mean.data()))
+            # print("Passed running_var: {}, raw running_var: {}".format(running_var, self.running_var.data()))
+            # print("Passed gamme: {}, beta: {}".format(gamma, beta))
+            # var_expanded = F.expand_dims(F.expand_dims(F.expand_dims(var, axis=0), axis=2), axis=3)
+
+            # normalized_x = (x - mean_expanded) / F.sqrt(var_expanded)
+            # print("Calculated mean: {}".format(mean))
+            # print("Calculated var: {}".format(var))
+            # print("Normalized x: {}".format(normalized_x))
+
+            # rst = (x - mean_expanded) / F.sqrt(var_expanded) * \
+            #       F.expand_dims(F.expand_dims(F.expand_dims(gamma, axis=0), axis=2), axis=3) + \
+            #       F.expand_dims(F.expand_dims(F.expand_dims(beta, axis=0), axis=2), axis=3)
+            # print("Target rst: {}".format(rst))
+
+            # update running mean and var
+            momentum = F.array([self._kwargs['momentum']])
+            momentum_rest = F.array([1 - self._kwargs['momentum']])
+            running_mean = F.add(F.multiply(self.running_mean.data(), momentum),
+                                 F.multiply(mean, momentum_rest))
+            running_var = F.add(F.multiply(self.running_var.data(), momentum),
+                                F.multiply(var, momentum_rest))
+            self.running_mean.set_data(running_mean)
+            self.running_var.set_data(running_var)
+            return F.BatchNorm(x, gamma, beta, mean, var, name='fwd', **self._kwargs)
         else:
-            return F.BatchNorm(x, gamma, beta, running_mean, running_var,
-                           name='fwd', **self._kwargs)
+            return F.BatchNorm(x, gamma, beta, running_mean, running_var, name='fwd', **self._kwargs)
 
     def __repr__(self):
         s = '{name}({content}'
@@ -498,6 +525,19 @@ def main():
         selected_tensor = channel_selector(tensor, local_channel_mask)
         print(selected_tensor.shape)
     print("Finished testing ChannelSelector.")
+
+    """ Test BN with inference statistic update """
+    bn = BatchNorm(inference_update_stat=True, in_channels=4)
+    bn.initialize()
+    bn.running_mean.set_data(bn.running_mean.data() + 1)
+    mean, var = 0, 1
+    for i in range(100):
+        dummy = nd.random.normal(mean, var, shape=(10, 4, 5, 5))
+        rst = bn(dummy)
+        # print(dummy)
+        # print(rst)
+    print("Defined mean: {}, running mean: {}".format(mean, bn.running_mean.data()))
+    print("Defined var: {}, running var: {}".format(var, bn.running_var.data()))
 
 if __name__ == '__main__':
     main()
