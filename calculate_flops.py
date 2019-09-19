@@ -44,7 +44,7 @@ def get_internal_label_info(internal_sym, label_shapes):
     return None, None
 
 
-def get_flops(norelubn=True):
+def get_flops(norelubn=True, size_in_mb=False):
     args = parse_args()
     args.norelubn = norelubn
     # print(args)
@@ -245,16 +245,17 @@ def get_flops(norelubn=True):
                 _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
                 out_shape = out_shapes[0]
                 total_flops += product(out_shape) * 3  # mean, variance, (blob - mean) / variance * beta + gamma
-            
 
     model_size = 0.0
     if label_names == None:
         label_names = list()
     for k, v in arg_params.items():
         if k not in data_names and k not in label_names:
-            model_size += product(v.shape) * np.dtype(v.dtype()).itemsize
-
-    return total_flops / 1000000, model_size / 1024 / 1024
+            if size_in_mb:
+                model_size += product(v.shape) * np.dtype(v.dtype()).itemsize / 1024 / 1024  # model size in MB
+            else:
+                model_size += product(v.shape) / 1000000  # number of parameters (Million)
+    return total_flops / 1000000, model_size
 
 
 if __name__ == '__main__':
