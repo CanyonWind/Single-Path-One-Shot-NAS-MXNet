@@ -1,6 +1,6 @@
 # [One-Shot NAS](https://arxiv.org/abs/1904.00420)
 This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
-[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series). It supports both pre-defined fixed structure model and the supernet model with block selection and channel selection.
+[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). It supports both pre-defined fixed structure model and the supernet model with block selection and channel selection.
 
 ## Prerequisites
 Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset)
