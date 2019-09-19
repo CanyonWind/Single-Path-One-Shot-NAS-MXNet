@@ -110,6 +110,8 @@ def parse_args():
                         help='whether to use all the choice blocks.')
     parser.add_argument('--use-all-channels', action='store_true',
                         help='whether to use all the channels.')
+    parser.add_argument('--epoch-start-cs', type=int, default=224,
+                        help='Epoch id for starting Channel selection.')
     opt = parser.parse_args()
     return opt
 
@@ -135,6 +137,10 @@ def main():
     batch_size *= max(1, num_gpus)
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     num_workers = opt.num_workers
+
+    # epoch_start_cs controls that before this epoch, use all channels, while, after this epoch, use channel selection.
+    if opt.epoch_start_cs != -1:
+        opt.use_all_channels = True
 
     lr_decay = opt.lr_decay
     lr_decay_period = opt.lr_decay_period
@@ -388,6 +394,8 @@ def main():
         best_val_score = 1
 
         for epoch in range(opt.resume_epoch, opt.num_epochs):
+            if epoch == opt.epoch_start_cs:
+                opt.use_all_channels = False
             tic = time.time()
             if opt.use_rec:
                 train_data.reset()
@@ -478,6 +486,7 @@ def main():
         if distillation:
             teacher.hybridize(static_alloc=True, static_shape=True)
     train(context)
+
 
 if __name__ == '__main__':
     main()
