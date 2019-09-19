@@ -204,7 +204,8 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
             channel_scales.append(scale_list[scale_ids[i]])
         net = ShuffleNasOneShotFix(architecture=architecture, channel_scales=channel_scales)
     else:
-        raise ValueError("architecture and scale_ids should both be None for supernet or both not None for fixed structure model.")
+        raise ValueError("architecture and scale_ids should both be None for supernet "
+                         "or both not None for fixed structure model.")
     return net
 
 
