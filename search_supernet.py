@@ -1,15 +1,14 @@
 import mxnet as mx
 from mxnet import gluon
-from mxnet.gluon import nn
-from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
 import os
 import copy
 import math
+from gluoncv.model_zoo import get_model
 
-import random
 from oneshot_nas_network import get_shufflenas_oneshot
 from calculate_flops import get_flops
+from oneshot_nas_blocks import NasBatchNorm
 
 
 def update_bn(net):
@@ -105,25 +104,54 @@ def get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
     return top1
 
 
-def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
+def set_nas_bn(net, inference_update_stat=False):
+    if isinstance(net, NasBatchNorm):
+        net.inference_update_stat = inference_update_stat
+    elif len(net._children) != 0:
+        for k, v in net._children.items():
+            set_nas_bn(v,inference_update_stat=inference_update_stat)
+    else:
+        return
+
+
+def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
+              ctx=mx.cpu(), dtype='float32', batch_size=256, update_bn_images=20000):
+    print("Updating BN statistics...")
+    set_nas_bn(net, inference_update_stat=True)
+    for i, batch in enumerate(train_data):
+        if (i + 1) * batch_size >= update_bn_images:
+            break
+        data, _ = batch_fn(batch, ctx)
+        _ = [net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
+    set_nas_bn(net, inference_update_stat=False)
+
+
+def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, dtype='float32', batch_size=256,
+                    flops_constraint=585, parameter_number_constraint=6.9):
+    """
+    Search within the pre-trained supernet.
+    :param net:
+    :param search_iters:
+    :param update_bn_images:
+    :param num_gpus:
+    :param dtype:
+    :param batch_size:
+    :param flops_constraint: MobileNetV3-Large-1.0 [219M], MicroNet Challenge standard MobileNetV2-1.4 [585M]
+    :param parameter_number_constraint: MobileNetV3-Large-1.0 [5.4M], MicroNet Challenge standard MobileNetV2-1.4 [6.9M]
+    :return:
+    """
     # TODO: use a heapq here to store top-5 models
-    train_data, val_data, batch_fn = get_data(num_gpus=num_gpus)
+    train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
     best_acc, best_acc_flop, best_acc_size = 0, 0, 0
     best_block_choices = None
     best_channel_choices = None
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     acc_top1 = mx.metric.Accuracy()
     acc_top5 = mx.metric.TopKAccuracy(5)
-    for _ in range(search_iters):
-        block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
-        full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False, dtype='float32')
-        # Update BN
-        # for _ in range(bn_iters):
-        #     data, _ = generate_random_data_label()
-        #     net(data, block_choices, full_channel_mask)
-        # Get validation accuracy
-        val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
-                               acc_top1=acc_top1, acc_top5=acc_top5, ctx=context)
+    for i in range(search_iters):
+        print("\nSearching iter: {}".format(i))
+        block_choices = net.random_block_choices(select_predefined_block=False, dtype=dtype)
+        full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False, dtype=dtype)
         
         # build fix_arch network and calculate flop
         fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
@@ -134,7 +162,23 @@ def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
         dummy_data = nd.ones([1, 3, 224, 224])
         fixarch_net(dummy_data)
         fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
-        flops, model_size = get_flops()
+        flops, model_size = get_flops()  # both in Millions
+        normalized_score = flops / flops_constraint + model_size / parameter_number_constraint
+        if normalized_score >= 1:
+            print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
+            print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+            print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+            print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+            print('[SKIPPED] # parameters:      {} M'.format(model_size))
+            continue
+
+        # Update BN
+        update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=context, dtype=dtype,
+                  batch_size=batch_size, update_bn_images=update_bn_images)
+        print("BN statistics updated.")
+        # Get validation accuracy
+        val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
+                               acc_top1=acc_top1, acc_top5=acc_top5, ctx=context)
         if val_acc > best_acc:
             best_acc = val_acc
             best_acc_flop = flops
@@ -142,28 +186,33 @@ def search_supernet(net, search_iters=2000, bn_iters=50000, num_gpus=0):
             best_block_choices = copy.deepcopy(block_choices.asnumpy())
             best_channel_choices = copy.deepcopy(channel_choices)
         print('-' * 40)
+        print("Current model normalized score: {}.".format(normalized_score))
         print("Val accuracy:      {}".format(val_acc))
         print("Block choices:     {}".format(block_choices.asnumpy()))
         print("Channel choices:   {}".format(channel_choices))
         print('Flops:             {} MFLOPS'.format(flops))
-        print('Model size:        {} MB'.format(model_size))
+        print('# parameters:      {} M'.format(model_size))
     
     print('-' * 40)
+    print("Current model normalized score: {}.".
+          format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
     print("Best val accuracy:    {}".format(best_acc))
     print("Block choices:        {}".format(best_block_choices))
     print("Channel choices:      {}".format(best_channel_choices))
     print('Flops:                {} MFLOPS'.format(best_acc_flop))
-    print('Model size:           {} MB'.format(best_acc_size))
-        
+    print('# parameters:         {} M'.format(best_acc_size))
 
-def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params'):
+
+def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params',
+         dtype='float32', batch_size=256):
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot()
     net.load_parameters(supernet_params, ctx=context)
     print(net)
-    search_supernet(net, search_iters=10, bn_iters=1, num_gpus=num_gpus)
+    search_supernet(net, search_iters=2000, num_gpus=num_gpus, dtype=dtype,
+                    batch_size=batch_size, update_bn_images=20000)
 
 
 if __name__ == '__main__':
-    main(2)
+    main(1)
 
