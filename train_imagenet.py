@@ -70,8 +70,8 @@ def parse_args():
                         help='Crop ratio during validation. default is 0.875')
     parser.add_argument('--use-pretrained', action='store_true',
                         help='enable using pretrained model from gluon.')
-    parser.add_argument('--use_se', action='store_true',
-                        help='use SE layers or not in resnext. default is false.')
+    parser.add_argument('--use-se', action='store_true',
+                        help='use SE layers or not in resnext and ShuffleNas. default is false.')
     parser.add_argument('--mixup', action='store_true',
                         help='whether train the model with mix-up. default is false.')
     parser.add_argument('--mixup-alpha', type=float, default=0.2,
@@ -112,6 +112,9 @@ def parse_args():
                         help='whether to use all the channels.')
     parser.add_argument('--epoch-start-cs', type=int, default=224,
                         help='Epoch id for starting Channel selection.')
+    parser.add_argument('--last-conv-after-pooling', action='store_true',
+                        help='Whether to follow MobileNet V3 last conv after pooling style.')
+
     opt = parser.parse_args()
     return opt
 
@@ -183,9 +186,11 @@ def main():
     if model_name == 'ShuffleNas_fixArch':
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-        net = get_shufflenas_oneshot(architecture, scale_ids)
+        net = get_shufflenas_oneshot(architecture, scale_ids, use_se=opt.use_se,
+                                     last_conv_after_pooling=opt.last_conv_after_pooling)
     elif model_name == 'ShuffleNas':
-        net = get_shufflenas_oneshot(use_all_blocks=opt.use_all_blocks)
+        net = get_shufflenas_oneshot(use_all_blocks=opt.use_all_blocks, use_se=opt.use_se,
+                                     last_conv_after_pooling=opt.last_conv_after_pooling)
     else:
         net = get_model(model_name, **kwargs)
 
