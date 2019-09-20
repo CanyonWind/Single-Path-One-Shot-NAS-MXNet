@@ -113,7 +113,7 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='last_conv_'),
+                                  padding=0, use_bias=False, prefix='fc_'),
                         # No bn for the conv after pooling
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
@@ -122,13 +122,13 @@ class ShuffleNasOneShot(HybridBlock):
                         # ShuffleNetV2+ approach
                         self.features.add(
                             nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                      padding=0, use_bias=False, prefix='last_conv0_'),
+                                      padding=0, use_bias=False, prefix='last_conv_'),
                             bn(momentum=0.1),
                             Activation('hard_swish' if self.use_se else 'relu'),
                             nn.GlobalAvgPool2D(),
                             SE(last_conv_out_channel),
                             nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
-                                      padding=0, use_bias=False, prefix='last_conv1_'),
+                                      padding=0, use_bias=False, prefix='fc_'),
                             # No bn for the conv after pooling
                             Activation('hard_swish' if self.use_se else 'relu')
                         )
@@ -202,7 +202,7 @@ class ShuffleNasOneShot(HybridBlock):
         for k, v in self.collect_params().items():
             if 'conv' in k:
                 if 'weight' in k:
-                    if 'first' in k or 'output' in k or 'squeeze' in k or 'excitation' in k:
+                    if 'first' in k or 'output' in k or 'fc' in k or 'squeeze' in k or 'excitation' in k:
                         v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit, ctx=ctx)
                     else:
                         v.initialize(mx.init.Normal(1.0 / v.shape[1]), force_reinit=force_reinit, ctx=ctx)
