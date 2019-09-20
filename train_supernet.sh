@@ -8,4 +8,4 @@ python train_imagenet.py \
     --num-epochs 120 --batch-size 128 --num-gpus 4 -j 4 \
     --label-smoothing --no-wd --warmup-epochs 10 --use-rec \
     --save-dir params_shufflenas_supernet --logging-file shufflenas_supernet.log --epoch-start-cs 60 \
-    --use-se --last-conv-after-pooling
+    --use-se --last-conv-after-pooling --cs-warm-up
