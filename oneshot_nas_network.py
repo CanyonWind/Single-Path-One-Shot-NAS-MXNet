@@ -3,6 +3,7 @@ from mxnet.gluon import nn
 from mxnet.gluon.nn import HybridBlock
 from mxnet import nd
 import os
+from sys import maxsize
 
 import random
 from oneshot_nas_blocks import NasHybridSequential, ShuffleNetBlock, ShuffleNasBlock, NasBatchNorm, Activation, SE
@@ -145,7 +146,7 @@ class ShuffleNasOneShot(HybridBlock):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
         return nd.array(block_choices).astype(dtype, copy=False)
 
-    def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse'):
+    def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse', epoch_after_cs=maxsize):
         """
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         mode: str, "dense" or "sparse". Sparse mode select # channel from candidate scales. Dense mode selects
@@ -170,7 +171,9 @@ class ShuffleNasOneShot(HybridBlock):
                         # In dense mode, channel_choices is # channel
                         channel_choices.append(random_select_channel)
                     elif mode == 'sparse':
-                        channel_choice = random.randint(0, len(self.candidate_scales) - 1)
+                        # this is for channel selection warm up: channel choice ~ (8, 9) -> (7, 9) -> ... -> (0, 9)
+                        channel_choice = random.randint(max(0, len(self.candidate_scales) - epoch_after_cs - 2),
+                                                        len(self.candidate_scales) - 1)
                         random_select_channel = int(self.stage_out_channels[i] // 2 * self.candidate_scales[channel_choice])
                         # In sparse mode, channel_choices is the indices of candidate_scales
                         channel_choices.append(channel_choice)
@@ -246,9 +249,9 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = False
+FIX_ARCH = True
 USE_SE = True
-LAST_CONV_AFTER_POOLING = False
+LAST_CONV_AFTER_POOLING = True
 
 
 def main():
