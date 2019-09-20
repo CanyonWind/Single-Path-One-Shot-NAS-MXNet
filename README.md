@@ -7,7 +7,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 
 ## Comparison to the official release 
 - Support both fixed-structure model and supernet uniform selection model.
-- SE is available for both fixed-arch model and supernet model.
+- SE is available for both fixed-structure and supernet models.
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
 - A full functioning FLOP calculator is provided.
