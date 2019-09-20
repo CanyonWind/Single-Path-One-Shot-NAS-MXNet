@@ -13,6 +13,30 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - A full functioning FLOP calculator is provided.
 - A naive random search with BN statistics update and FLOP & # parameters constraint is provided.
  
+ 
+## Usage
+**Training stage**
+
+Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
+to do the training. A slightly modified version is included in this repo.
+
+```shell
+# For fixed-structure model
+sh ./train_fixarch.sh
+
+# For supernet model
+sh ./train_supernet.sh
+```
+
+**Searching stage**
+
+```shell
+# Save a toy model of supernet model param, or put a well-trained supernet model under ./params/ folder and skip this step
+python oneshot_nas_network.py
+
+# do random search
+python search_supernet.py
+```
 
 
 ## Roadmap
@@ -38,30 +62,6 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
     - [ ] Evolution algorithm 
     - [ ] Evolution algorithm with flop / # parameters constraint(s)
 
-
-## Usage
-**Training stage**
-
-Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
-to do the training. A slightly modified version is included in this repo.
-
-```shell
-# For fixed-structure model
-sh ./train_fixarch.sh
-
-# For supernet model
-sh ./train_supernet.sh
-```
-
-**Searching stage**
-
-```shell
-# Save a toy model of supernet model param, or put a well-trained supernet model under ./params/ folder and skip this step
-python oneshot_nas_network.py
-
-# do random search
-python search_supernet.py
-```
 
 ## Results
 
