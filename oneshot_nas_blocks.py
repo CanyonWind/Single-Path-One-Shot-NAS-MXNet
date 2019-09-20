@@ -5,7 +5,84 @@ import random
 import numpy as np
 
 
-__all__ = [ 'ShuffleNetBlock', 'ShuffleNasBlock', 'NasBatchNorm', 'NasHybridSequential']
+__all__ = ['ShuffleNetBlock', 'ShuffleNasBlock', 'Activation', 'SE', 'NasBatchNorm', 'NasHybridSequential']
+
+
+class Activation(HybridBlock):
+    """Activation function used in MobileNetV3"""
+    def __init__(self, act_func, **kwargs):
+        super(Activation, self).__init__(**kwargs)
+        if act_func == "relu":
+            self.act = nn.Activation('relu')
+        elif act_func == "relu6":
+            self.act = ReLU6()
+        elif act_func == "hard_sigmoid":
+            self.act = HardSigmoid()
+        elif act_func == "swish":
+            self.act = nn.Swish()
+        elif act_func == "hard_swish":
+            self.act = HardSwish()
+        elif act_func == "leaky":
+            self.act = nn.LeakyReLU(alpha=0.375)
+        else:
+            raise NotImplementedError
+
+    def hybrid_forward(self, F, x):
+        return self.act(x)
+
+
+class ReLU6(HybridBlock):
+    def __init__(self, **kwargs):
+        super(ReLU6, self).__init__(**kwargs)
+
+    def hybrid_forward(self, F, x):
+        return F.clip(x, 0, 6, name="relu6")
+
+
+class HardSigmoid(HybridBlock):
+    def __init__(self, **kwargs):
+        super(HardSigmoid, self).__init__(**kwargs)
+        self.act = ReLU6()
+
+    def hybrid_forward(self, F, x):
+        return F.clip(x + 3, 0, 6, name="hard_sigmoid") / 6.
+
+
+class HardSwish(HybridBlock):
+    def __init__(self, **kwargs):
+        super(HardSwish, self).__init__(**kwargs)
+        self.act = HardSigmoid()
+
+    def hybrid_forward(self, F, x):
+        return x * (F.clip(x + 3, 0, 6, name="hard_swish") / 6.)
+
+
+class SE(HybridBlock):
+    def __init__(self, num_in, ratio=4,
+                 act_func=("relu", "hard_sigmoid"), use_bn=False, **kwargs):
+        super(SE, self).__init__(**kwargs)
+
+        def make_divisible(x, divisible_by=8):
+            # make the mid channel to be divisible to 8 can increase the cache hitting ratio
+            return int(np.ceil(x * 1. / divisible_by) * divisible_by)
+
+        self.use_bn = use_bn
+        num_out = num_in
+        num_mid = make_divisible(num_out // ratio)
+
+        with self.name_scope():
+            self.channel_attention = nn.HybridSequential()
+            self.channel_attention.add(nn.GlobalAvgPool2D(),
+                                       nn.Conv2D(channels=num_mid, in_channels=num_in, kernel_size=1, use_bias=True,
+                                                 prefix='conv_squeeze_'),
+                                       Activation(act_func[0]),
+                                       nn.Conv2D(channels=num_out, in_channels=num_mid, kernel_size=1, use_bias=True,
+                                                 prefix='conv_excitation_'),
+                                       Activation(act_func[1]))
+
+    def hybrid_forward(self, F, x):
+        out = self.channel_attention(x)
+        return F.broadcast_mul(x, out)
 
 
 class ShuffleChannels(HybridBlock):
@@ -46,7 +123,6 @@ class ChannelSelector(HybridBlock):
         self.channel_number = channel_number
 
     def hybrid_forward(self, F, x, block_channel_mask, *args, **kwargs):
-        # TODO: fixed arch channel size is not 'max_channel' anymore. Dynamically slice the [all one mask]
         block_channel_mask = F.slice(block_channel_mask, begin=(None, None), end=(None, self.channel_number))
         block_channel_mask = F.reshape(block_channel_mask, shape=(1, self.channel_number, 1, 1))
         x = F.broadcast_mul(x, block_channel_mask.as_in_context(x.context))
@@ -55,7 +131,7 @@ class ChannelSelector(HybridBlock):
 
 class ShuffleNetBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', fix_arch=True, bn=nn.BatchNorm, **kwargs):
+                 block_mode='ShuffleNetV2', fix_arch=True, bn=nn.BatchNorm, act_name='relu', use_se=False, **kwargs):
         super(ShuffleNetBlock, self).__init__()
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
@@ -106,7 +182,7 @@ class ShuffleNetBlock(HybridBlock):
                 
                 self.main_branch.add(
                     bn(in_channels=self.main_mid_channel, momentum=0.1),
-                    nn.Activation('relu'),
+                    Activation(act_name),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=self.stride, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
@@ -115,7 +191,7 @@ class ShuffleNetBlock(HybridBlock):
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
                     bn(in_channels=self.main_output_channel, momentum=0.1),
-                    nn.Activation('relu')
+                    Activation(act_name)
                 )
             elif block_mode == 'ShuffleXception':
                 self.main_branch.add(
@@ -131,7 +207,7 @@ class ShuffleNetBlock(HybridBlock):
                     
                 self.main_branch.add(
                     bn(in_channels=self.main_mid_channel, momentum=0.1),
-                    nn.Activation('relu'),
+                    Activation(act_name),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
@@ -144,7 +220,7 @@ class ShuffleNetBlock(HybridBlock):
                     
                 self.main_branch.add(
                     bn(in_channels=self.main_mid_channel, momentum=0.1),
-                    nn.Activation('relu'),
+                    Activation(act_name),
                     # dw with linear output
                     nn.Conv2D(self.main_mid_channel, in_channels=self.main_mid_channel, kernel_size=self.ksize,
                               strides=1, padding=self.padding, groups=self.main_mid_channel, use_bias=False),
@@ -153,8 +229,10 @@ class ShuffleNetBlock(HybridBlock):
                     nn.Conv2D(self.main_output_channel, in_channels=self.main_mid_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
                     bn(in_channels=self.main_output_channel, momentum=0.1),
-                    nn.Activation('relu')
+                    Activation(act_name)
                 )
+            if use_se:
+                self.main_branch.add(SE(self.main_output_channel))
             if self.stride == 2:
                 """
                 Down-sample block:
@@ -174,7 +252,7 @@ class ShuffleNetBlock(HybridBlock):
                     nn.Conv2D(self.project_channel, in_channels=self.project_channel, kernel_size=1, strides=1,
                               padding=0, use_bias=False),
                     bn(in_channels=self.project_channel, momentum=0.1),
-                    nn.Activation('relu')
+                    Activation(act_name)
                 )
 
     def hybrid_forward(self, F, old_x, *args, **kwargs):
@@ -193,9 +271,10 @@ class ShuffleNetCSBlock(ShuffleNetBlock):
     ShuffleNetBlock with Channel Selecting
     """
     def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
-                 block_mode='ShuffleNetV2', fix_arch=False,  bn=nn.BatchNorm, **kwargs):
-        super(ShuffleNetCSBlock, self).__init__(input_channel, output_channel, mid_channel, ksize, stride, bn=bn,
-                 block_mode=block_mode, fix_arch=fix_arch, **kwargs)
+                 block_mode='ShuffleNetV2', fix_arch=False,  bn=nn.BatchNorm, act_name='relu', use_se=False, **kwargs):
+        super(ShuffleNetCSBlock, self).__init__(input_channel, output_channel, mid_channel, ksize, stride,
+                                                block_mode=block_mode, fix_arch=fix_arch, bn=bn,
+                                                act_name=act_name, use_se=use_se, **kwargs)
 
     def hybrid_forward(self, F, old_x, channel_choice, *args, **kwargs):
         if self.stride == 2:
@@ -209,7 +288,7 @@ class ShuffleNetCSBlock(ShuffleNetBlock):
 
 class ShuffleNasBlock(HybridBlock):
     def __init__(self, input_channel, output_channel, stride, max_channel_scale=2.0, 
-                 use_all_blocks=False, bn=nn.BatchNorm, **kwargs):
+                 use_all_blocks=False, bn=nn.BatchNorm, act_name='relu', use_se=False, **kwargs):
         super(ShuffleNasBlock, self).__init__()
         assert stride in [1, 2]
         self.use_all_blocks = use_all_blocks
@@ -219,16 +298,16 @@ class ShuffleNasBlock(HybridBlock):
             """
             max_mid_channel = int(output_channel // 2 * max_channel_scale)
             self.block_sn_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleNetV2', bn=bn)
+                                                  3, stride, 'ShuffleNetV2', bn=bn, act_name=act_name, use_se=use_se)
             self.block_sn_5x5 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  5, stride, 'ShuffleNetV2', bn=bn)
+                                                  5, stride, 'ShuffleNetV2', bn=bn, act_name=act_name, use_se=use_se)
             self.block_sn_7x7 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  7, stride, 'ShuffleNetV2', bn=bn)
+                                                  7, stride, 'ShuffleNetV2', bn=bn, act_name=act_name, use_se=use_se)
             self.block_sx_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
-                                                  3, stride, 'ShuffleXception', bn=bn)
+                                                  3, stride, 'ShuffleXception', bn=bn, act_name=act_name, use_se=use_se)
 
     def hybrid_forward(self, F, x, block_choice, block_channel_mask, *args, **kwargs):
-        # ShuffleNasBlock has three inputs and passes two inputs to the ShuffleNetCSBlock (ShuffleNetBlock with channel selection)
+        # ShuffleNasBlock has three inputs and passes two inputs to the ShuffleNetCSBlock
         if self.use_all_blocks:
             temp1 = self.block_sn_3x3(x, block_channel_mask)
             temp2 = self.block_sn_5x5(x, block_channel_mask)
@@ -539,6 +618,7 @@ def main():
     print("Defined mean: {}, running mean: {}".format(mean, bn.running_mean.data()))
     print("Defined std: {}, running var: {}".format(std, bn.running_var.data()))
     print("Finished testing NasBatchNorm\n")
+
 
 if __name__ == '__main__':
     main()
