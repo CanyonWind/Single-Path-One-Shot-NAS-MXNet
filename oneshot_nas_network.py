@@ -108,7 +108,7 @@ class ShuffleNasOneShot(HybridBlock):
 
                 # last conv
                 if self.last_conv_after_pooling:
-                    # MobileNet V3 style
+                    # MobileNet V3 approach
                     self.features.add(
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
@@ -118,18 +118,29 @@ class ShuffleNasOneShot(HybridBlock):
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
                 else:
-                    # Oneshot Nas original approach
-                    self.features.add(
-                        nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='last_conv_'),
-                        bn(momentum=0.1),
-                        Activation('hard_swish' if self.use_se else 'relu'),
-                        nn.GlobalAvgPool2D(),
-                        SE(last_conv_out_channel),
-                        nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='last_conv_'),
-                        # No bn for the conv after pooling
-                        Activation('hard_swish' if self.use_se else 'relu'))
+                    if self.use_se:
+                        # ShuffleNetV2+ approach
+                        self.features.add(
+                            nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
+                                      padding=0, use_bias=False, prefix='last_conv0_'),
+                            bn(momentum=0.1),
+                            Activation('hard_swish' if self.use_se else 'relu'),
+                            nn.GlobalAvgPool2D(),
+                            SE(last_conv_out_channel),
+                            nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
+                                      padding=0, use_bias=False, prefix='last_conv1_'),
+                            # No bn for the conv after pooling
+                            Activation('hard_swish' if self.use_se else 'relu')
+                        )
+                    else:
+                        # original Oneshot Nas approach
+                        self.features.add(
+                            nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
+                                      padding=0, use_bias=False, prefix='last_conv_'),
+                            bn(momentum=0.1),
+                            Activation('hard_swish' if self.use_se else 'relu'),
+                            nn.GlobalAvgPool2D()
+                        )
 
                 # Dropout ratio follows ShuffleNetV2+ for se
                 self.features.add(nn.Dropout(0.2 if self.use_se else 0.1))
@@ -254,12 +265,14 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = False
-USE_SE = True
+FIX_ARCH = True
 LAST_CONV_AFTER_POOLING = True
+USE_SE = True
 
 
 def main():
+    from calculate_flops import get_flops
+
     if FIX_ARCH:
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
@@ -289,6 +302,9 @@ def main():
             os.makedirs('./symbols')
         net(test_data)
         net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+        flops, model_size = get_flops()
+        print("Last conv after pooling: {}, use se: {}".format(LAST_CONV_AFTER_POOLING, USE_SE))
+        print("FLOPS: {}M, # parameters: {}M".format(flops, model_size))
     else:
         if not os.path.exists('./params'):
             os.makedirs('./params')
