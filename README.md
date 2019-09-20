@@ -27,8 +27,9 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - [x] Add MobileNetV3 style last conv (on/off can be controlled by --last-conv-after-pooling)
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **In progress:** Train the official uniform selection supernet model on Imagenet
-    - [x] Seems like training with random block & channel selection from scratch is hard to converge, add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
-    - [ ] Train the supernet with --use-se and --last-conv-after-pooling
+    - [x] Training with random block & channel selection from scratch is hard to converge, add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
+    - [x] Add channel selection warm up so that, after epoch_start_cs, ChannelSelector will gradually increase the channel selection range.
+    - [ ] Train the supernet with --use-se and --last-conv-after-pooling --cs-warm-up
 - [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
     - [x] update BN before calculating the validation accuracy for each choice
