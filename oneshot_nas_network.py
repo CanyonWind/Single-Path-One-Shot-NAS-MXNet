@@ -64,7 +64,7 @@ class ShuffleNasOneShot(HybridBlock):
                     output_channel = self.stage_out_channels[stage_id]
 
                     if self.use_se:
-                        act_name = 'hard_swish' if stage_id >=1 else 'relu'
+                        act_name = 'hard_swish' if stage_id >= 1 else 'relu'
                         block_use_se = True if stage_id >= 2 else False
                     else:
                         act_name = 'relu'
@@ -109,8 +109,9 @@ class ShuffleNasOneShot(HybridBlock):
                 # last conv
                 if self.last_conv_after_pooling:
                     # MobileNet V3 style
-                    self.features.add(nn.GlobalAvgPool2D())
                     self.features.add(
+                        nn.GlobalAvgPool2D(),
+                        # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
                                   padding=0, use_bias=False, prefix='last_conv_'),
                         # No bn for the conv after pooling
@@ -122,9 +123,13 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
                                   padding=0, use_bias=False, prefix='last_conv_'),
                         bn(momentum=0.1),
-                        Activation('hard_swish' if self.use_se else 'relu')
-                    )
-                    self.features.add(nn.GlobalAvgPool2D())
+                        Activation('hard_swish' if self.use_se else 'relu'),
+                        nn.GlobalAvgPool2D(),
+                        SE(last_conv_out_channel),
+                        nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
+                                  padding=0, use_bias=False, prefix='last_conv_'),
+                        # No bn for the conv after pooling
+                        Activation('hard_swish' if self.use_se else 'relu'))
 
                 # Dropout ratio follows ShuffleNetV2+ for se
                 self.features.add(nn.Dropout(0.2 if self.use_se else 0.1))
@@ -249,7 +254,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = True
+FIX_ARCH = False
 USE_SE = True
 LAST_CONV_AFTER_POOLING = True
 
