@@ -200,7 +200,7 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, 
 def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params',
          dtype='float32', batch_size=256):
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
-    net = get_shufflenas_oneshot()
+    net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.load_parameters(supernet_params, ctx=context)
     print(net)
     search_supernet(net, search_iters=2000, num_gpus=num_gpus, dtype=dtype,
