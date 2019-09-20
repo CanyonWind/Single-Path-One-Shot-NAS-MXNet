@@ -40,17 +40,27 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 
 
 ## Usage
+**Training stage**
+
 Use [the GluonCV official ImageNet training script](https://gluon-cv.mxnet.io/build/examples_classification/dive_deep_imagenet.html#sphx-glr-download-build-examples-classification-dive-deep-imagenet-py)
 to do the training. A slightly modified version is included in this repo.
 
 ```shell
+# For fixed-structure model
 sh ./train_fixarch.sh
+
+# For supernet model
+sh ./train_supernet.sh
 ```
 
-For the flop calculator, save the symobilc model first. Then call the calculator. You can choose to ignore ReLU and BN or not with the flag -norelubn
-```python
-python oneshot_nas_network.py 
-python calculate_flops.py -norelubn
+**Searching stage**
+
+```shell
+# Save a toy model of supernet model param, or put a well-trained supernet model under ./params/ folder and skip this step
+python oneshot_nas_network.py
+
+# do random search
+python search_supernet.py
 ```
 
 ## Results
