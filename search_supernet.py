@@ -11,12 +11,6 @@ from calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
 
 
-def update_bn(net):
-    # TODO: add this before searching block and channel
-    # https://www.d2l.ai/chapter_convolutional-modern/batch-norm.html#implementation-from-scratch
-    return None
-
-
 def generate_random_data_label(ctx=mx.gpu(0)):
     data = nd.random.uniform(-1, 1, shape=(1, 3, 224, 224), ctx=ctx)
     label = None
@@ -214,5 +208,5 @@ def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supern
 
 
 if __name__ == '__main__':
-    main(1)
+    main(0)
 
