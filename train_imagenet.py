@@ -114,6 +114,9 @@ def parse_args():
                         help='Epoch id for starting Channel selection.')
     parser.add_argument('--last-conv-after-pooling', action='store_true',
                         help='Whether to follow MobileNet V3 last conv after pooling style.')
+    parser.add_argument('--cs-warm-up', action='store_true',
+                        help='Whether to do warm up for Channel Selection so that gradually selects '
+                             'larger range of channels')
 
     opt = parser.parse_args()
     return opt
@@ -348,7 +351,7 @@ def main():
             smoothed.append(res)
         return smoothed
 
-    def test(ctx, val_data):
+    def test(ctx, val_data, epoch):
         if opt.use_rec:
             val_data.reset()
         acc_top1.reset()
@@ -357,7 +360,13 @@ def main():
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
                 block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels, dtype=opt.dtype)
+                if opt.cs_warm_up:
+                    full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
+                                                                   epoch_after_cs=epoch - opt.epoch_start_cs,
+                                                                   dtype=opt.dtype)
+                else:
+                    full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
+                                                                   dtype=opt.dtype)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -366,7 +375,7 @@ def main():
 
         _, top1 = acc_top1.get()
         _, top5 = acc_top5.get()
-        return (1-top1, 1-top5)
+        return 1-top1, 1-top5
 
     def train(ctx):
         if isinstance(ctx, mx.Context):
@@ -433,7 +442,13 @@ def main():
                 with ag.record():
                     if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                        full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels, dtype=opt.dtype)
+                        if opt.cs_warm_up:
+                            full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
+                                                                           epoch_after_cs=epoch - opt.epoch_start_cs,
+                                                                           dtype=opt.dtype)
+                        else:
+                            full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
+                                                                           dtype=opt.dtype)
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -465,9 +480,9 @@ def main():
                     btic = time.time()
 
             train_metric_name, train_metric_score = train_metric.get()
-            throughput = int(batch_size * i /(time.time() - tic))
+            throughput = int(batch_size * i / (time.time() - tic))
 
-            err_top1_val, err_top5_val = test(ctx, val_data)
+            err_top1_val, err_top5_val = test(ctx, val_data, epoch)
 
             logger.info('[Epoch %d] training: %s=%f'%(epoch, train_metric_name, train_metric_score))
             logger.info('[Epoch %d] speed: %d samples/sec\ttime cost: %f'%(epoch, throughput, time.time()-tic))
