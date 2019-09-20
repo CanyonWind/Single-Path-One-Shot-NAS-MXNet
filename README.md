@@ -1,16 +1,24 @@
 # [One-Shot NAS](https://arxiv.org/abs/1904.00420)
 This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
-[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). It supports both pre-defined fixed structure model and the supernet model with block selection and channel selection.
+[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). 
+
+**For training:** 
+It supports both pre-defined fixed structure model, the supernet model with block & channel selection and SE. 
+
+**For searching:**
+It supports random search with BN statistics update and [normalized FLOP + # parameters constraint](https://micronet-challenge.github.io/scoring_and_submission.html)
 
 ## Prerequisites
 Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset)
 
 ## Comparison to the official release 
 - Support both fixed-structure model and supernet uniform selection model.
+- SE is available for both fixed-arch model and supernet model.
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
 - A full functioning FLOP calculator is provided.
 - A naive random search with BN statistics update and FLOP & # parameters constraint is provided.
+ 
 
 
 ## Roadmap
@@ -21,9 +29,12 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - [x] Train a tiny model on Imagenet to verify the feasibility.
 - [x] Modify the open source MXNet FLOP calculator to support BN
 - [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
+- [x] Add SE in the model (on/off can be controlled by --use-se)
+- [x] Add MobileNetV3 style last conv (on/off can be controlled by --last-conv-after-pooling)
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **In progress:** Train the official uniform selection supernet model on Imagenet
     - [x] Seems like training with random block & channel selection from scratch is hard to converge, add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
+    - [ ] Train the supernet with --use-se and --last-conv-after-pooling
 - [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
     - [x] update BN before calculating the validation accuracy for each choice
