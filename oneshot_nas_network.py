@@ -113,7 +113,7 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='conv_fc_'),
+                                  padding=0, use_bias=False, prefix='last_conv_'),
                         # No bn for the conv after pooling
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
@@ -170,6 +170,23 @@ class ShuffleNasOneShot(HybridBlock):
         """
         assert len(self.stage_repeats) == len(self.stage_out_channels)
 
+        # From [1.0, 1.2, 1.4, 1.6, 1.8, 2.0] to [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0], warm-up stages are
+        # not just 1 epoch, but 2, 3, 4, 5 accordingly.
+        if 0 <= epoch_after_cs <= 23:
+            epoch_delay = {0: 0,
+                           1: 1,
+                           2: 2,
+                           3: 3,
+                           4: 4,  5: 4,                                # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                           6: 5,  7: 5,  8: 5,                          # warm up epoch: 3 ...
+                           9: 6,  10: 6, 11: 6, 12: 6,                 # warm up epoch: 4 ...
+                           13: 7, 14: 7, 15: 7, 16: 7, 17: 7,         # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
+                           18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, actually this stage is useless
+
+            delayed_epoch_after_cs = epoch_delay[epoch_after_cs]
+        else:
+            delayed_epoch_after_cs = epoch_after_cs
+
         channel_mask = []
         channel_choices = []
         global_max_length = int(self.stage_out_channels[-1] // 2 * self.candidate_scales[-1])
@@ -187,12 +204,16 @@ class ShuffleNasOneShot(HybridBlock):
                         # In dense mode, channel_choices is # channel
                         channel_choices.append(random_select_channel)
                     elif mode == 'sparse':
+
                         # this is for channel selection warm up: channel choice ~ (8, 9) -> (7, 9) -> ... -> (0, 9)
-                        channel_choice = random.randint(max(0, len(self.candidate_scales) - epoch_after_cs - 2),
+                        channel_choice = random.randint(max(0, len(self.candidate_scales) - delayed_epoch_after_cs - 2),
                                                         len(self.candidate_scales) - 1)
-                        random_select_channel = int(self.stage_out_channels[i] // 2 * self.candidate_scales[channel_choice])
+                        random_select_channel = int(self.stage_out_channels[i] // 2 *
+                                                    self.candidate_scales[channel_choice])
                         # In sparse mode, channel_choices is the indices of candidate_scales
                         channel_choices.append(channel_choice)
+                    else:
+                        raise ValueError("Unrecognized mode: {}".format(mode))
                     for j in range(random_select_channel):
                         local_mask[j] = 1
                 channel_mask.append(local_mask)
@@ -265,7 +286,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = False
+FIX_ARCH = True
 LAST_CONV_AFTER_POOLING = True
 USE_SE = True
 
