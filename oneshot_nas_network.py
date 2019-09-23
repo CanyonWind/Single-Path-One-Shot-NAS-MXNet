@@ -113,7 +113,7 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='last_conv_'),
+                                  padding=0, use_bias=False, prefix='conv_fc_'),
                         # No bn for the conv after pooling
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
@@ -177,9 +177,9 @@ class ShuffleNasOneShot(HybridBlock):
                            1: 1,
                            2: 2,
                            3: 3,
-                           4: 4,  5: 4,                                # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
-                           6: 5,  7: 5,  8: 5,                          # warm up epoch: 3 ...
-                           9: 6,  10: 6, 11: 6, 12: 6,                 # warm up epoch: 4 ...
+                           4: 4,  5: 4,                               # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                           6: 5,  7: 5,  8: 5,                        # warm up epoch: 3 ...
+                           9: 6,  10: 6, 11: 6, 12: 6,                # warm up epoch: 4 ...
                            13: 7, 14: 7, 15: 7, 16: 7, 17: 7,         # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
                            18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, actually this stage is useless
 
