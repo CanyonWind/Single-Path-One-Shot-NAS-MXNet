@@ -113,7 +113,7 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='fc_'),
+                                  padding=0, use_bias=False, prefix='conv_fc_'),
                         # No bn for the conv after pooling
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
@@ -128,7 +128,7 @@ class ShuffleNasOneShot(HybridBlock):
                             nn.GlobalAvgPool2D(),
                             SE(last_conv_out_channel),
                             nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
-                                      padding=0, use_bias=False, prefix='fc_'),
+                                      padding=0, use_bias=False, prefix='conv_fc_'),
                             # No bn for the conv after pooling
                             Activation('hard_swish' if self.use_se else 'relu')
                         )
