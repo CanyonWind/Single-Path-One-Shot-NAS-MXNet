@@ -162,7 +162,8 @@ class ShuffleNasOneShot(HybridBlock):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
         return nd.array(block_choices).astype(dtype, copy=False)
 
-    def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse', epoch_after_cs=maxsize):
+    def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse', epoch_after_cs=maxsize,
+                            ignore_first_two_cs=True):
         """
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         mode: str, "dense" or "sparse". Sparse mode select # channel from candidate scales. Dense mode selects
@@ -187,6 +188,11 @@ class ShuffleNasOneShot(HybridBlock):
         else:
             delayed_epoch_after_cs = epoch_after_cs
 
+        if ignore_first_two_cs:
+            min_scale_id = 2
+        else:
+            min_scale_id = 0
+
         channel_mask = []
         channel_choices = []
         global_max_length = int(self.stage_out_channels[-1] // 2 * self.candidate_scales[-1])
@@ -206,8 +212,8 @@ class ShuffleNasOneShot(HybridBlock):
                     elif mode == 'sparse':
 
                         # this is for channel selection warm up: channel choice ~ (8, 9) -> (7, 9) -> ... -> (0, 9)
-                        channel_choice = random.randint(max(0, len(self.candidate_scales) - delayed_epoch_after_cs - 2),
-                                                        len(self.candidate_scales) - 1)
+                        channel_scale_start = max(min_scale_id, len(self.candidate_scales) - delayed_epoch_after_cs - 2)
+                        channel_choice = random.randint(channel_scale_start, len(self.candidate_scales) - 1)
                         random_select_channel = int(self.stage_out_channels[i] // 2 *
                                                     self.candidate_scales[channel_choice])
                         # In sparse mode, channel_choices is the indices of candidate_scales
@@ -277,6 +283,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
         scale_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         channel_scales = []
         for i in range(len(scale_ids)):
+            # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
             channel_scales.append(scale_list[scale_ids[i]])
         net = ShuffleNasOneShotFix(architecture=architecture, channel_scales=channel_scales,
                                    use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
