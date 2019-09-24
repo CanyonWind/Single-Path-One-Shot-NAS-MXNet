@@ -52,7 +52,7 @@ python search_supernet.py
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [ ] **In progress:** Train the official uniform selection supernet model on Imagenet
     - [x] Training with random block & channel selection from scratch is hard to converge, add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
-    - [x] Add channel selection warm up so that, after epoch_start_cs, ChannelSelector will gradually increase the channel selection range.
+    - [x] Add channel selection warm up: after epoch_start_cs, the channel selection range will be gradually increased.
     - [ ] Train the supernet with --use-se and --last-conv-after-pooling --cs-warm-up
 - [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
