@@ -356,7 +356,7 @@ def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32
         full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False, dtype=dtype)
         
         # build fix_arch network and calculate flop
-        fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
+        fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
         fixarch_net._initialize()
         if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
