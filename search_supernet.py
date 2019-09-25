@@ -26,8 +26,6 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
     rec_train_idx = os.path.expanduser(rec_train_idx)
     rec_val = os.path.expanduser(rec_val)
     rec_val_idx = os.path.expanduser(rec_val_idx)
-    jitter_param = 0.4
-    lighting_param = 0.1
     resize = int(math.ceil(input_size / crop_ratio))
     mean_rgb = [123.68, 116.779, 103.939]
     std_rgb = [58.393, 57.12, 57.375]
@@ -100,7 +98,7 @@ def set_nas_bn(net, inference_update_stat=False):
 
 
 def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
-              ctx=mx.cpu(), dtype='float32', batch_size=256, update_bn_images=20000):
+              ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
     print("Updating BN statistics...")
     set_nas_bn(net, inference_update_stat=True)
     for i, batch in enumerate(train_data):
@@ -111,14 +109,13 @@ def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
     set_nas_bn(net, inference_update_stat=False)
 
 
-def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, dtype='float32', batch_size=256,
-                    flops_constraint=585, parameter_number_constraint=6.9):
+def search_supernet(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
+                    flops_constraint=585, parameter_number_constraint=6.9, ctx=[mx.cpu()]):
     """
     Search within the pre-trained supernet.
     :param net:
     :param search_iters:
     :param update_bn_images:
-    :param num_gpus:
     :param dtype:
     :param batch_size:
     :param flops_constraint: MobileNetV3-Large-1.0 [219M], MicroNet Challenge standard MobileNetV2-1.4 [585M]
@@ -126,11 +123,10 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, 
     :return:
     """
     # TODO: use a heapq here to store top-5 models
-    train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
+    train_data, val_data, batch_fn = get_data(num_gpus=len(ctx), batch_size=batch_size)
     best_acc, best_acc_flop, best_acc_size = 0, 0, 0
     best_block_choices = None
     best_channel_choices = None
-    context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     acc_top1 = mx.metric.Accuracy()
     acc_top5 = mx.metric.TopKAccuracy(5)
     for i in range(search_iters):
@@ -140,7 +136,7 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, 
         
         # build fix_arch network and calculate flop
         fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
-        fixarch_net.initialize()
+        fixarch_net._initialize()
         if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
         fixarch_net.hybridize()
@@ -149,7 +145,7 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, 
         fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
         flops, model_size = get_flops()  # both in Millions
         normalized_score = flops / flops_constraint + model_size / parameter_number_constraint
-        if normalized_score >= 1:
+        if normalized_score >= 2:
             print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
             print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
             print("[SKIPPED] Channel choices:   {}".format(channel_choices))
@@ -158,12 +154,12 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, num_gpus=0, 
             continue
 
         # Update BN
-        update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=context, dtype=dtype,
+        update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=ctx, dtype=dtype,
                   batch_size=batch_size, update_bn_images=update_bn_images)
         print("BN statistics updated.")
         # Get validation accuracy
         val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
-                               acc_top1=acc_top1, acc_top5=acc_top5, ctx=context)
+                               acc_top1=acc_top1, acc_top5=acc_top5, ctx=ctx)
         if val_acc > best_acc:
             best_acc = val_acc
             best_acc_flop = flops
@@ -194,10 +190,10 @@ def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supern
     net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.load_parameters(supernet_params, ctx=context)
     print(net)
-    search_supernet(net, search_iters=2000, num_gpus=num_gpus, dtype=dtype,
-                    batch_size=batch_size, update_bn_images=20000)
+    search_supernet(net, search_iters=2000, dtype=dtype,
+                    batch_size=batch_size, update_bn_images=20000, ctx=context)
 
 
 if __name__ == '__main__':
-    main(0)
+    main(1)
 
