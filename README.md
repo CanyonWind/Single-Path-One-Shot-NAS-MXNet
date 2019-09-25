@@ -59,7 +59,7 @@ python search_supernet.py
     - [x] update BN before calculating the validation accuracy for each choice
         - [x] Build and do unit test on the customized BN for updating moving mean & variance during inference
         - [x] Replace nn.batchnorm with the customized BN
-    - [ ] Evolution algorithm 
+    - [x] Evolution algorithm 
     - [ ] Evolution algorithm with flop / # parameters constraint(s)
 
 
