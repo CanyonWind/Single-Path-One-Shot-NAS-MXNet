@@ -4,11 +4,13 @@ from mxnet import nd
 import os
 import copy
 import math
-from gluoncv.model_zoo import get_model
+from itertools import count
+import random
 
 from oneshot_nas_network import get_shufflenas_oneshot
 from calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
+import heapq
 
 
 def generate_random_data_label(ctx=mx.gpu(0)):
@@ -72,7 +74,7 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
 
 
 def get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
-                 acc_top1=None, acc_top5=None, ctx=mx.cpu(), dtype='float32'):
+                 acc_top1=None, acc_top5=None, ctx=[mx.cpu()], dtype='float32'):
     val_data.reset()
     acc_top1.reset()
     acc_top5.reset()
@@ -109,7 +111,226 @@ def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
     set_nas_bn(net, inference_update_stat=False)
 
 
-def search_supernet(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
+class TopKHeap(object):
+    def __init__(self, k, cnt):
+        self.k = k
+        self.data = []
+        self.cnt = cnt
+
+    def push(self, elem, cnt):
+        if len(self.data) < self.k:
+            heapq.heappush(self.data, (elem['acc'], next(cnt), elem))
+        else:
+            topk_small = self.data[0]
+            if elem['acc'] > topk_small[0]:
+                heapq.heapreplace(self.data, (elem['acc'], next(cnt), elem))
+
+    def topk(self):
+        # element is in format of (accuracy, second_order, net_selected_params)
+        return [x[2] for x in reversed([heapq.heappop(self.data) for _ in range(len(self.data))])]
+
+
+class Evolver():
+    """ Class that implements genetic algorithm for supernet selection. """
+
+    def __init__(self, net, train_data, val_data, batch_fn, param_dict, update_bn_images=20000,
+                 search_iters=1000, random_select=0.1, mutate_chance=0.1,
+                 num_gpus=0, dtype='float32', batch_size=256, flops_constraint=585, parameter_number_constraint=6.9):
+        """
+        Args:
+            param_dict (dict):     Possible network paremters  {'block': [] * 4, 'channel': [] * 10}
+            update_bn_images:
+            search_iters:
+            retain (float):        Percentage of population to retain after each generation
+            random_select (float): Probability of a rejected network remaining in the population
+            mutate_chance (float): Probability a network will be randomly mutated
+            num_gpus:
+            dtype:
+            batch_size:
+            flops_constraint:      MobileNetV3-Large-1.0 [219M],
+                                   MicroNet Challenge standard MobileNetV2-1.4 [585M]
+            param_num_constraint:  MobileNetV3-Large-1.0 [5.4M],
+                                   MicroNet Challenge standard MobileNetV2-1.4 [6.9M]
+        """
+        self.net = net
+        self.train_data = train_data
+        self.val_data = val_data
+        self.batch_fn = batch_fn
+        self.param_dict = param_dict
+        self.update_bn_images = update_bn_images
+        self.search_iters = search_iters
+        self.random_select = random_select
+        self.mutate_chance = mutate_chance
+        self.num_gpus = num_gpus
+        self.dtype = dtype
+        self.batch_size = batch_size
+        self.flops_constraint = flops_constraint
+        self.parameter_number_constraint = parameter_number_constraint
+
+    def create_population(self, count=2000):
+        """Create a population of random networks.
+        Args:
+            count (int): Number of networks to generate, aka the
+                size of the population
+        Returns:
+            (list): Population of random networks
+        """
+        population = []
+        for _ in range(0, count):
+            # Create a random network.
+            instance = {}
+            for param_name in self.param_dict:
+                instance[param_name] = [random.choice(self.param_dict[param_name]) for _ in range(20)]
+
+            # Add the network to our population.
+            population.append(instance)
+
+        return population
+
+    def fitness_1st_stage(self, block_choices, channel_choices):
+        """ Return the flop score + num_param score, which is our first fitness function. """
+        # build fix_arch network and calculate flop
+        fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
+        fixarch_net._initialize()
+        if not os.path.exists('./symbols'):
+            os.makedirs('./symbols')
+        fixarch_net.hybridize()
+        dummy_data = nd.ones([1, 3, 224, 224])
+        fixarch_net(dummy_data)
+        fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+        flops, model_size = get_flops()  # both in Millions
+        normalized_score = flops / self.flops_constraint + model_size / self.parameter_number_constraint
+        if normalized_score >= 1.1:
+            print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
+            print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+            print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+            print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+            print('[SKIPPED] # parameters:      {} M'.format(model_size))
+        return normalized_score
+
+    def fitness_2nd_stage(self, block_choices, full_channel_mask, acc_top1=mx.metric.Accuracy(),
+                          acc_top5=mx.metric.TopKAccuracy(5), dtype='float32'):
+        """ Return the accuracy, which is our second fitness function. """
+        # Update BN
+        ctx = [mx.gpu(i) for i in range(self.num_gpus)] if self.num_gpus > 0 else [mx.cpu()]
+        update_bn(self.net, block_choices, full_channel_mask, self.batch_fn, self.train_data, ctx=ctx, dtype=self.dtype,
+                  batch_size=self.batch_size, update_bn_images=self.update_bn_images)
+
+        self.val_data.reset()
+        acc_top1.reset()
+        acc_top5.reset()
+        print("BN statistics updated.")
+
+        for i, batch in enumerate(self.val_data):
+            # TODO: remove debug code
+            if i >= 1:
+                break
+            # End debug
+            data, label = self.batch_fn(batch, ctx)
+            outputs = [self.net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
+            acc_top1.update(label, outputs)
+            acc_top5.update(label, outputs)
+
+        _, top1 = acc_top1.get()
+        _, top5 = acc_top5.get()
+        return top1
+
+    def breed(self, mother, father):
+        """ Make two children.
+        Args:
+            mother (dict): Network parameters
+            father (dict): Network parameters
+        Returns:
+            (list): Two network objects
+        """
+        children = []
+        for _ in range(2):
+
+            child = {}
+
+            # Crossover: loop through the parameters and pick params for the kid.
+            for param_name in self.param_dict.keys():
+                child[param_name] = [0] * len(self.param_dict[param_name])
+                for i in range(len(self.param_dict[param_name])):
+                    child[param_name][i] = random.choice([mother[param_name][i], father[param_name][i]])
+
+                    # Mutation: randomly mutate some of the children.
+                    if self.mutate_chance > random.random():
+                        child[param_name][i] = random.choice(self.param_dict[param_name])
+
+            children.append(child)
+
+        return children
+
+    def evolve(self, population, retain_length1=1000, retain_length2=500, topk=3):
+        """Evolve a population of networks.
+        Args:
+            population (list): A list of network parameters
+        Returns:
+            (list): The evolved population of networks
+        """
+
+        # fitness first stage -------------------------------
+        selected1 = [(self.fitness_1st_stage(person['block'], person['channel']), person) for person in population]
+
+        # Sort on the scores.
+        selected1 = [x[1] for x in sorted(selected1, key=lambda x: x[0])]
+
+        # The parents are every network we want to keep.
+        parents = selected1[:retain_length1]
+
+        # For those we aren't keeping, randomly keep some anyway.
+        for individual in selected1[retain_length1:]:
+            if self.random_select > random.random():
+                parents.append(individual)
+
+        # fitness second stage -------------------------------
+        # TODO: get channel mask
+        selected2 = [(self.fitness_2nd_stage(person['block'], person['channel']), person) for person in parents]
+
+        # Sort on the scores.
+        # TODO: Add accuracy
+        selected2 = [x[1] for x in sorted(selected2, key=lambda x: x[0], reverse=True)]
+
+        # The parents are every network we want to keep.
+        parents = selected2[:retain_length2]
+
+        # For those we aren't keeping, randomly keep some anyway.
+        for individual in selected2[retain_length2:]:
+            if self.random_select > random.random():
+                parents.append(individual)
+
+        # Now find out how many spots we have left to fill.
+        parents_length = len(parents)
+        desired_length = len(population) - parents_length
+        children = []
+
+        # Add children, which are bred from two remaining networks.
+        while len(children) < desired_length:
+
+            # Get a random mom and dad.
+            male = random.randint(0, parents_length-1)
+            female = random.randint(0, parents_length-1)
+
+            # Assuming they aren't the same network...
+            if male != female:
+                male = parents[male]
+                female = parents[female]
+
+                # Breed them.
+                babies = self.breed(male, female)
+
+                # Add the children one at a time.
+                for baby in babies:
+                    # Don't grow larger than desired length.
+                    if len(children) < desired_length:
+                        children.append(baby)
+
+        parents.extend(children)
+        return parents, selected2[:topk]
+
+
+def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
                     flops_constraint=585, parameter_number_constraint=6.9, ctx=[mx.cpu()]):
     """
     Search within the pre-trained supernet.
@@ -135,7 +356,7 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, dtype='float
         full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False, dtype=dtype)
         
         # build fix_arch network and calculate flop
-        fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
+        fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
         fixarch_net._initialize()
         if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
@@ -184,14 +405,46 @@ def search_supernet(net, search_iters=2000, update_bn_images=20000, dtype='float
     print('# parameters:         {} M'.format(best_acc_size))
 
 
+def genetic_search(net, num_gpus=4, batch_size=256, ctx=[mx.cpu()]):
+    # get data
+    train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
+
+    # set channel and block value list
+    param_dict = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                  'block': [0, 1, 2, 3]}
+
+    # keep global topk params
+    cnt = count()  # for heap
+    global_topk = TopKHeap(3, cnt)
+
+    # evolution
+    num_iter = 50
+    evolver = Evolver(net, train_data, val_data, batch_fn, param_dict)
+    population = evolver.create_population()
+
+    for i in range(num_iter):
+        print("\nSearching iter: {}".format(i))
+        population, local_topk = evolver.evolve(population)
+        for elem in local_topk:
+            global_topk.push(elem, cnt)
+
+    print(global_topk)
+    return None
+
+
 def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params',
-         dtype='float32', batch_size=256):
+         dtype='float32', batch_size=256, search_mode='random'):
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.load_parameters(supernet_params, ctx=context)
     print(net)
-    search_supernet(net, search_iters=2000, dtype=dtype,
-                    batch_size=batch_size, update_bn_images=20000, ctx=context)
+    if search_mode == 'random':
+        random_search(net, search_iters=2000, dtype=dtype,
+                        batch_size=batch_size, update_bn_images=20000, ctx=context)
+    elif search_mode == 'genetic':
+        genetic_search()
+    else:
+        raise ValueError("Unrecognized search mode: {}".format(search_mode))
 
 
 if __name__ == '__main__':
