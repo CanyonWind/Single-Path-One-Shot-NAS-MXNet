@@ -21,7 +21,7 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
              rec_train_idx='~/.mxnet/datasets/imagenet/rec/train.idx',
              rec_val='~/.mxnet/datasets/imagenet/rec/val.rec', 
              rec_val_idx='~/.mxnet/datasets/imagenet/rec/val.idx',
-             input_size=224, crop_ratio=0.875, num_workers=4, batch_size=256, num_gpus=0):
+             input_size=224, crop_ratio=0.875, num_workers=8, batch_size=256, num_gpus=0):
     rec_train = os.path.expanduser(rec_train)
     rec_train_idx = os.path.expanduser(rec_train_idx)
     rec_val = os.path.expanduser(rec_val)
@@ -39,7 +39,7 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
     train_data = mx.io.ImageRecordIter(
         path_imgrec=rec_train,
         path_imgidx=rec_train_idx,
-        preprocess_threads=num_workers,
+        preprocess_threads=int(num_workers//2),
         shuffle=False,
         batch_size=batch_size,
 
@@ -102,7 +102,7 @@ def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
     print("Updating BN statistics...")
     set_nas_bn(net, inference_update_stat=True)
     for i, batch in enumerate(train_data):
-        if (i + 1) * batch_size >= update_bn_images:
+        if (i + 1) * batch_size * len(ctx) >= update_bn_images:
             break
         data, _ = batch_fn(batch, ctx)
         _ = [net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
