@@ -393,7 +393,9 @@ class NasBatchNorm(HybridBlock):
                                            init=running_variance_initializer,
                                            allow_deferred_init=True,
                                            differentiable=False)
-
+        self.momentum = nd.array([self._kwargs['momentum']])
+        self.momentum_rest = nd.array([1 - self._kwargs['momentum']])
+        
     def cast(self, dtype):
         if np.dtype(dtype).name == 'float16':
             dtype = 'float32'
@@ -423,12 +425,10 @@ class NasBatchNorm(HybridBlock):
             # print("Target rst: {}".format(rst))
 
             # update running mean and var
-            momentum = F.array([self._kwargs['momentum']])
-            momentum_rest = F.array([1 - self._kwargs['momentum']])
-            running_mean = F.add(F.multiply(self.running_mean.data(), momentum),
-                                 F.multiply(mean, momentum_rest))
-            running_var = F.add(F.multiply(self.running_var.data(), momentum),
-                                F.multiply(var, momentum_rest))
+            running_mean = F.add(F.multiply(self.running_mean.data(), self.momentum.as_in_context(x.context)),
+                                 F.multiply(mean, self.momentum_rest.as_in_context(x.context)))
+            running_var = F.add(F.multiply(self.running_var.data(), self.momentum.as_in_context(x.context)),
+                                F.multiply(var, self.momentum_rest.as_in_context(x.context)))
             self.running_mean.set_data(running_mean)
             self.running_var.set_data(running_var)
             return F.BatchNorm(x, gamma, beta, mean, var, name='fwd', **self._kwargs)
