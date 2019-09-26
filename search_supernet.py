@@ -6,6 +6,7 @@ import copy
 import math
 from itertools import count
 import random
+import time
 
 from oneshot_nas_network import get_shufflenas_oneshot
 from calculate_flops import get_flops
@@ -101,7 +102,6 @@ def set_nas_bn(net, inference_update_stat=False):
 
 def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
               ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
-    print("Updating BN statistics...")
     set_nas_bn(net, inference_update_stat=True)
     for i, batch in enumerate(train_data):
         if (i + 1) * batch_size * len(ctx) >= update_bn_images:
@@ -331,7 +331,7 @@ class Evolver():
 
 
 def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
-                    flops_constraint=585, parameter_number_constraint=6.9, ctx=[mx.cpu()]):
+                  flops_constraint=585, parameter_number_constraint=6.9, ctx=[mx.cpu()]):
     """
     Search within the pre-trained supernet.
     :param net:
@@ -375,12 +375,15 @@ def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32
             continue
 
         # Update BN
+        tic = time.time()
         update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=ctx, dtype=dtype,
                   batch_size=batch_size, update_bn_images=update_bn_images)
-        print("BN statistics updated.")
+        print("BN statistics updated. Time used: {}".format(time.time() - tic))
         # Get validation accuracy
+        tic = time.time()
         val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
                                acc_top1=acc_top1, acc_top5=acc_top5, ctx=ctx)
+        print("Validation accuracy evaluated. Time used: {}".format(time.time() - tic))
         if val_acc > best_acc:
             best_acc = val_acc
             best_acc_flop = flops
@@ -409,6 +412,9 @@ def genetic_search(net, num_gpus=4, batch_size=256, ctx=[mx.cpu()]):
     # get data
     train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
 
+    # get supernet
+    context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
+
     # set channel and block value list
     param_dict = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                   'block': [0, 1, 2, 3]}
@@ -436,11 +442,13 @@ def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supern
          dtype='float32', batch_size=256, search_mode='random'):
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
+    net.cast(dtype)
     net.load_parameters(supernet_params, ctx=context)
+    net.cast('float32')
     print(net)
     if search_mode == 'random':
-        random_search(net, search_iters=2000, dtype=dtype,
-                        batch_size=batch_size, update_bn_images=20000, ctx=context)
+        random_search(net, search_iters=2000, dtype='float32',
+                      batch_size=batch_size, update_bn_images=20000, ctx=context)
     elif search_mode == 'genetic':
         genetic_search()
     else:
@@ -448,5 +456,5 @@ def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supern
 
 
 if __name__ == '__main__':
-    main(1)
+    main(num_gpus=1, batch_size=256, search_mode='random', dtype='float16')
 
