@@ -54,13 +54,13 @@ python search_supernet.py
     - [x] Add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
     - [x] Add channel selection warm up: after epoch_start_cs, the channel selection range will be gradually increased.
     - [x] Train the supernet with --use-se and --last-conv-after-pooling --cs-warm-up
-- [ ] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
+- [x] **In progress:** Build the evolution algorithm to search within the pretrained supernet model.
     - [x] Build random search
     - [x] update BN before calculating the validation accuracy for each choice
         - [x] Build and do unit test on the customized BN for updating moving mean & variance during inference
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
-    - [ ] Evolution algorithm with flop / # parameters constraint(s)
+    - [x] Evolution algorithm with flop / # parameters constraint(s)
 
 
 ## Results
