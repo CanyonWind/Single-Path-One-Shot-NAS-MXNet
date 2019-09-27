@@ -70,8 +70,6 @@ python search_supernet.py
 
 ## Results
 
-**Original implementation**
-
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
 |    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  60.98   |   81.33   |
