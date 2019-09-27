@@ -11,7 +11,7 @@ Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO 
 - Fixed-structure model can be hybridized, hence (hopefully) also be accelerated.
 - Support both random block selection and random channel selection.
 - A full functioning FLOP calculator is provided.
-- Genetic and andom search with BN statistics update and FLOP & # parameters constraint are provided.
+- Genetic and random search with BN statistics update and FLOP & # parameters constraint are provided.
  
  
 ## Usage
