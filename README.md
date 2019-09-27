@@ -65,6 +65,7 @@ python search_supernet.py
     - [ ] Search within the pretrained se-supernet
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
+- [ ] Quantization
 
 
 ## Results
