@@ -72,7 +72,7 @@ python search_supernet.py
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  60.98   |   81.33   |
+|    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  62.90   |   84.49   |
 |    OneShot |  328M (345M with ReLU and BN) |  3.4M |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   |
