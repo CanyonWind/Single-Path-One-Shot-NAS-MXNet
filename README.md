@@ -47,7 +47,7 @@ python search_supernet.py
 - [x] Train a tiny model on Imagenet to verify the feasibility.
 - [x] Modify the open source MXNet FLOP calculator to support BN
 - [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
-- [x] Add SE in the model (on/off can be controlled by --use-se)
+- [x] Add SE and hard swish in the model (on/off can be controlled by --use-se)
 - [x] Add MobileNetV3 style last conv (on/off can be controlled by --last-conv-after-pooling)
 - [ ] **In progress:** Train the official fixed architecture model on Imagenet
 - [x] Train the official uniform selection supernet model on Imagenet
@@ -61,7 +61,7 @@ python search_supernet.py
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop / # parameters constraint(s)
-- [ ] **In progress:** Search and train an se-subnet with smaller (flop + # parameters) score than the given structure.
+- [ ] **In progress:** Search and train an ShufflNetV2+ style se-subnet.
     - [ ] Search within the pretrained se-supernet
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
