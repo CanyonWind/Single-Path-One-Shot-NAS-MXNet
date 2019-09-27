@@ -60,9 +60,9 @@ python search_supernet.py
         - [x] Build and do unit test on the customized BN for updating moving mean & variance during inference
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
-    - [x] Evolution algorithm with flop / # parameters constraint(s)
-- [ ] **In progress:** Search and train an ShufflNetV2+ style se-subnet.
-    - [ ] Search within the pretrained se-supernet
+    - [x] Evolution algorithm with flop and # parameters constraint(s)
+- [ ] Search and train an ShufflNetV2+ style se-subnet.
+    - [ ] **In progress:** Search within the pretrained se-supernet
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
 - [ ] Quantization
