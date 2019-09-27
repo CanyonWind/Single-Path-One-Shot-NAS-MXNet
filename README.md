@@ -61,6 +61,10 @@ python search_supernet.py
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop / # parameters constraint(s)
+- [ ] **In progress:** Search and train an se-subnet with smaller (flop + # parameters) score than the given structure.
+    - [ ] Search within the pretrained se-supernet
+    - [ ] Train the searched se-subnet
+- [ ] Estimate each (block, # channel) combination cpu & gpu latency
 
 
 ## Results
@@ -69,6 +73,7 @@ python search_supernet.py
 
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 |
 | :--------------------- | :---: | :------:  | :---: | :---: |
+|    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  0.6098   |   0.8133   |
 |    OneShot |  328M (345M with ReLU and BN) |  3.4M |  **-**   |   -   |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   |
