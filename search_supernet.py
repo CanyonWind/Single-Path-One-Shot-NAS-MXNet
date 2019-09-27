@@ -7,6 +7,7 @@ import math
 from itertools import count
 import random
 import time
+import logging
 
 from oneshot_nas_network import get_shufflenas_oneshot
 from calculate_flops import get_flops
@@ -202,7 +203,7 @@ class Evolver():
         normalized_score = flops / self.flops_constraint + model_size / self.parameter_number_constraint
         if normalized_score >= 1.1:
             print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
-            print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+            print("[SKIPPED] Block choices:     {}".format(block_choices))
             print("[SKIPPED] Channel choices:   {}".format(channel_choices))
             print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
             print('[SKIPPED] # parameters:      {} M'.format(model_size))
@@ -331,7 +332,7 @@ class Evolver():
 
 
 def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
-                  flops_constraint=585, parameter_number_constraint=6.9, ctx=[mx.cpu()]):
+                  flops_constraint=328, parameter_number_constraint=3.4, logger=None, ctx=[mx.cpu()]):
     """
     Search within the pre-trained supernet.
     :param net:
@@ -390,25 +391,45 @@ def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32
             best_acc_size = model_size
             best_block_choices = copy.deepcopy(block_choices.asnumpy())
             best_channel_choices = copy.deepcopy(channel_choices)
+
+        if logger:
+            logger.info('-' * 40)
+            logger.info("Current model normalized score: {}.".format(normalized_score))
+            logger.info("Val accuracy:      {}".format(val_acc))
+            logger.info("Block choices:     {}".format(block_choices.asnumpy()))
+            logger.info("Channel choices:   {}".format(channel_choices))
+            logger.info('Flops:             {} MFLOPS'.format(flops))
+            logger.info('# parameters:      {} M'.format(model_size))
+        else:
+            print('-' * 40)
+            print("Current model normalized score: {}.".format(normalized_score))
+            print("Val accuracy:      {}".format(val_acc))
+            print("Block choices:     {}".format(block_choices.asnumpy()))
+            print("Channel choices:   {}".format(channel_choices))
+            print('Flops:             {} MFLOPS'.format(flops))
+            print('# parameters:      {} M'.format(model_size))
+
+    if logger:
+        logger.info('-' * 40)
+        logger.info("Current model normalized score: {}.".
+                    format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
+        logger.info("Best val accuracy:    {}".format(best_acc))
+        logger.info("Block choices:        {}".format(best_block_choices))
+        logger.info("Channel choices:      {}".format(best_channel_choices))
+        logger.info('Flops:                {} MFLOPS'.format(best_acc_flop))
+        logger.info('# parameters:         {} M'.format(best_acc_size))
+    else:
         print('-' * 40)
-        print("Current model normalized score: {}.".format(normalized_score))
-        print("Val accuracy:      {}".format(val_acc))
-        print("Block choices:     {}".format(block_choices.asnumpy()))
-        print("Channel choices:   {}".format(channel_choices))
-        print('Flops:             {} MFLOPS'.format(flops))
-        print('# parameters:      {} M'.format(model_size))
-    
-    print('-' * 40)
-    print("Current model normalized score: {}.".
-          format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
-    print("Best val accuracy:    {}".format(best_acc))
-    print("Block choices:        {}".format(best_block_choices))
-    print("Channel choices:      {}".format(best_channel_choices))
-    print('Flops:                {} MFLOPS'.format(best_acc_flop))
-    print('# parameters:         {} M'.format(best_acc_size))
+        print("Current model normalized score: {}.".
+              format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
+        print("Best val accuracy:    {}".format(best_acc))
+        print("Block choices:        {}".format(best_block_choices))
+        print("Channel choices:      {}".format(best_channel_choices))
+        print('Flops:                {} MFLOPS'.format(best_acc_flop))
+        print('# parameters:         {} M'.format(best_acc_size))
 
 
-def genetic_search(net, num_gpus=4, batch_size=256, ctx=[mx.cpu()]):
+def genetic_search(net, num_gpus=4, batch_size=256, logger=None, ctx=[mx.cpu()]):
     # get data
     train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
 
@@ -439,22 +460,53 @@ def genetic_search(net, num_gpus=4, batch_size=256, ctx=[mx.cpu()]):
 
 
 def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params',
-         dtype='float32', batch_size=256, search_mode='random'):
+         dtype='float32', batch_size=256, search_mode='random', comparison_model='MobileNetV3_large'):
+
+    config = {'num_gpus': num_gpus, 'supernet_params': supernet_params,
+              'dtype': dtype, 'batch_size': batch_size, 'search_mode': search_mode,
+              'comparison_model': comparison_model}
+
+    if comparison_model == 'MobileNetV3_large':    # proves ShuffleNet series calculate  == google paper's
+        flops_constraint = 217
+        parameter_number_constraint = 5.4
+    elif comparison_model == 'MobileNetV2_1.4':    # proves MicroNet challenge doubles what google paper claimed
+        flops_constraint = 585                     # somehow MicroNet challenge calculate flops by doubled this.
+        parameter_number_constraint = 6.9
+    elif comparison_model == 'SinglePathOneShot':  # proves mine calculation == ShuffleNet series' == google paper's
+        flops_constraint = 328
+        parameter_number_constraint = 3.4
+    elif comparison_model == 'ShuffleNetV2+_medium':
+        flops_constraint = 222
+        parameter_number_constraint = 5.6
+    else:
+        raise ValueError("Unrecognized comparison model: {}".format(comparison_model))
+
     context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.cast(dtype)
     net.load_parameters(supernet_params, ctx=context)
     net.cast('float32')
     print(net)
+    filehandler = logging.FileHandler('./search_supernet_{}.log'.format(comparison_model))
+    streamhandler = logging.StreamHandler()
+
+    logger = logging.getLogger('')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(filehandler)
+    logger.addHandler(streamhandler)
+
+    logger.info(config)
+
     if search_mode == 'random':
-        random_search(net, search_iters=2000, dtype='float32',
-                      batch_size=batch_size, update_bn_images=20000, ctx=context)
+        random_search(net, search_iters=50000, dtype='float32',
+                      batch_size=batch_size, update_bn_images=20000, logger=logger, ctx=context,
+                      flops_constraint=flops_constraint, parameter_number_constraint=parameter_number_constraint)
     elif search_mode == 'genetic':
-        genetic_search()
+        genetic_search(net, num_gpus=len(context), batch_size=batch_size, logger=logger, ctx=context)
     else:
         raise ValueError("Unrecognized search mode: {}".format(search_mode))
 
 
 if __name__ == '__main__':
-    main(num_gpus=1, batch_size=256, search_mode='random', dtype='float16')
+    main(num_gpus=1, batch_size=128, search_mode='random', dtype='float16', comparison_model='SinglePathOneShot')
 
