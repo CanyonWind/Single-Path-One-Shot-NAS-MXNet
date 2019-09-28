@@ -38,6 +38,7 @@ python oneshot_nas_network.py
 python search_supernet.py
 ```
 
+![alt text](./images/Supernet.png)
 
 ## Roadmap
 - [x] Implement the fixed architecture model from the official pytorch release.
