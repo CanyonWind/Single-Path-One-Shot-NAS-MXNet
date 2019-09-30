@@ -3,15 +3,15 @@ import numpy as np
 import argparse
 import re
 
-
-def plot():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log-file', default='condensed_shufflenas_supernet.log', help='log file')
-    parser.add_argument('--mode', type=str, default='accuracy', help='the mode of plotting')
-    # parser.add_argument('--log-file', default='search_supernet_SinglePathOneShot.log', help='log file')
-    # parser.add_argument('--mode', type=str, default='subnet', help='the mode of plotting')
+    parser.add_argument('--mode', type=str, default='accuracy', help='the mode of plotting. ['accuracy', 'subnet']')
     args = vars(parser.parse_args())
+    return args
+    
 
+def plot():
     rows = open(args['log_file']).readlines()
 
     if args['mode'] == 'accuracy':
@@ -71,4 +71,5 @@ def plot():
 
 
 if __name__ == '__main__':
+    args = parse_args()
     plot()
