@@ -40,7 +40,7 @@ python train_imagenet.py \
     --num-epochs 120 --batch-size 128 --num-gpus 4 -j 4 \
     --label-smoothing --no-wd --warmup-epochs 10 --use-rec \
     --save-dir params_shufflenas_supernet --logging-file shufflenas_supernet.log \
-    --epoch-start-cs 0 --use-se
+    --epoch-start-cs 60 --cs-warm-up
 ```
 
 **Searching stage**
