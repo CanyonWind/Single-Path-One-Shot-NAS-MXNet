@@ -557,11 +557,6 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
 
 
 def main():
-
-    config = {'num_gpus': args.num_gpus, 'supernet_params': args.supernet_params,
-              'dtype': args.dtype, 'batch_size': args.batch_size, 'search_mode': args.search_mode,
-              'comparison_model': args.comparison_model}
-
     context = [mx.gpu(i) for i in range(args.num_gpus)] if args.num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=args.use_se, last_conv_after_pooling=args.last_conv_after_pooling)
     net.cast(args.dtype)
@@ -577,7 +572,7 @@ def main():
     logger.addHandler(filehandler)
     logger.addHandler(streamhandler)
 
-    logger.info(config)
+    logger.info(args)
 
     data_kwargs = {
         "rec_train": args.rec_train,
