@@ -5,7 +5,7 @@ import re
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log-file', default='condensed_shufflenas_supernet.log', help='log file')
+    parser.add_argument('--log-file', default='./logs/shufflenas_supernet.log', help='log file')
     parser.add_argument('--mode', type=str, default='accuracy', help='the mode of plotting. ['accuracy', 'subnet']')
     args = vars(parser.parse_args())
     return args
