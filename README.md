@@ -95,7 +95,7 @@ python search_supernet.py \
 
 ## Results
 
-| Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Sum of Normalized Score](https://micronet-challenge.github.io/scoring_and_submission.html) |
+| Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) |
 | :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: |
 |    OneShot Supernet |  841.9M |  15.4M |  62.90   |   84.49   | - |
 |    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 |
