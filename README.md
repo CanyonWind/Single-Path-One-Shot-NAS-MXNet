@@ -95,16 +95,18 @@ python search_supernet.py \
 
 ## Results
 
-| Model                  | FLOPs | #Params   | Top-1 | Top-5 |
-| :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  62.90   |   84.49   |
-|    OneShot (FP16) |  328M (345M with ReLU and BN) |  3.4M |  74.02   |   91.63   |
-|    OneShot (official pytorch) |  328M |  3.4M |  74.9   |   92.00   |
-|    NASNET-A|  564M |  5.3M |  74.0   |   91.6   |
-|    PNASNET|  588M |  5.1M |  74.2   |   91.9   |
-|    MnasNet|  317M |  4.2M |  74.0   |  91.8   |
-|    DARTS|  574M|  4.7M |  73.3   |   91.3  |
-|    FBNet-B|  295M|  4.5M |  74.1   |   -   |
+| Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Sum of Normalized Score](https://micronet-challenge.github.io/scoring_and_submission.html) |
+| :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: |
+|    OneShot Supernet |  841.9M (maximum path) |  15.4M (all paths) |  62.90   |   84.49   | - |
+|    OneShot |  328M |  3.4M |  74.02   |   91.6   | 2 |
+|    OneShot+ |  297M |  3.7M |  **75.2**   |   **92.6**   | **1.9937** |
+|    OneShot (official pytorch) |  328M |  3.4M |  74.9   |   92.0   | 2 |
+|    MobileNetV3 Large 224/1.0 |	217M |	5.4M |	**75.2**|	- | 2.25 |
+|    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 |
+|    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 |
+|    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 |
+|    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 |
+|    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 |
 
 **Last conv channels reducted model**
 
