@@ -50,7 +50,7 @@ python search_supernet.py
 - [x] Verify that this repo's implementation shares the same # parameters and # FLOPs with the official one.
 - [x] Add SE and hard swish in the model (on/off can be controlled by --use-se)
 - [x] Add MobileNetV3 style last conv (on/off can be controlled by --last-conv-after-pooling)
-- [ ] **In progress:** Train the official fixed architecture model on Imagenet
+- [x] Train the official fixed architecture model on Imagenet
 - [x] Train the official uniform selection supernet model on Imagenet
     - [x] Add --use-all-blocks, --use-all-channels and --epoch-start-cs options for the supernet training.
     - [x] Add channel selection warm up: after epoch_start_cs, the channel selection range will be gradually increased.
