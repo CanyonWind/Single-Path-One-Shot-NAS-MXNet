@@ -1,6 +1,3 @@
-import mxnet as mx
-from mxnet import gluon
-from mxnet import nd
 import os
 import copy
 import math
@@ -8,24 +5,88 @@ from itertools import count
 import random
 import time
 import logging
+import argparse
+import heapq
+
+import mxnet as mx
+from mxnet import gluon
+from mxnet import nd
 
 from oneshot_nas_network import get_shufflenas_oneshot
 from calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
-import heapq
 
 
-def generate_random_data_label(ctx=mx.gpu(0)):
-    data = nd.random.uniform(-1, 1, shape=(1, 3, 224, 224), ctx=ctx)
-    label = None
-    return data, label
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train a model for image classification.')
+
+    # ---------------------------- data ------------------------------- #
+    parser.add_argument('--rec_train', type=str,
+                        default='~/.mxnet/datasets/imagenet/rec/train.rec',
+                        help='the training data')
+    parser.add_argument('--rec_train_idx', type=str,
+                        default='~/.mxnet/datasets/imagenet/rec/train.idx',
+                        help='the index of training data')
+    parser.add_argument('--rec_val', type=str,
+                        default='~/.mxnet/datasets/imagenet/rec/val.rec',
+                        help='the validation data')
+    parser.add_argument('--rec_val_idx', type=str,
+                        default='~/.mxnet/datasets/imagenet/rec/val.idx',
+                        help='the index of validation data')
+    parser.add_argument('--input_size', type=int, default=224,
+                        help='the size of the input image')
+    parser.add_argument('--crop-ratio', type=float, default=0.875,
+                        help='crop ratio during validation. default is 0.875')
+    parser.add_argument('--num_workers', type=int, default=8,
+                        help='number of preprocessing workers')
+    parser.add_argument('--batch_size', type=int, default=128,
+                        help='training batch size per device (CPU/GPU)')
+    parser.add_argument('--dtype', type=str, default='float32',
+                        help='data type for training')
+    parser.add_argument('--shuffle_train', type=bool, default=False,
+                        help='whether to do shuffle in training data for BN update')
+    parser.add_argument('--num_gpus', type=int, default=1,
+                        help='number of gpus to use')
+
+    # ---------------------------- model ------------------------------- #
+    parser.add_argument('--use_se', type=bool, default=True,
+                        help='use SE layers or not in resnext and ShuffleNas')
+    parser.add_argument('--last_conv_after_pooling', type=bool, default=True,
+                        help='whether to follow MobileNet V3 last conv after pooling style')
+
+    # ----------------------- search supernet -------------------------- #
+    parser.add_argument('--supernet_params', type=str,
+                        default='./params/ShuffleNasOneshot-imagenet-supernet.params',
+                        help='supernet parameter directory')
+    parser.add_argument('--search_mode', type=str, default='genetic',
+                        help="search mode, options: ['random', 'genetic'] ")
+    parser.add_argument('--comparison_model', type=str, default='SinglePathOneShot',
+                        help="model to compare with when searching, "
+                             "options: ['MobileNetV3_large', 'MobileNetV2_1.4', "
+                             "'SinglePathOneShot', 'ShuffleNetV2+_medium']")
+    parser.add_argument('--topk', type=int, default=3,
+                        help='get top k models')
+    parser.add_argument('--search_iters', type=int, default=10,
+                        help='how many search iterations')
+    parser.add_argument('--update_bn_images', type=int, default=20000,
+                        help='How many images to update the BN statistics.')
+
+    # ----------------------- genetic search -------------------------- #
+    parser.add_argument('--population_size', type=int, default=500,
+                        help='the size of population to keep during searching')
+    parser.add_argument('--retain_length', type=int, default=100,
+                        help='how many items to keep after fitness')
+    parser.add_argument('--random_select', type=float, default=0.1,
+                        help='probability of a rejected network remaining in the population')
+    parser.add_argument('--mutate_chance', type=float, default=0.1,
+                        help='probability a network will be randomly mutated')
+
+    args = parser.parse_args()
+    return args
 
 
-def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec', 
-             rec_train_idx='~/.mxnet/datasets/imagenet/rec/train.idx',
-             rec_val='~/.mxnet/datasets/imagenet/rec/val.rec', 
-             rec_val_idx='~/.mxnet/datasets/imagenet/rec/val.idx',
-             input_size=224, crop_ratio=0.875, num_workers=8, batch_size=256, num_gpus=0):
+def get_data(batch_size, num_gpus, rec_train, rec_train_idx, rec_val, rec_val_idx,
+             input_size, crop_ratio, num_workers, shuffle_train):
     rec_train = os.path.expanduser(rec_train)
     rec_train_idx = os.path.expanduser(rec_train_idx)
     rec_val = os.path.expanduser(rec_val)
@@ -44,7 +105,7 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
         path_imgrec=rec_train,
         path_imgidx=rec_train_idx,
         preprocess_threads=int(num_workers//2),
-        shuffle=False,
+        shuffle=shuffle_train,
         batch_size=batch_size,
 
         resize=resize,
@@ -60,7 +121,7 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
         path_imgrec=rec_val,
         path_imgidx=rec_val_idx,
         preprocess_threads=num_workers,
-        shuffle=False,
+        shuffle=shuffle_train,
         batch_size=batch_size,
 
         resize=resize,
@@ -75,8 +136,52 @@ def get_data(rec_train='~/.mxnet/datasets/imagenet/rec/train.rec',
     return train_data, val_data, batch_fn
 
 
+def get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot'):
+    """ Return the flops and num of params """
+    # build fix_arch network and calculate flop
+    fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
+    fixarch_net._initialize()
+    if not os.path.exists('./symbols'):
+        os.makedirs('./symbols')
+    fixarch_net.hybridize()
+
+    # calculate flops and num of params
+    dummy_data = nd.ones([1, 3, 224, 224])
+    fixarch_net(dummy_data)
+    fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+    flops, model_size = get_flops()  # both in Millions
+
+    # proves ShuffleNet series calculate == google paper's
+    if args.comparison_model == 'MobileNetV3_large':
+        flops_constraint = 217
+        parameter_number_constraint = 5.4
+
+    # proves MicroNet challenge doubles what google paper claimed
+    elif args.comparison_model == 'MobileNetV2_1.4':
+        flops_constraint = 585
+        parameter_number_constraint = 6.9
+
+    elif args.comparison_model == 'SinglePathOneShot':
+        flops_constraint = 328
+        parameter_number_constraint = 3.4
+
+    # proves mine calculation == ShuffleNet series' == google paper's
+    elif args.comparison_model == 'ShuffleNetV2+_medium':
+        flops_constraint = 222
+        parameter_number_constraint = 5.6
+
+    else:
+        raise ValueError("Unrecognized comparison model: {}".format(comparison_model))
+
+    flop_score = flops / flops_constraint
+    model_size_score = model_size / parameter_number_constraint
+
+    return flops, model_size, flop_score, model_size_score
+
+
 def get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
-                 acc_top1=None, acc_top5=None, ctx=[mx.cpu()], dtype='float32'):
+                 acc_top1=mx.metric.Accuracy(), acc_top5=mx.metric.TopKAccuracy(5),
+                 ctx=[mx.cpu()], dtype='float32'):
     val_data.reset()
     acc_top1.reset()
     acc_top5.reset()
@@ -112,128 +217,138 @@ def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
     set_nas_bn(net, inference_update_stat=False)
 
 
+def update_log(elem, logger=None):
+    """
+    Print log
+    Args:
+        elem: a tuple of (accuracy, norm_score, flops, model_size, block_choice, channel_choice)
+        logger:
+    """
+    if logger:
+        logger.info('-' * 40)
+        logger.info("Model normalized score: {}.".format(elem[1]))
+        logger.info("Val accuracy:      {}".format(elem[0]))
+        logger.info("Block choices:     {}".format(elem[4]))
+        logger.info("Channel choices:   {}".format(elem[5]))
+        logger.info('Flops:             {} MFLOPS'.format(elem[2]))
+        logger.info('# parameters:      {} M'.format(elem[3]))
+    else:
+        print('-' * 40)
+        print("Model normalized score: {}.".format(elem[1]))
+        print("Val accuracy:      {}".format(elem[0]))
+        print("Block choices:     {}".format(elem[4]))
+        print("Channel choices:   {}".format(elem[5]))
+        print('Flops:             {} MFLOPS'.format(elem[2]))
+        print('# parameters:      {} M'.format(elem[3]))
+
+
 class TopKHeap(object):
-    def __init__(self, k, cnt):
+    def __init__(self, k):
         self.k = k
         self.data = []
-        self.cnt = cnt
 
-    def push(self, elem, cnt):
+    def push(self, elem):
         if len(self.data) < self.k:
-            heapq.heappush(self.data, (elem['acc'], next(cnt), elem))
+            heapq.heappush(self.data, elem)
         else:
             topk_small = self.data[0]
-            if elem['acc'] > topk_small[0]:
-                heapq.heapreplace(self.data, (elem['acc'], next(cnt), elem))
+            if elem[0] > topk_small[0]:
+                heapq.heapreplace(self.data, elem)
 
     def topk(self):
-        # element is in format of (accuracy, second_order, net_selected_params)
-        return [x[2] for x in reversed([heapq.heappop(self.data) for _ in range(len(self.data))])]
+        return reversed([heapq.heappop(self.data) for _ in range(len(self.data))])
 
 
 class Evolver():
     """ Class that implements genetic algorithm for supernet selection. """
 
-    def __init__(self, net, train_data, val_data, batch_fn, param_dict, update_bn_images=20000,
-                 search_iters=1000, random_select=0.1, mutate_chance=0.1,
-                 num_gpus=0, dtype='float32', batch_size=256, flops_constraint=585, parameter_number_constraint=6.9):
-        """
-        Args:
-            param_dict (dict):     Possible network paremters  {'block': [] * 4, 'channel': [] * 10}
-            update_bn_images:
-            search_iters:
-            retain (float):        Percentage of population to retain after each generation
-            random_select (float): Probability of a rejected network remaining in the population
-            mutate_chance (float): Probability a network will be randomly mutated
-            num_gpus:
-            dtype:
-            batch_size:
-            flops_constraint:      MobileNetV3-Large-1.0 [219M],
-                                   MicroNet Challenge standard MobileNetV2-1.4 [585M]
-            param_num_constraint:  MobileNetV3-Large-1.0 [5.4M],
-                                   MicroNet Challenge standard MobileNetV2-1.4 [6.9M]
-        """
+    def __init__(self, net, train_data, val_data, batch_fn, param_dict,
+                 dtype='float32', ctx=[mx.cpu()], comparison_model='SinglePathOneShot',
+                 update_bn_images=20000, search_iters=50, batch_size=256,
+                 population_size=500, retain_length=100, random_select=0.1, mutate_chance=0.1):
+
         self.net = net
         self.train_data = train_data
         self.val_data = val_data
         self.batch_fn = batch_fn
         self.param_dict = param_dict
+        self.dtype = dtype
+        self.ctx = ctx
+        self.comparision_model = comparison_model
         self.update_bn_images = update_bn_images
         self.search_iters = search_iters
+        self.batch_size = batch_size
+        self.population_size = population_size
+        self.retain_length = retain_length
         self.random_select = random_select
         self.mutate_chance = mutate_chance
-        self.num_gpus = num_gpus
-        self.dtype = dtype
-        self.batch_size = batch_size
-        self.flops_constraint = flops_constraint
-        self.parameter_number_constraint = parameter_number_constraint
 
-    def create_population(self, count=2000):
+    def create_population(self):
         """Create a population of random networks.
         Args:
-            count (int): Number of networks to generate, aka the
-                size of the population
+            count (int): Number of networks to generate, aka the size of the population
         Returns:
             (list): Population of random networks
         """
         population = []
-        for _ in range(0, count):
+        while len(population) < self.population_size:
             # Create a random network.
             instance = {}
             for param_name in self.param_dict:
                 instance[param_name] = [random.choice(self.param_dict[param_name]) for _ in range(20)]
 
+            block_choices = nd.array(instance['block']).astype(self.dtype, copy=False)
+            channel_choices = instance['channel']
+            flops, model_size, flop_score, model_size_score = \
+                get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
+
+            combined_score = flop_score + model_size_score
+            if combined_score >= 2:
+                print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                continue
+
             # Add the network to our population.
+            instance['flops'] = flops
+            instance['model_size'] = model_size
+            instance['score'] = combined_score
             population.append(instance)
 
         return population
 
-    def fitness_1st_stage(self, block_choices, channel_choices):
-        """ Return the flop score + num_param score, which is our first fitness function. """
-        # build fix_arch network and calculate flop
-        fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
-        fixarch_net._initialize()
-        if not os.path.exists('./symbols'):
-            os.makedirs('./symbols')
-        fixarch_net.hybridize()
-        dummy_data = nd.ones([1, 3, 224, 224])
-        fixarch_net(dummy_data)
-        fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
-        flops, model_size = get_flops()  # both in Millions
-        normalized_score = flops / self.flops_constraint + model_size / self.parameter_number_constraint
-        if normalized_score >= 1.1:
-            print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
-            print("[SKIPPED] Block choices:     {}".format(block_choices))
-            print("[SKIPPED] Channel choices:   {}".format(channel_choices))
-            print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
-            print('[SKIPPED] # parameters:      {} M'.format(model_size))
-        return normalized_score
-
-    def fitness_2nd_stage(self, block_choices, full_channel_mask, acc_top1=mx.metric.Accuracy(),
-                          acc_top5=mx.metric.TopKAccuracy(5), dtype='float32'):
+    def fitness(self, block_choices, channel_choice):
         """ Return the accuracy, which is our second fitness function. """
+        # get block choices
+        block_choices = nd.array(block_choices).astype(self.dtype, copy=False)
+
+        # get channel mask
+        channel_mask = []
+        global_max_length = int(self.net.stage_out_channels[-1] // 2 * self.net.candidate_scales[-1])
+        for i in range(len(self.net.stage_repeats)):
+            for j in range(self.net.stage_repeats[i]):
+                local_mask = [0] * global_max_length
+                channel_choice_index = len(channel_mask)  # channel_choice index is equal to current channel_mask length
+                channel_num = int(self.net.stage_out_channels[i] // 2 *
+                                  self.net.candidate_scales[channel_choice[channel_choice_index]])
+                local_mask[:channel_num] = [1] * channel_num
+                channel_mask.append(local_mask)
+        channel_mask = nd.array(channel_mask).astype(self.dtype, copy=False)
+
         # Update BN
-        ctx = [mx.gpu(i) for i in range(self.num_gpus)] if self.num_gpus > 0 else [mx.cpu()]
-        update_bn(self.net, block_choices, full_channel_mask, self.batch_fn, self.train_data, ctx=ctx, dtype=self.dtype,
+        tic = time.time()
+        update_bn(self.net, self.batch_fn, self.train_data, block_choices, channel_mask, ctx=self.ctx, dtype=self.dtype,
                   batch_size=self.batch_size, update_bn_images=self.update_bn_images)
+        print("BN statistics updated. Time used: {}".format(time.time() - tic))
 
-        self.val_data.reset()
-        acc_top1.reset()
-        acc_top5.reset()
-        print("BN statistics updated.")
+        # get accuracy
+        tic = time.time()
+        top1 = get_accuracy(self.net, self.val_data, self.batch_fn, block_choices, channel_mask,
+                            ctx=self.ctx, dtype=self.dtype)
+        print("Validation accuracy evaluated. Time used: {}".format(time.time() - tic))
 
-        for i, batch in enumerate(self.val_data):
-            # TODO: remove debug code
-            if i >= 1:
-                break
-            # End debug
-            data, label = self.batch_fn(batch, ctx)
-            outputs = [self.net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
-            acc_top1.update(label, outputs)
-            acc_top5.update(label, outputs)
-
-        _, top1 = acc_top1.get()
-        _, top5 = acc_top5.get()
         return top1
 
     def breed(self, mother, father):
@@ -251,8 +366,8 @@ class Evolver():
 
             # Crossover: loop through the parameters and pick params for the kid.
             for param_name in self.param_dict.keys():
-                child[param_name] = [0] * len(self.param_dict[param_name])
-                for i in range(len(self.param_dict[param_name])):
+                child[param_name] = [0] * len(father[param_name])
+                for i in range(len(father[param_name])):
                     child[param_name][i] = random.choice([mother[param_name][i], father[param_name][i]])
 
                     # Mutation: randomly mutate some of the children.
@@ -263,41 +378,31 @@ class Evolver():
 
         return children
 
-    def evolve(self, population, retain_length1=1000, retain_length2=500, topk=3):
-        """Evolve a population of networks.
+    def evolve(self, population, topk_items, logger=None):
+        """ Evolve a population of networks.
         Args:
-            population (list): A list of network parameters
-        Returns:
-            (list): The evolved population of networks
+            population: A list of network parameters
+            retain_length: How many items to keep after fitness
+            topk_items: the heap to store top k items
+        Return:
+            A list of the evolved population of networks
         """
 
-        # fitness first stage -------------------------------
-        selected1 = [(self.fitness_1st_stage(person['block'], person['channel']), person) for person in population]
+        # fitness
+        selected = [(self.fitness(person['block'], person['channel']), person) for person in population]
+        for item in selected:
+            net_obj = (item[0], item[1]['score'], item[1]['flops'], item[1]['model_size'],
+                       copy.deepcopy(item[1]['block']), copy.deepcopy(item[1]['channel']))
+            topk_items.push(net_obj)
+            update_log(net_obj, logger)
 
-        # Sort on the scores.
-        selected1 = [x[1] for x in sorted(selected1, key=lambda x: x[0])]
-
-        # The parents are every network we want to keep.
-        parents = selected1[:retain_length1]
-
-        # For those we aren't keeping, randomly keep some anyway.
-        for individual in selected1[retain_length1:]:
-            if self.random_select > random.random():
-                parents.append(individual)
-
-        # fitness second stage -------------------------------
-        # TODO: get channel mask
-        selected2 = [(self.fitness_2nd_stage(person['block'], person['channel']), person) for person in parents]
-
-        # Sort on the scores.
-        # TODO: Add accuracy
-        selected2 = [x[1] for x in sorted(selected2, key=lambda x: x[0], reverse=True)]
+        selected = [x[1] for x in sorted(selected, key=lambda x: x[0], reverse=True)]
 
         # The parents are every network we want to keep.
-        parents = selected2[:retain_length2]
+        parents = selected[:self.retain_length]
 
         # For those we aren't keeping, randomly keep some anyway.
-        for individual in selected2[retain_length2:]:
+        for individual in selected[self.retain_length:]:
             if self.random_select > random.random():
                 parents.append(individual)
 
@@ -324,170 +429,147 @@ class Evolver():
                 # Add the children one at a time.
                 for baby in babies:
                     # Don't grow larger than desired length.
-                    if len(children) < desired_length:
-                        children.append(baby)
+                    if len(children) >= desired_length:
+                        break
+
+                    block_choices = nd.array(baby['block']).astype(self.dtype, copy=False)
+                    channel_choices = baby['channel']
+                    flops, model_size, flop_score, model_size_score = \
+                        get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
+
+                    combined_score = flop_score + model_size_score
+                    if combined_score >= 2:
+                        print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                        print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                        print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                        print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                        print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                        continue
+
+                    # Add the network to our population.
+                    baby['flops'] = flops
+                    baby['model_size'] = model_size
+                    baby['score'] = combined_score
+                    children.append(baby)
 
         parents.extend(children)
-        return parents, selected2[:topk]
+        return parents
 
 
-def random_search(net, search_iters=2000, update_bn_images=20000, dtype='float32', batch_size=256,
-                  flops_constraint=328, parameter_number_constraint=3.4, logger=None, ctx=[mx.cpu()]):
-    """
-    Search within the pre-trained supernet.
-    :param net:
-    :param search_iters:
-    :param update_bn_images:
-    :param dtype:
-    :param batch_size:
-    :param flops_constraint: MobileNetV3-Large-1.0 [219M], MicroNet Challenge standard MobileNetV2-1.4 [585M]
-    :param parameter_number_constraint: MobileNetV3-Large-1.0 [5.4M], MicroNet Challenge standard MobileNetV2-1.4 [6.9M]
-    :return:
-    """
-    # TODO: use a heapq here to store top-5 models
-    train_data, val_data, batch_fn = get_data(num_gpus=len(ctx), batch_size=batch_size)
-    best_acc, best_acc_flop, best_acc_size = 0, 0, 0
-    best_block_choices = None
-    best_channel_choices = None
-    acc_top1 = mx.metric.Accuracy()
-    acc_top5 = mx.metric.TopKAccuracy(5)
+def random_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_model='SinglePathOneShot',
+                  update_bn_images=20000, search_iters=50000, batch_size=128, topk=3, **data_kwargs):
+    """ Search within the pre-trained supernet. """
+
+    train_data, val_data, batch_fn = get_data(batch_size=batch_size, num_gpus=len(ctx), **data_kwargs)
+
+    topk_nets = TopKHeap(topk)  # a list of tuple (acc, score, flops, model_size, block_choices, channel_choices)
+    net_obj = None
+
     for i in range(search_iters):
         print("\nSearching iter: {}".format(i))
+
+        # get selected blocks and channels
         block_choices = net.random_block_choices(select_predefined_block=False, dtype=dtype)
         full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False, dtype=dtype)
-        
-        # build fix_arch network and calculate flop
-        fixarch_net = get_shufflenas_oneshot(block_choices.asnumpy(), channel_choices)
-        fixarch_net._initialize()
-        if not os.path.exists('./symbols'):
-            os.makedirs('./symbols')
-        fixarch_net.hybridize()
-        dummy_data = nd.ones([1, 3, 224, 224])
-        fixarch_net(dummy_data)
-        fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
-        flops, model_size = get_flops()  # both in Millions
-        normalized_score = flops / flops_constraint + model_size / parameter_number_constraint
-        if normalized_score >= 2:
-            print("[SKIPPED] Current model normalized score: {}.".format(normalized_score))
+
+        # calculate
+        flops, model_size, flop_score, model_size_score = \
+            get_flop_param_score(block_choices, channel_choices, comparison_model)
+        combined_score = flop_score + model_size_score
+        if combined_score >= 2:
+            print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
             print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
             print("[SKIPPED] Channel choices:   {}".format(channel_choices))
             print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
             print('[SKIPPED] # parameters:      {} M'.format(model_size))
             continue
 
-        # Update BN
+        # update BN
         tic = time.time()
         update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=ctx, dtype=dtype,
                   batch_size=batch_size, update_bn_images=update_bn_images)
         print("BN statistics updated. Time used: {}".format(time.time() - tic))
-        # Get validation accuracy
+
+        # get validation accuracy
         tic = time.time()
-        val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask,
-                               acc_top1=acc_top1, acc_top5=acc_top5, ctx=ctx)
+        val_acc = get_accuracy(net, val_data, batch_fn, block_choices, full_channel_mask, ctx=ctx)
         print("Validation accuracy evaluated. Time used: {}".format(time.time() - tic))
-        if val_acc > best_acc:
-            best_acc = val_acc
-            best_acc_flop = flops
-            best_acc_size = model_size
-            best_block_choices = copy.deepcopy(block_choices.asnumpy())
-            best_channel_choices = copy.deepcopy(channel_choices)
 
-        if logger:
-            logger.info('-' * 40)
-            logger.info("Current model normalized score: {}.".format(normalized_score))
-            logger.info("Val accuracy:      {}".format(val_acc))
-            logger.info("Block choices:     {}".format(block_choices.asnumpy()))
-            logger.info("Channel choices:   {}".format(channel_choices))
-            logger.info('Flops:             {} MFLOPS'.format(flops))
-            logger.info('# parameters:      {} M'.format(model_size))
-        else:
-            print('-' * 40)
-            print("Current model normalized score: {}.".format(normalized_score))
-            print("Val accuracy:      {}".format(val_acc))
-            print("Block choices:     {}".format(block_choices.asnumpy()))
-            print("Channel choices:   {}".format(channel_choices))
-            print('Flops:             {} MFLOPS'.format(flops))
-            print('# parameters:      {} M'.format(model_size))
+        # update the list of best networks
+        # net_obj is (accuracy, norm_score, flops, model_size, block_choice, channel_choice)
+        net_obj = (val_acc, flop_score + model_size_score, flops, model_size,
+                copy.deepcopy(block_choices.asnumpy()), copy.deepcopy(channel_choices))
+        topk_nets.push(net_obj)
+        update_log(net_obj, logger)
 
+    # summary
     if logger:
         logger.info('-' * 40)
-        logger.info("Current model normalized score: {}.".
-                    format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
-        logger.info("Best val accuracy:    {}".format(best_acc))
-        logger.info("Block choices:        {}".format(best_block_choices))
-        logger.info("Channel choices:      {}".format(best_channel_choices))
-        logger.info('Flops:                {} MFLOPS'.format(best_acc_flop))
-        logger.info('# parameters:         {} M'.format(best_acc_size))
+        logger.info('Best models:')
     else:
         print('-' * 40)
-        print("Current model normalized score: {}.".
-              format(best_acc_flop / flops_constraint + best_acc_size / parameter_number_constraint))
-        print("Best val accuracy:    {}".format(best_acc))
-        print("Block choices:        {}".format(best_block_choices))
-        print("Channel choices:      {}".format(best_channel_choices))
-        print('Flops:                {} MFLOPS'.format(best_acc_flop))
-        print('# parameters:         {} M'.format(best_acc_size))
+        print('Best models:')
+    for net_obj in topk_nets.data:
+        update_log(net_obj, logger)
 
 
-def genetic_search(net, num_gpus=4, batch_size=256, logger=None, ctx=[mx.cpu()]):
+def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_model='SinglePathOneShot',
+                   update_bn_images=20000, search_iters=50000, batch_size=128, topk=3,
+                   population_size=500, retain_length=100, random_select=0.1, mutate_chance=0.1, **data_kwargs):
+
     # get data
-    train_data, val_data, batch_fn = get_data(num_gpus=num_gpus, batch_size=batch_size)
+    train_data, val_data, batch_fn = get_data(batch_size=batch_size, num_gpus=len(ctx), **data_kwargs)
 
-    # get supernet
-    context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
+    topk_nets = TopKHeap(topk)  # a list of tuple (acc, score, flops, model_size, block_choices, channel_choices)
+    net_obj = None
 
     # set channel and block value list
     param_dict = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                   'block': [0, 1, 2, 3]}
 
-    # keep global topk params
-    cnt = count()  # for heap
-    global_topk = TopKHeap(3, cnt)
-
     # evolution
-    num_iter = 50
-    evolver = Evolver(net, train_data, val_data, batch_fn, param_dict)
+    evolver = Evolver(net, train_data, val_data, batch_fn, param_dict,
+                      dtype=dtype,
+                      ctx=ctx,
+                      comparison_model=comparison_model,
+                      update_bn_images=update_bn_images,
+                      search_iters=search_iters,
+                      batch_size=batch_size,
+                      population_size=population_size,
+                      retain_length=retain_length,
+                      random_select=random_select,
+                      mutate_chance=mutate_chance)
     population = evolver.create_population()
 
-    for i in range(num_iter):
+    for i in range(search_iters):
         print("\nSearching iter: {}".format(i))
-        population, local_topk = evolver.evolve(population)
-        for elem in local_topk:
-            global_topk.push(elem, cnt)
+        population = evolver.evolve(population, topk_nets, logger)
 
-    print(global_topk)
-    return None
-
-
-def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params',
-         dtype='float32', batch_size=256, search_mode='random', comparison_model='MobileNetV3_large'):
-
-    config = {'num_gpus': num_gpus, 'supernet_params': supernet_params,
-              'dtype': dtype, 'batch_size': batch_size, 'search_mode': search_mode,
-              'comparison_model': comparison_model}
-
-    if comparison_model == 'MobileNetV3_large':    # proves ShuffleNet series calculate  == google paper's
-        flops_constraint = 217
-        parameter_number_constraint = 5.4
-    elif comparison_model == 'MobileNetV2_1.4':    # proves MicroNet challenge doubles what google paper claimed
-        flops_constraint = 585                     # somehow MicroNet challenge calculate flops by doubled this.
-        parameter_number_constraint = 6.9
-    elif comparison_model == 'SinglePathOneShot':  # proves mine calculation == ShuffleNet series' == google paper's
-        flops_constraint = 328
-        parameter_number_constraint = 3.4
-    elif comparison_model == 'ShuffleNetV2+_medium':
-        flops_constraint = 222
-        parameter_number_constraint = 5.6
+    # summary
+    if logger:
+        logger.info('-' * 40)
+        logger.info('Best models:')
     else:
-        raise ValueError("Unrecognized comparison model: {}".format(comparison_model))
+        print('-' * 40)
+        print('Best models:')
+    for net_obj in topk_nets.data:
+        update_log(net_obj, logger)
 
-    context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
-    net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
-    net.cast(dtype)
-    net.load_parameters(supernet_params, ctx=context)
+
+def main():
+
+    config = {'num_gpus': args.num_gpus, 'supernet_params': args.supernet_params,
+              'dtype': args.dtype, 'batch_size': args.batch_size, 'search_mode': args.search_mode,
+              'comparison_model': args.comparison_model}
+
+    context = [mx.gpu(i) for i in range(args.num_gpus)] if args.num_gpus > 0 else [mx.cpu()]
+    net = get_shufflenas_oneshot(use_se=args.use_se, last_conv_after_pooling=args.last_conv_after_pooling)
+    net.cast(args.dtype)
+    net.load_parameters(args.supernet_params, ctx=context)
     net.cast('float32')
     print(net)
-    filehandler = logging.FileHandler('./search_supernet_{}.log'.format(comparison_model))
+
+    filehandler = logging.FileHandler('./search_supernet_{}.log'.format(args.comparison_model))
     streamhandler = logging.StreamHandler()
 
     logger = logging.getLogger('')
@@ -497,16 +579,48 @@ def main(num_gpus=4, supernet_params='./params/ShuffleNasOneshot-imagenet-supern
 
     logger.info(config)
 
-    if search_mode == 'random':
-        random_search(net, search_iters=50000, dtype='float32',
-                      batch_size=batch_size, update_bn_images=20000, logger=logger, ctx=context,
-                      flops_constraint=flops_constraint, parameter_number_constraint=parameter_number_constraint)
-    elif search_mode == 'genetic':
-        genetic_search(net, num_gpus=len(context), batch_size=batch_size, logger=logger, ctx=context)
+    data_kwargs = {
+        "rec_train": args.rec_train,
+        "rec_train_idx": args.rec_train_idx,
+        "rec_val": args.rec_val,
+        "rec_val_idx": args.rec_val_idx,
+        "input_size": args.input_size,
+        "crop_ratio": args.crop_ratio,
+        "num_workers": args.num_workers,
+        "shuffle_train": args.shuffle_train
+    }
+
+    if args.search_mode == 'random':
+        random_search(net,
+                      dtype='float32',
+                      logger=logger,
+                      ctx=context,
+                      search_iters=args.search_iters,
+                      comparison_model=args.comparison_model,
+                      update_bn_images=args.update_bn_images,
+                      batch_size=args.batch_size,
+                      topk=args.topk,
+                      **data_kwargs
+                      )
+    elif args.search_mode == 'genetic':
+        genetic_search(net,
+                       dtype='float32',
+                       logger=logger,
+                       ctx=context,
+                       search_iters=args.search_iters,
+                       comparison_model=args.comparison_model,
+                       update_bn_images=args.update_bn_images,
+                       batch_size=args.batch_size,
+                       topk=args.topk,
+                       population_size=args.population_size,
+                       retain_length=args.retain_length,
+                       random_select=args.random_select,
+                       mutate_chance=args.mutate_chance,
+                       **data_kwargs)
     else:
-        raise ValueError("Unrecognized search mode: {}".format(search_mode))
+        raise ValueError("Unrecognized search mode: {}".format(args.search_mode))
 
 
 if __name__ == '__main__':
-    main(num_gpus=1, batch_size=128, search_mode='random', dtype='float16', comparison_model='SinglePathOneShot')
-
+    args = parse_args()
+    main()
