@@ -21,64 +21,64 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
 
     # ---------------------------- data ------------------------------- #
-    parser.add_argument('--rec_train', type=str,
+    parser.add_argument('--rec-train', type=str,
                         default='~/.mxnet/datasets/imagenet/rec/train.rec',
                         help='the training data')
-    parser.add_argument('--rec_train_idx', type=str,
+    parser.add_argument('--rec-train-idx', type=str,
                         default='~/.mxnet/datasets/imagenet/rec/train.idx',
                         help='the index of training data')
-    parser.add_argument('--rec_val', type=str,
+    parser.add_argument('--rec-val', type=str,
                         default='~/.mxnet/datasets/imagenet/rec/val.rec',
                         help='the validation data')
-    parser.add_argument('--rec_val_idx', type=str,
+    parser.add_argument('--rec-val-idx', type=str,
                         default='~/.mxnet/datasets/imagenet/rec/val.idx',
                         help='the index of validation data')
-    parser.add_argument('--input_size', type=int, default=224,
+    parser.add_argument('--input-size', type=int, default=224,
                         help='the size of the input image')
     parser.add_argument('--crop-ratio', type=float, default=0.875,
                         help='crop ratio during validation. default is 0.875')
-    parser.add_argument('--num_workers', type=int, default=8,
+    parser.add_argument('--num-workers', type=int, default=8,
                         help='number of preprocessing workers')
-    parser.add_argument('--batch_size', type=int, default=128,
+    parser.add_argument('--batch-size', type=int, default=128,
                         help='training batch size per device (CPU/GPU)')
     parser.add_argument('--dtype', type=str, default='float32',
                         help='data type for training')
-    parser.add_argument('--shuffle_train', type=bool, default=False,
+    parser.add_argument('--shuffle-train', type=bool, default=False,
                         help='whether to do shuffle in training data for BN update')
-    parser.add_argument('--num_gpus', type=int, default=1,
+    parser.add_argument('--num-gpus', type=int, default=1,
                         help='number of gpus to use')
 
     # ---------------------------- model ------------------------------- #
-    parser.add_argument('--use_se', type=bool, default=True,
+    parser.add_argument('--use-se', action='store_true',
                         help='use SE layers or not in resnext and ShuffleNas')
-    parser.add_argument('--last_conv_after_pooling', type=bool, default=True,
+    parser.add_argument('--last-conv-after-pooling', action='store_true',
                         help='whether to follow MobileNet V3 last conv after pooling style')
 
     # ----------------------- search supernet -------------------------- #
-    parser.add_argument('--supernet_params', type=str,
+    parser.add_argument('--supernet-params', type=str,
                         default='./params/ShuffleNasOneshot-imagenet-supernet.params',
                         help='supernet parameter directory')
-    parser.add_argument('--search_mode', type=str, default='genetic',
+    parser.add_argument('--search-mode', type=str, default='genetic',
                         help="search mode, options: ['random', 'genetic'] ")
-    parser.add_argument('--comparison_model', type=str, default='SinglePathOneShot',
+    parser.add_argument('--comparison-model', type=str, default='SinglePathOneShot',
                         help="model to compare with when searching, "
                              "options: ['MobileNetV3_large', 'MobileNetV2_1.4', "
                              "'SinglePathOneShot', 'ShuffleNetV2+_medium']")
     parser.add_argument('--topk', type=int, default=3,
                         help='get top k models')
-    parser.add_argument('--search_iters', type=int, default=10,
+    parser.add_argument('--search-iters', type=int, default=10,
                         help='how many search iterations')
-    parser.add_argument('--update_bn_images', type=int, default=20000,
+    parser.add_argument('--update-bn-images', type=int, default=20000,
                         help='How many images to update the BN statistics.')
 
     # ----------------------- genetic search -------------------------- #
-    parser.add_argument('--population_size', type=int, default=500,
+    parser.add_argument('--population-size', type=int, default=500,
                         help='the size of population to keep during searching')
-    parser.add_argument('--retain_length', type=int, default=100,
+    parser.add_argument('--retain-length', type=int, default=100,
                         help='how many items to keep after fitness')
-    parser.add_argument('--random_select', type=float, default=0.1,
+    parser.add_argument('--random-select', type=float, default=0.1,
                         help='probability of a rejected network remaining in the population')
-    parser.add_argument('--mutate_chance', type=float, default=0.1,
+    parser.add_argument('--mutate-chance', type=float, default=0.1,
                         help='probability a network will be randomly mutated')
 
     args = parser.parse_args()
