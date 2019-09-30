@@ -110,7 +110,7 @@ def parse_args():
                         help='whether to use all the choice blocks.')
     parser.add_argument('--use-all-channels', action='store_true',
                         help='whether to use all the channels.')
-    parser.add_argument('--epoch-start-cs', type=int, default=224,
+    parser.add_argument('--epoch-start-cs', type=int, default=60,
                         help='Epoch id for starting Channel selection.')
     parser.add_argument('--last-conv-after-pooling', action='store_true',
                         help='Whether to follow MobileNet V3 last conv after pooling style.')
