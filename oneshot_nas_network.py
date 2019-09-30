@@ -295,7 +295,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
 
 FIX_ARCH = False
 LAST_CONV_AFTER_POOLING = False
-USE_SE = True
+USE_SE = False
 
 
 def main():
