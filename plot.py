@@ -7,6 +7,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log-file', default='./logs/shufflenas_supernet.log', help='log file')
     parser.add_argument('--mode', type=str, default='accuracy', help='the mode of plotting. ['accuracy', 'subnet']')
+    parser.add_argument('--title', type=str, default='Supernet Top-1 Accuracy', help='Title of the plot')
+    parser.add_argument('--save-file', type=str, default='./supernet.png', help='save file name')
     args = vars(parser.parse_args())
     return args
     
@@ -36,11 +38,11 @@ def plot():
         plt.figure()
         plt.plot(np.arange(0, len(train_acc_list)), [item[1] for item in train_acc_list], label="train_top1")
         plt.plot(np.arange(0, len(val_acc_list)), [item[1] for item in val_acc_list], label="val_top1")
-        plt.title("Accuracy plot for supernet")
+        plt.title(args["title"])
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
         plt.legend(loc="lower right")
-        plt.savefig('supernet_accuracy.png')
+        plt.savefig(args["save_file"])
         plt.show()
     elif args['mode'] == 'subnet':
         score_list = []
@@ -62,11 +64,11 @@ def plot():
         plt.style.use("ggplot")
         plt.figure()
         plt.scatter(score_list, val_acc_list, alpha=0.8, c='steelblue', s=150, label='subnet')
-        plt.title("Subnet Val-acc vs. score difference")
+        plt.title(args["title"])
         plt.xlabel("Normalized score difference (larger is better)")
         plt.ylabel("Accuracy")
         plt.legend(loc="lower right")
-        plt.savefig('subnet_scatter.png')
+        plt.savefig(args["save_file"])
         plt.show()
 
 
