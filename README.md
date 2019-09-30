@@ -101,7 +101,7 @@ python search_supernet.py \
 |    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 |
 |    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** |
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 |
-|    MobileNetV3 Large 224/1.0 |	217M |	5.4M |	**75.2**|	- | 2.25 |
+|    MobileNetV3 Large |	217M |	5.4M |	**75.2**|	- | 2.25 |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 |
