@@ -293,8 +293,8 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = True
-LAST_CONV_AFTER_POOLING = True
+FIX_ARCH = False
+LAST_CONV_AFTER_POOLING = False
 USE_SE = True
 
 
