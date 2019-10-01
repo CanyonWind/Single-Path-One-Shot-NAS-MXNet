@@ -24,7 +24,20 @@ pip install -r requirements.txt
 - Support both random block selection and random channel selection.
 - A full functioning FLOP calculator is provided.
 - Genetic and random search with BN statistics update and FLOP & # parameters constraint are provided.
- 
+
+| Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
+| :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: | :----: |  :----: | 
+|    OneShot+ Supernet |  841.9M |  15.4M |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
+|    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | - |
+|    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
+|    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
+|    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
+|    MobileNetV3 Large |	 **217M** |	5.4M |	75.2|	- | 2.25 | - | - |
+|    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
+|    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
+|    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
+|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
  
 ## Usage
 **Training stage**
@@ -109,24 +122,6 @@ python search_supernet.py \
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
 - [ ] Quantization
-
-
-## Results
-
-| Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
-| :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: | :----: |  :----: | 
-|    OneShot+ Supernet |  841.9M |  15.4M |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
-|    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | - |
-|    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
-|    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
-|    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
-|    MobileNetV3 Large |	217M |	5.4M |	**75.2**|	- | 2.25 | - | - |
-|    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
-|    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
-|    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
-|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
-
 
 
 **Last conv channels reducted model**
