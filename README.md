@@ -25,6 +25,7 @@ pip install -r requirements.txt
 - A full functioning FLOP calculator is provided.
 - Genetic and random search with BN statistics update and FLOP & # parameters constraint are provided.
 
+## Results
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: | :----: |  :----: | 
 |    OneShot+ Supernet |  841.9M |  15.4M |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
@@ -38,6 +39,17 @@ pip install -r requirements.txt
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
 |    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
+ 
+**Last conv channels reducted model**
+
+Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
+
+| Model                  | FLOPs | #Params   | Top-1 | Top-5 |
+| :--------------------- | :---: | :------:  | :---: | :---: |
+|    OneShot (customized) |  (embarrassing large)M |  1.93M |  **68.74**   |   -   |
+|    MobileNet V3 Small 0.75 | 44M | 2.4M | 65.4 | - |
+|    Mnas Small | 65.1M | 1.9M | 64.9 | - |
+|    [MobileNet V2 0.5](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet#imagenet--checkpoints) | 97.2M | 1.95M | 65.4 | - |
  
 ## Usage
 **Training stage**
@@ -122,18 +134,6 @@ python search_supernet.py \
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
 - [ ] Quantization
-
-
-**Last conv channels reducted model**
-
-Beacuse of a mistyping, a small model with 1/10 last conv channels was trained. Provided anyhow.  
-
-| Model                  | FLOPs | #Params   | Top-1 | Top-5 |
-| :--------------------- | :---: | :------:  | :---: | :---: |
-|    OneShot (customized) |  (embarrassing large)M |  1.93M |  **68.74**   |   -   |
-|    MobileNet V3 Small 0.75 | 44M | 2.4M | 65.4 | - |
-|    Mnas Small | 65.1M | 1.9M | 64.9 | - |
-|    [MobileNet V2 0.5](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet#imagenet--checkpoints) | 97.2M | 1.95M | 65.4 | - |
 
 
 ## Citation
