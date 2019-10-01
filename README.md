@@ -99,7 +99,7 @@ python search_supernet.py \
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop and # parameters constraint(s)
 - [ ] Train with heuristic constraint --> To limit unuseful subnet training
-    - [ ] Do offiline calculation for each pair of (block, channels) and build an efficient heuristic flops calculator.
+    - [ ] Do offiline calculation for each pair of (block, channels) and build an efficient heuristic flops estimator.
     - [ ] In training stage, the pair of choices that doen't reach heuristic constraint will be ignored.
 - [ ] Two stage searching
     - [ ] Do Block search firstly
