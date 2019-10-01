@@ -1,4 +1,4 @@
-python plot.py \
+python utils/plot.py \
     --log-file ./logs/shufflenas_supernet.log \
     --mode accuracy \
     --title "Supernet top-1 accuracy" \
