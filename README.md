@@ -98,6 +98,12 @@ python search_supernet.py \
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop and # parameters constraint(s)
+- [ ] Train with heuristic constraint --> To limit unuseful subnet training
+    - [ ] Do offiline calculation for each pair of (block, channels) and build an efficient heuristic flops calculator.
+    - [ ] In training stage, the pair of choices that doen't reach heuristic constraint will be ignored.
+- [ ] Two stage searching
+    - [ ] Do Block search firstly
+    - [ ] Based on the best searched blocks, do channel search
 - [ ] Search and train an ShufflNetV2+ style se-subnet.
     - [ ] **In progress:** Search within the pretrained se-supernet
     - [ ] Train the searched se-subnet
