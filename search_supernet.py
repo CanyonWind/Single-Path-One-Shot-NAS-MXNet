@@ -13,7 +13,7 @@ from mxnet import gluon
 from mxnet import nd
 
 from oneshot_nas_network import get_shufflenas_oneshot
-from calculate_flops import get_flops
+from utils.calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
 
 
