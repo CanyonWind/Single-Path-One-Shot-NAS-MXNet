@@ -8,4 +8,4 @@ python train_imagenet.py \
     --num-epochs 360 --batch-size 128 --num-gpus 3 -j 8 \
     --label-smoothing --no-wd --warmup-epochs 10 --use-rec \
     --use-se --last-conv-after-pooling \
-    --save-dir params_oneshot+ --logging-file oneshot+.log
+    --save-dir params_shufflenas_oneshot+ --logging-file shufflenas_oneshot+.log
