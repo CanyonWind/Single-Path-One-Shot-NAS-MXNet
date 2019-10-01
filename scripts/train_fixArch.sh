@@ -7,4 +7,4 @@ python train_imagenet.py \
     --lr 0.5 --wd 0.00004 --lr-mode cosine --dtype float16\
     --num-epochs 240 --batch-size 256 --num-gpus 4 -j 8 \
     --label-smoothing --no-wd --warmup-epochs 10 --use-rec \
-    --save-dir params_shufflenas_fixarch --logging-file shufflenas_fixarch.log
+    --save-dir params_shufflenas_oneshot --logging-file shufflenas_oneshot.log
