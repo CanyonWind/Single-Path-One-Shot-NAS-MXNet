@@ -299,7 +299,7 @@ USE_SE = False
 
 
 def main():
-    from calculate_flops import get_flops
+    from utils.calculate_flops import get_flops
 
     if FIX_ARCH:
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
