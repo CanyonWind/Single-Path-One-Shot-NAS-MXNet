@@ -30,7 +30,7 @@ pip install -r requirements.txt
 | :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: | :----: |  :----: | 
 |    OneShot+ Supernet |  841.9M |  15.4M |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
 |    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | - |
+|    OneShot |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
