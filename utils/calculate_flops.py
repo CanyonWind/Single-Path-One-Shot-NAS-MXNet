@@ -44,31 +44,11 @@ def get_internal_label_info(internal_sym, label_shapes):
     return None, None
 
 
-def get_flops(norelubn=True, size_in_mb=False):
-    args = parse_args()
-    args.norelubn = norelubn
-    # print(args)
-    sym = mx.sym.load(args.symbol_path)
-
-    data_shapes = list()
-    data_names = list()
-    if args.data_shapes is not None and len(args.data_shapes) > 0:
-        for shape in args.data_shapes:
-            items = shape.replace('\'', '').replace('"', '').split(',')
-            data_shapes.append((items[0], tuple([int(s) for s in items[1:]])))
-            data_names.append(items[0])
-
-    label_shapes = None
-    label_names = list()
-    if args.label_shapes is not None and len(args.label_shapes) > 0:
-        label_shapes = list()
-        for shape in args.label_shapes:
-            items = shape.replace('\'', '').replace('"', '').split(',')
-            label_shapes.append((items[0], tuple([int(s) for s in items[1:]])))
-            label_names.append(items[0])
-
+def get_flops(norelubn=True, size_in_mb=False, symbol_path='./symbols/ShuffleNas_fixArch-symbol.json',
+              data_names=['data'], data_shapes=[('data', (1, 3, 224, 224))],
+              label_names=['output'], label_shapes=[('output', (1, 1000))]):
     devs = [mx.cpu()]
-
+    sym = mx.sym.load(symbol_path)
     if len(label_names) == 0:
         label_names = None
     model = mx.mod.Module(context=devs, symbol=sym, data_names=data_names, label_names=None)
@@ -209,8 +189,7 @@ def get_flops(norelubn=True, size_in_mb=False):
 
             del shape_dict
 
-        if not args.norelubn:
-            
+        if not norelubn:
             if op == 'Activation':
                 if attrs['act_type'] == 'relu':
                     internal_sym = sym.get_internals()[layer_name + '_fwd' + '_output']
@@ -258,7 +237,30 @@ def get_flops(norelubn=True, size_in_mb=False):
     return total_flops / 1000000, model_size
 
 
-if __name__ == '__main__':
-    flops, model_size = get_flops()
+def main():
+    args = parse_args()
+    data_shapes = list()
+    data_names = list()
+    if args.data_shapes is not None and len(args.data_shapes) > 0:
+        for shape in args.data_shapes:
+            items = shape.replace('\'', '').replace('"', '').split(',')
+            data_shapes.append((items[0], tuple([int(s) for s in items[1:]])))
+            data_names.append(items[0])
+
+    label_shapes = None
+    label_names = list()
+    if args.label_shapes is not None and len(args.label_shapes) > 0:
+        label_shapes = list()
+        for shape in args.label_shapes:
+            items = shape.replace('\'', '').replace('"', '').split(',')
+            label_shapes.append((items[0], tuple([int(s) for s in items[1:]])))
+            label_names.append(items[0])
+    flops, model_size = get_flops(norelubn=True, size_in_mb=False, symbol_path=args.symbol_path,
+                                  data_names=data_names, data_shapes=data_shapes,
+                                  label_names=label_names, label_shapes=label_shapes)
     print('flops: ', str(flops), ' MFLOPS')
     print('model size: ', str(model_size), ' MB')
+
+
+if __name__ == '__main__':
+    main()
