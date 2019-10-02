@@ -1,7 +1,6 @@
 import os
 import copy
 import math
-from itertools import count
 import random
 import time
 import logging
@@ -58,7 +57,7 @@ def parse_args():
     parser.add_argument('--supernet-params', type=str,
                         default='./params/ShuffleNasOneshot-imagenet-supernet.params',
                         help='supernet parameter directory')
-    parser.add_argument('--search-mode', type=str, default='genetic',
+    parser.add_argument('--search-mode', type=str, default='random',
                         help="search mode, options: ['random', 'genetic'] ")
     parser.add_argument('--comparison-model', type=str, default='SinglePathOneShot',
                         help="model to compare with when searching, "
@@ -66,15 +65,15 @@ def parse_args():
                              "'SinglePathOneShot', 'ShuffleNetV2+_medium']")
     parser.add_argument('--topk', type=int, default=3,
                         help='get top k models')
-    parser.add_argument('--search-iters', type=int, default=10,
+    parser.add_argument('--search-iters', type=int, default=20,
                         help='how many search iterations')
     parser.add_argument('--update-bn-images', type=int, default=20000,
                         help='How many images to update the BN statistics.')
 
     # ----------------------- genetic search -------------------------- #
-    parser.add_argument('--population-size', type=int, default=500,
+    parser.add_argument('--population-size', type=int, default=50,
                         help='the size of population to keep during searching')
-    parser.add_argument('--retain-length', type=int, default=100,
+    parser.add_argument('--retain-length', type=int, default=10,
                         help='how many items to keep after fitness')
     parser.add_argument('--random-select', type=float, default=0.1,
                         help='probability of a rejected network remaining in the population')
@@ -149,7 +148,8 @@ def get_flop_param_score(block_choices, channel_choices, comparison_model='Singl
     dummy_data = nd.ones([1, 3, 224, 224])
     fixarch_net(dummy_data)
     fixarch_net.export("./symbols/ShuffleNas_fixArch", epoch=1)
-    flops, model_size = get_flops()  # both in Millions
+
+    flops, model_size = get_flops(symbol_path="./symbols/ShuffleNas_fixArch-symbol.json")  # both in Millions
 
     # proves ShuffleNet series calculate == google paper's
     if args.comparison_model == 'MobileNetV3_large':
@@ -208,6 +208,9 @@ def set_nas_bn(net, inference_update_stat=False):
 
 def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
               ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
+    net.cast('float16')
+    net.load_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
+    net.cast('float32')
     set_nas_bn(net, inference_update_stat=True)
     for i, batch in enumerate(train_data):
         if (i + 1) * batch_size * len(ctx) >= update_bn_images:
@@ -302,15 +305,15 @@ class Evolver():
             flops, model_size, flop_score, model_size_score = \
                 get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
-            combined_score = flop_score + model_size_score
-            if combined_score >= 2:
+            combined_score = 0.5 * flop_score + 0.5 * model_size_score
+            if combined_score > 1:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                 print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                 print('[SKIPPED] # parameters:      {} M'.format(model_size))
                 continue
-
+            print("Population size + 1, total {}, with normalized score: {}".format(len(population) + 1, combined_score))
             # Add the network to our population.
             instance['flops'] = flops
             instance['model_size'] = model_size
@@ -347,7 +350,7 @@ class Evolver():
         tic = time.time()
         top1 = get_accuracy(self.net, self.val_data, self.batch_fn, block_choices, channel_mask,
                             ctx=self.ctx, dtype=self.dtype)
-        print("Validation accuracy evaluated. Time used: {}".format(time.time() - tic))
+        print("Validation accuracy evaluated. Time used: {}. Val acc: {}".format(time.time() - tic, top1))
 
         return top1
 
@@ -437,15 +440,15 @@ class Evolver():
                     flops, model_size, flop_score, model_size_score = \
                         get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
-                    combined_score = flop_score + model_size_score
-                    if combined_score >= 2:
+                    combined_score = 0.5 * flop_score + 0.5 * model_size_score
+                    if combined_score > 1:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                         print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                         print('[SKIPPED] # parameters:      {} M'.format(model_size))
                         continue
-
+                    print("Children size + 1, size {}, with normalized score: {}".format(len(children) + 1, combined_score))
                     # Add the network to our population.
                     baby['flops'] = flops
                     baby['model_size'] = model_size
@@ -475,8 +478,8 @@ def random_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_
         # calculate
         flops, model_size, flop_score, model_size_score = \
             get_flop_param_score(block_choices, channel_choices, comparison_model)
-        combined_score = flop_score + model_size_score
-        if combined_score >= 2:
+        combined_score = 0.5 * flop_score + 0.5 * model_size_score
+        if combined_score > 1:
             print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
             print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
             print("[SKIPPED] Channel choices:   {}".format(channel_choices))
@@ -484,6 +487,7 @@ def random_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_
             print('[SKIPPED] # parameters:      {} M'.format(model_size))
             continue
 
+        print("Target size + 1, with normalized score: {}".format(combined_score))
         # update BN
         tic = time.time()
         update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx=ctx, dtype=dtype,
@@ -521,10 +525,9 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
     train_data, val_data, batch_fn = get_data(batch_size=batch_size, num_gpus=len(ctx), **data_kwargs)
 
     topk_nets = TopKHeap(topk)  # a list of tuple (acc, score, flops, model_size, block_choices, channel_choices)
-    net_obj = None
 
     # set channel and block value list
-    param_dict = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    param_dict = {'channel': [2, 3, 4, 5, 6, 7, 8, 9],
                   'block': [0, 1, 2, 3]}
 
     # evolution
@@ -543,6 +546,7 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
 
     for i in range(search_iters):
         print("\nSearching iter: {}".format(i))
+        logger.info("\nSearching iter: {}".format(i))
         population = evolver.evolve(population, topk_nets, logger)
 
     # summary
@@ -559,7 +563,9 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
 def main():
     context = [mx.gpu(i) for i in range(args.num_gpus)] if args.num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=args.use_se, last_conv_after_pooling=args.last_conv_after_pooling)
+    # net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.cast(args.dtype)
+    # net.cast('float16')
     net.load_parameters(args.supernet_params, ctx=context)
     net.cast('float32')
     print(net)
@@ -590,7 +596,7 @@ def main():
                       dtype='float32',
                       logger=logger,
                       ctx=context,
-                      search_iters=args.search_iters,
+                      search_iters=100,
                       comparison_model=args.comparison_model,
                       update_bn_images=args.update_bn_images,
                       batch_size=args.batch_size,
