@@ -208,6 +208,7 @@ def set_nas_bn(net, inference_update_stat=False):
 
 def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
               ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
+    train_data.reset()
     net.cast('float16')
     net.load_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
     net.cast('float32')
