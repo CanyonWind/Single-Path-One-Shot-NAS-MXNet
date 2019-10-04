@@ -1,22 +1,23 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
-import re
+import os
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log-file', default='./logs/shufflenas_supernet.log', help='log file')
-    parser.add_argument('--mode', type=str, default='accuracy', help="the mode of plotting. ['accuracy', 'subnet']")
-    parser.add_argument('--title', type=str, default='Supernet Top-1 Accuracy', help='Title of the plot')
-    parser.add_argument('--save-file', type=str, default='./supernet.png', help='save file name')
+    parser.add_argument('--log-file', default='../logs/genetic_search_supernet.log', help='log file')
+    parser.add_argument('--mode', type=str, default='genetic_search', help="the mode of plotting. "
+                        "['accuracy', 'random_search', 'genetic_search']")
+    parser.add_argument('--title', type=str, default='Genetic Search Supernet', help='Title of the plot')
+    parser.add_argument('--save-dir', type=str, default='./images', help='save dir name')
+    parser.add_argument('--save-file', type=str, default='genetic_search_supernet.png', help='save file name')
     args = vars(parser.parse_args())
     return args
     
 
-def plot():
-    rows = open(args['log_file']).readlines()
-
-    if args['mode'] == 'accuracy':
+def plot(rows, iter):
+    if 'accuracy' in args['mode']:
         train_acc_list = []
         val_acc_list = []
 
@@ -42,9 +43,9 @@ def plot():
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
         plt.legend(loc="lower right")
-        plt.savefig(args["save_file"])
+        plt.savefig(os.path.join(args["save_dir"], args["save_file"]))
         plt.show()
-    elif args['mode'] == 'subnet':
+    elif 'search' in args['mode']:
         score_list = []
         val_acc_list = []
 
@@ -53,7 +54,7 @@ def plot():
                 score = float(row[row.find(':') + 1: row.rfind('.')])
                 if 'Val' not in rows[i + 1]:
                     continue
-                score_list.append(2 - score)
+                score_list.append(1 - score)
             if 'Val' in row:
                 val_acc = float(row[row.find(':') + 1: row.find('\n')])
                 if val_acc < 0.1:
@@ -63,15 +64,37 @@ def plot():
 
         plt.style.use("ggplot")
         plt.figure()
+        axes = plt.gca()
+        axes.set_xlim([-0.005, 0.2])
+        axes.set_ylim([0.15, 0.6])
         plt.scatter(score_list, val_acc_list, alpha=0.8, c='steelblue', s=150, label='subnet')
-        plt.title(args["title"])
+        plt.title(args["title"] + ' iter' + str(iter))
         plt.xlabel("Normalized score difference (larger is better)")
         plt.ylabel("Accuracy")
         plt.legend(loc="lower right")
-        plt.savefig(args["save_file"])
-        plt.show()
+        plt.savefig(os.path.join(args["save_dir"], args["save_file"][:-4] + '_iter' + str(iter) + '.png'))
+        # plt.show()
+
+
+def parse_iter(rows):
+    indices = [[-1]]
+    for i, row in enumerate(rows):
+        if 'Searching iter' in row:
+            indices[-1].append(i - 1)
+            indices.append([i])
+    indices[-1].append(len(rows))
+    return indices[1:]
 
 
 if __name__ == '__main__':
     args = parse_args()
-    plot()
+    rows = open(args['log_file']).readlines()
+    if not os.path.exists(args['save_dir']):
+        os.makedirs(args['save_dir'])
+
+    if 'accuracy' in args['mode'] or 'random' in args['mode']:
+        plot(rows, iter=0)
+    else:
+        iter_indices = parse_iter(rows)
+        for i, iter_index in enumerate(iter_indices):
+            plot(rows[iter_index[0]: iter_index[1]], i)
