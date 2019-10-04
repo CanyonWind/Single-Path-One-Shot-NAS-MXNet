@@ -67,7 +67,10 @@ def plot(rows, iter):
         axes = plt.gca()
         axes.set_xlim([-0.005, 0.2])
         axes.set_ylim([0.15, 0.6])
-        plt.scatter(score_list, val_acc_list, alpha=0.8, c='steelblue', s=150, label='subnet')
+        summed_scores = [score_list[i] + val_acc_list[i] for i in range(len(val_acc_list))]
+        color_list = ['steelblue' if summed_score != max(summed_scores) else 'indianred'
+                      for summed_score in summed_scores]
+        plt.scatter(score_list, val_acc_list, alpha=0.8, c=color_list, s=50, label='subnet')
         plt.title(args["title"] + ' iter' + str(iter))
         plt.xlabel("Normalized score difference (larger is better)")
         plt.ylabel("Accuracy")
