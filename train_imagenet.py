@@ -187,8 +187,10 @@ def main():
         optimizer_params['multi_precision'] = True
 
     if model_name == 'ShuffleNas_fixArch':
-        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        # architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+        # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+        scale_ids = [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
         net = get_shufflenas_oneshot(architecture, scale_ids, use_se=opt.use_se,
                                      last_conv_after_pooling=opt.last_conv_after_pooling)
     elif model_name == 'ShuffleNas':
