@@ -5984,3 +5984,1089 @@ Block choices:     [0, 0, 2, 0, 0, 0, 1, 0, 2, 2, 1, 1, 0, 2, 1, 2, 0, 2, 2, 0]
 Channel choices:   [8, 7, 5, 7, 5, 7, 7, 4, 2, 4, 2, 3, 5, 3, 6, 2, 5, 3, 4, 6]
 Flops:             337.367272 MFLOPS
 # parameters:      3.270249000000002 M
+
+Searching iter: 17
+Namespace(batch_size=16, comparison_model='SinglePathOneShot', crop_ratio=0.875, dtype='float16', input_size=224, last_conv_after_pooling=True, mutate_chance=0.1, num_gpus=1, num_workers=8, population_size=50, random_select=0.1, rec_train='/home/alex/imagenet/rec/train.rec', rec_train_idx='/home/alex/imagenet/rec/train.idx', rec_val='/home/alex/imagenet/rec/val.rec', rec_val_idx='/home/alex/imagenet/rec/val.idx', retain_length=10, search_iters=20, search_mode='genetic', shuffle_train=True, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params', topk=3, update_bn_images=20000, use_se=True)
+Namespace(batch_size=16, comparison_model='SinglePathOneShot', crop_ratio=0.875, dtype='float16', input_size=224, last_conv_after_pooling=True, mutate_chance=0.1, num_gpus=1, num_workers=8, population_size=50, random_select=0.1, rec_train='/home/alex/imagenet/rec/train.rec', rec_train_idx='/home/alex/imagenet/rec/train.idx', rec_val='/home/alex/imagenet/rec/val.rec', rec_val_idx='/home/alex/imagenet/rec/val.idx', retain_length=10, search_iters=20, search_mode='genetic', shuffle_train=True, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params', topk=3, update_bn_images=20000, use_se=True)
+
+Searching iter: 0
+Namespace(batch_size=64, comparison_model='SinglePathOneShot', crop_ratio=0.875, dtype='float16', input_size=224, last_conv_after_pooling=True, mutate_chance=0.1, num_gpus=1, num_workers=8, population_size=1, random_select=0.1, rec_train='/home/alex/imagenet/rec/train.rec', rec_train_idx='/home/alex/imagenet/rec/train.idx', rec_val='/home/alex/imagenet/rec/val.rec', rec_val_idx='/home/alex/imagenet/rec/val.idx', retain_length=1, search_iters=20, search_mode='genetic', shuffle_train=True, supernet_params='./params/ShuffleNasOneshot-imagenet-supernet.params', topk=3, update_bn_images=20000, use_se=True)
+
+Searching iter: 0
+----------------------------------------
+Model normalized score: 0.9993950035868009.
+Val accuracy:      0.5824697066326531
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             336.40452 MFLOPS
+# parameters:      3.3087660000000017 M
+----------------------------------------
+Model normalized score: 0.9926299949784796.
+Val accuracy:      0.5770288584183674
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 6, 7, 7, 8, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             340.236712 MFLOPS
+# parameters:      3.223040000000002 M
+----------------------------------------
+Model normalized score: 0.986226473457676.
+Val accuracy:      0.5740991709183674
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             334.902376 MFLOPS
+# parameters:      3.2347910000000017 M
+----------------------------------------
+Model normalized score: 0.9950140265423244.
+Val accuracy:      0.5697544642857143
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             337.414312 MFLOPS
+# parameters:      3.2685080000000015 M
+----------------------------------------
+Model normalized score: 0.9901079677187952.
+Val accuracy:      0.5685188137755102
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 1, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 3, 2, 3, 4, 6, 6, 6, 3, 3, 4, 6]
+Flops:             335.614248 MFLOPS
+# parameters:      3.2538060000000018 M
+----------------------------------------
+Model normalized score: 0.9899046850789099.
+Val accuracy:      0.5667521158854166
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 2, 2, 0, 1, 2, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 8, 2, 3, 2, 3, 4, 3, 7, 7, 3, 3, 4, 6]
+Flops:             336.762024 MFLOPS
+# parameters:      3.240526000000002 M
+----------------------------------------
+Model normalized score: 0.9989167941176473.
+Val accuracy:      0.5684191645408163
+Block choices:     [0, 0, 0, 1, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 1, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             339.051304 MFLOPS
+# parameters:      3.2780780000000016 M
+----------------------------------------
+Model normalized score: 0.9876194261119084.
+Val accuracy:      0.5628786670918368
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 1, 2, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 3, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             330.64996 MFLOPS
+# parameters:      3.2883430000000016 M
+----------------------------------------
+Model normalized score: 0.9802127596843618.
+Val accuracy:      0.5647720025510204
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 1, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 4, 4, 3, 7, 6, 5, 3, 4, 4]
+Flops:             333.293608 MFLOPS
+# parameters:      3.210574000000002 M
+----------------------------------------
+Model normalized score: 0.9992887840746056.
+Val accuracy:      0.5612045599489796
+Block choices:     [0, 0, 2, 0, 3, 0, 1, 1, 2, 0, 1, 1, 1, 1, 2, 2, 2, 0, 2, 1]
+Channel choices:   [8, 5, 5, 7, 5, 3, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 8]
+Flops:             325.993 MFLOPS
+# parameters:      3.4159680000000017 M
+----------------------------------------
+Model normalized score: 0.9915500846484937.
+Val accuracy:      0.49418048469387754
+Block choices:     [0, 1, 2, 0, 3, 0, 1, 1, 0, 2, 1, 0, 1, 1, 1, 2, 2, 0, 2, 1]
+Channel choices:   [3, 5, 5, 9, 6, 3, 2, 4, 5, 4, 2, 4, 4, 3, 6, 7, 3, 3, 4, 8]
+Flops:             326.140392 MFLOPS
+# parameters:      3.361817000000001 M
+----------------------------------------
+Model normalized score: 0.9990977388809184.
+Val accuracy:      0.4959920247395833
+Block choices:     [0, 0, 1, 2, 0, 0, 2, 0, 2, 2, 2, 1, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 7, 5, 8, 5, 2, 7, 9, 2, 4, 2, 3, 9, 4, 6, 6, 3, 3, 2, 5]
+Flops:             349.519272 MFLOPS
+# parameters:      3.170799000000001 M
+----------------------------------------
+Model normalized score: 0.9426990695839312.
+Val accuracy:      0.46542171556122447
+Block choices:     [0, 0, 1, 3, 3, 0, 1, 0, 2, 2, 1, 2, 1, 1, 1, 2, 2, 0, 2, 1]
+Channel choices:   [8, 6, 5, 8, 5, 2, 3, 5, 2, 4, 2, 4, 4, 3, 6, 6, 3, 3, 2, 5]
+Flops:             317.610472 MFLOPS
+# parameters:      3.118050000000001 M
+----------------------------------------
+Model normalized score: 0.99919443543759.
+Val accuracy:      0.5351761798469388
+Block choices:     [0, 0, 0, 1, 2, 2, 1, 1, 2, 0, 0, 2, 0, 2, 1, 2, 3, 0, 1, 2]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 3, 6, 6, 7, 3, 3, 4, 6]
+Flops:             334.105832 MFLOPS
+# parameters:      3.331230000000002 M
+----------------------------------------
+Model normalized score: 0.9606910997130562.
+Val accuracy:      0.4926060267857143
+Block choices:     [0, 1, 0, 0, 0, 2, 1, 1, 2, 0, 0, 2, 2, 2, 0, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 4, 4, 6, 6, 2, 3, 3, 4, 4]
+Flops:             327.598632 MFLOPS
+# parameters:      3.136860000000002 M
+----------------------------------------
+Model normalized score: 0.9879020035868008.
+Val accuracy:      0.5740194515306123
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             332.804392 MFLOPS
+# parameters:      3.267932000000002 M
+----------------------------------------
+Model normalized score: 0.9949189820659973.
+Val accuracy:      0.5248819986979166
+Block choices:     [0, 3, 1, 1, 0, 2, 1, 0, 2, 2, 1, 2, 1, 1, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 4, 5, 8, 2, 7, 3, 8, 2, 3, 2, 4, 4, 3, 6, 6, 3, 3, 7, 5]
+Flops:             331.713064 MFLOPS
+# parameters:      3.3269600000000015 M
+----------------------------------------
+Model normalized score: 0.9978143967001438.
+Val accuracy:      0.5528938137755102
+Block choices:     [0, 1, 0, 0, 3, 0, 1, 1, 3, 2, 1, 2, 1, 1, 2, 2, 2, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 6, 3, 3, 4, 2, 4, 2, 4, 4, 3, 7, 6, 5, 3, 4, 8]
+Flops:             323.063976 MFLOPS
+# parameters:      3.4363040000000016 M
+----------------------------------------
+Model normalized score: 0.9670543134863704.
+Val accuracy:      0.5524154974489796
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 2, 2, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 3, 3, 4, 2, 4, 2, 4, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             323.678632 MFLOPS
+# parameters:      3.2207640000000017 M
+----------------------------------------
+Model normalized score: 0.9954124426111911.
+Val accuracy:      0.5727638711734694
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             335.36964 MFLOPS
+# parameters:      3.292412000000002 M
+----------------------------------------
+Model normalized score: 0.9879845265423245.
+Val accuracy:      0.4731345663265306
+Block choices:     [0, 0, 1, 3, 0, 0, 2, 0, 2, 2, 1, 1, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 7, 5, 8, 5, 2, 4, 5, 2, 4, 2, 7, 9, 2, 6, 6, 3, 3, 2, 5]
+Flops:             342.3002 MFLOPS
+# parameters:      3.170061000000001 M
+----------------------------------------
+Model normalized score: 0.9901468895265426.
+Val accuracy:      0.5049625318877551
+Block choices:     [0, 3, 2, 1, 0, 0, 1, 1, 2, 0, 0, 0, 1, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [3, 5, 5, 9, 6, 7, 2, 4, 2, 3, 2, 4, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             334.400616 MFLOPS
+# parameters:      3.2666510000000017 M
+----------------------------------------
+Model normalized score: 0.9892568938307034.
+Val accuracy:      0.5422566731770834
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 8, 2, 6, 7, 7, 4, 2, 4, 4, 4, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             335.69892 MFLOPS
+# parameters:      3.247141000000002 M
+----------------------------------------
+Model normalized score: 0.9646084253945483.
+Val accuracy:      0.5267458545918368
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 1, 2, 0, 2, 0, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 3, 6, 6, 7, 8, 2, 3, 2, 3, 4, 3, 6, 3, 3, 3, 4, 6]
+Flops:             327.0906 MFLOPS
+# parameters:      3.1687640000000012 M
+----------------------------------------
+Model normalized score: 0.9699938421807748.
+Val accuracy:      0.4614756058673469
+Block choices:     [0, 0, 1, 2, 0, 0, 1, 0, 2, 2, 2, 1, 0, 1, 1, 2, 0, 0, 3, 1]
+Channel choices:   [8, 7, 5, 8, 5, 2, 3, 9, 2, 4, 4, 4, 4, 3, 6, 6, 3, 3, 2, 5]
+Flops:             332.591144 MFLOPS
+# parameters:      3.148367000000001 M
+----------------------------------------
+Model normalized score: 0.9771951944045913.
+Val accuracy:      0.49166932397959184
+Block choices:     [0, 0, 2, 0, 3, 0, 1, 1, 0, 2, 0, 0, 1, 1, 1, 2, 2, 0, 2, 1]
+Channel choices:   [3, 5, 5, 7, 5, 7, 7, 4, 2, 3, 2, 3, 4, 8, 6, 7, 3, 3, 4, 6]
+Flops:             323.245864 MFLOPS
+# parameters:      3.294208000000002 M
+----------------------------------------
+Model normalized score: 0.9895604784791967.
+Val accuracy:      0.5701929209183674
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 3, 2, 3, 4, 6, 6, 6, 3, 3, 4, 6]
+Flops:             335.645608 MFLOPS
+# parameters:      3.2497580000000013 M
+----------------------------------------
+Model normalized score: 0.9716096305595412.
+Val accuracy:      0.5474529655612245
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 1, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 4, 2, 3, 2, 3, 4, 4, 6, 4, 3, 3, 4, 6]
+Flops:             328.0314 MFLOPS
+# parameters:      3.206620000000002 M
+----------------------------------------
+Model normalized score: 0.9883532001434723.
+Val accuracy:      0.5472005208333334
+Block choices:     [0, 1, 1, 2, 0, 0, 1, 0, 2, 2, 2, 1, 0, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 3, 6, 7, 2, 8, 2, 3, 3, 2, 4, 4, 7, 7, 3, 3, 4, 6]
+Flops:             335.005864 MFLOPS
+# parameters:      3.2481800000000014 M
+----------------------------------------
+Model normalized score: 0.9817029626972742.
+Val accuracy:      0.5055604272959183
+Block choices:     [0, 1, 0, 1, 0, 0, 2, 0, 2, 2, 2, 1, 2, 0, 1, 2, 2, 0, 2, 2]
+Channel choices:   [8, 7, 5, 7, 2, 2, 7, 9, 2, 3, 2, 3, 9, 2, 6, 6, 3, 3, 4, 5]
+Flops:             330.88516 MFLOPS
+# parameters:      3.2456730000000014 M
+----------------------------------------
+Model normalized score: 0.9553677080344336.
+Val accuracy:      0.5224210778061225
+Block choices:     [0, 1, 2, 0, 3, 0, 1, 1, 2, 0, 1, 2, 1, 1, 1, 0, 0, 0, 2, 1]
+Channel choices:   [8, 6, 5, 8, 5, 2, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 3, 3, 4, 7]
+Flops:             313.2138 MFLOPS
+# parameters:      3.249772000000002 M
+----------------------------------------
+Model normalized score: 0.9503255286944048.
+Val accuracy:      0.5108816964285714
+Block choices:     [0, 0, 1, 0, 3, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 2, 0, 2, 1]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 5, 2, 4, 2, 4, 3, 3, 6, 6, 3, 3, 2, 6]
+Flops:             318.648488 MFLOPS
+# parameters:      3.159150000000001 M
+----------------------------------------
+Model normalized score: 0.9867403959827836.
+Val accuracy:      0.5181361607142857
+Block choices:     [0, 0, 2, 3, 3, 2, 1, 0, 0, 2, 1, 0, 1, 1, 1, 2, 2, 0, 2, 1]
+Channel choices:   [8, 6, 5, 9, 6, 3, 3, 5, 2, 4, 2, 4, 5, 3, 6, 6, 3, 3, 4, 5]
+Flops:             337.119528 MFLOPS
+# parameters:      3.215303000000002 M
+----------------------------------------
+Model normalized score: 0.9930502152080346.
+Val accuracy:      0.4816047512755102
+Block choices:     [0, 0, 1, 0, 3, 0, 1, 0, 0, 2, 0, 2, 1, 1, 1, 2, 2, 0, 2, 3]
+Channel choices:   [3, 6, 5, 9, 6, 3, 3, 4, 2, 4, 2, 8, 4, 3, 6, 6, 3, 3, 5, 5]
+Flops:             319.8778 MFLOPS
+# parameters:      3.436935000000001 M
+----------------------------------------
+Model normalized score: 0.9858666800573891.
+Val accuracy:      0.5512898763020834
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 2, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 3, 5, 7, 6, 7, 7, 4, 2, 3, 2, 3, 4, 3, 8, 7, 3, 3, 4, 6]
+Flops:             332.932968 MFLOPS
+# parameters:      3.2527590000000015 M
+----------------------------------------
+Model normalized score: 0.9892322352941179.
+Val accuracy:      0.5627989477040817
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 2, 1, 2, 0, 2, 1, 2, 0, 0, 1, 0]
+Channel choices:   [8, 7, 5, 8, 6, 3, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             331.979624 MFLOPS
+# parameters:      3.285527000000002 M
+----------------------------------------
+Model normalized score: 0.9683918070301294.
+Val accuracy:      0.479671556122449
+Block choices:     [0, 0, 0, 2, 0, 0, 3, 1, 2, 2, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [3, 5, 5, 3, 6, 3, 2, 4, 5, 5, 2, 4, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             321.088296 MFLOPS
+# parameters:      3.2567100000000013 M
+----------------------------------------
+Model normalized score: 0.95122899856528.
+Val accuracy:      0.48180404974489793
+Block choices:     [0, 0, 0, 0, 0, 0, 2, 0, 2, 2, 1, 2, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 3, 3, 2, 2, 4, 2, 3, 9, 4, 6, 6, 3, 3, 2, 6]
+Flops:             318.689256 MFLOPS
+# parameters:      3.164871000000001 M
+----------------------------------------
+Model normalized score: 0.9578076499282642.
+Val accuracy:      0.4922672193877551
+Block choices:     [0, 0, 1, 2, 0, 0, 1, 0, 2, 1, 1, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 2, 7, 4, 2, 3, 2, 3, 4, 6, 6, 6, 3, 3, 2, 5]
+Flops:             327.830696 MFLOPS
+# parameters:      3.114847000000001 M
+----------------------------------------
+Model normalized score: 0.9924354555236732.
+Val accuracy:      0.4698461415816326
+Block choices:     [0, 0, 1, 1, 2, 0, 2, 1, 2, 0, 0, 1, 0, 2, 1, 2, 3, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 5, 2, 7, 9, 2, 4, 2, 3, 4, 8, 6, 6, 3, 3, 2, 5]
+Flops:             339.0074 MFLOPS
+# parameters:      3.2344600000000012 M
+----------------------------------------
+Model normalized score: 0.9624221441893832.
+Val accuracy:      0.5006306966145834
+Block choices:     [0, 1, 2, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 1, 1, 2, 0, 0, 2, 0]
+Channel choices:   [3, 5, 5, 7, 3, 3, 2, 8, 2, 4, 2, 4, 4, 3, 7, 7, 3, 3, 4, 8]
+Flops:             312.213416 MFLOPS
+# parameters:      3.3081120000000013 M
+----------------------------------------
+Model normalized score: 0.976747779053085.
+Val accuracy:      0.5603675063775511
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [6, 6, 5, 8, 5, 7, 3, 6, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             327.564136 MFLOPS
+# parameters:      3.2464030000000017 M
+----------------------------------------
+Model normalized score: 0.9734689935437593.
+Val accuracy:      0.5516382334183674
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 3, 0, 1, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 2, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             323.603368 MFLOPS
+# parameters:      3.2651640000000017 M
+----------------------------------------
+Model normalized score: 0.9961608895265426.
+Val accuracy:      0.47927295918367346
+Block choices:     [0, 0, 2, 1, 3, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 2, 2, 0, 3, 1]
+Channel choices:   [3, 6, 5, 9, 5, 3, 2, 4, 5, 4, 2, 4, 4, 6, 6, 6, 3, 3, 4, 6]
+Flops:             327.20036 MFLOPS
+# parameters:      3.382183000000002 M
+----------------------------------------
+Model normalized score: 0.9966376068866574.
+Val accuracy:      0.5615632971938775
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 1, 2, 1, 1, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 3, 7, 4, 2, 3, 7, 7, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             337.348456 MFLOPS
+# parameters:      3.2802310000000015 M
+----------------------------------------
+Model normalized score: 0.9728994698708755.
+Val accuracy:      0.55181884765625
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 3, 1, 1, 1, 2, 0, 0, 2, 1]
+Channel choices:   [8, 5, 5, 7, 5, 7, 3, 5, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             325.848744 MFLOPS
+# parameters:      3.238016000000002 M
+----------------------------------------
+Model normalized score: 0.9936618091822097.
+Val accuracy:      0.4534239477040816
+Block choices:     [0, 0, 3, 0, 0, 0, 1, 2, 0, 0, 0, 2, 1, 1, 1, 2, 2, 0, 1, 1]
+Channel choices:   [3, 6, 5, 9, 6, 3, 2, 4, 7, 4, 2, 3, 4, 6, 6, 4, 3, 3, 4, 6]
+Flops:             337.166568 MFLOPS
+# parameters:      3.2618810000000016 M
+----------------------------------------
+Model normalized score: 0.9827244131994263.
+Val accuracy:      0.5273836096938775
+Block choices:     [1, 0, 1, 2, 3, 0, 1, 2, 2, 2, 1, 0, 1, 1, 1, 2, 2, 0, 2, 2]
+Channel choices:   [8, 7, 5, 8, 5, 2, 6, 5, 2, 4, 2, 4, 4, 3, 6, 6, 4, 3, 3, 5]
+Flops:             333.826728 MFLOPS
+# parameters:      3.2221270000000013 M
+----------------------------------------
+Model normalized score: 0.9913682431850792.
+Val accuracy:      0.4186862244897959
+Block choices:     [0, 0, 1, 3, 3, 0, 2, 0, 2, 2, 2, 2, 3, 2, 1, 0, 0, 0, 2, 1]
+Channel choices:   [8, 6, 5, 2, 5, 2, 7, 5, 2, 4, 2, 3, 9, 3, 6, 6, 3, 3, 2, 5]
+Flops:             337.059944 MFLOPS
+# parameters:      3.247390000000002 M
+----------------------------------------
+Model normalized score: 0.9746546398852227.
+Val accuracy:      0.5675422512755102
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 4]
+Flops:             330.844392 MFLOPS
+# parameters:      3.1981670000000024 M
+
+Searching iter: 18
+----------------------------------------
+Model normalized score: 0.9993950035868009.
+Val accuracy:      0.5831871811224489
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             336.40452 MFLOPS
+# parameters:      3.3087660000000017 M
+----------------------------------------
+Model normalized score: 0.9926299949784796.
+Val accuracy:      0.5775960286458334
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 6, 7, 7, 8, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             340.236712 MFLOPS
+# parameters:      3.223040000000002 M
+----------------------------------------
+Model normalized score: 0.986226473457676.
+Val accuracy:      0.5746173469387755
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             334.902376 MFLOPS
+# parameters:      3.2347910000000017 M
+----------------------------------------
+Model normalized score: 0.9879020035868008.
+Val accuracy:      0.5725645727040817
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             332.804392 MFLOPS
+# parameters:      3.267932000000002 M
+----------------------------------------
+Model normalized score: 0.9954124426111911.
+Val accuracy:      0.5711495535714286
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             335.36964 MFLOPS
+# parameters:      3.292412000000002 M
+----------------------------------------
+Model normalized score: 0.9895604784791967.
+Val accuracy:      0.5705915178571429
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 3, 2, 3, 4, 6, 6, 6, 3, 3, 4, 6]
+Flops:             335.645608 MFLOPS
+# parameters:      3.2497580000000013 M
+----------------------------------------
+Model normalized score: 0.9950140265423244.
+Val accuracy:      0.5704320790816326
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             337.414312 MFLOPS
+# parameters:      3.2685080000000015 M
+----------------------------------------
+Model normalized score: 0.9901079677187952.
+Val accuracy:      0.5706787109375
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 1, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 3, 2, 3, 4, 6, 6, 6, 3, 3, 4, 6]
+Flops:             335.614248 MFLOPS
+# parameters:      3.2538060000000018 M
+----------------------------------------
+Model normalized score: 0.9989167941176473.
+Val accuracy:      0.5677016900510204
+Block choices:     [0, 0, 0, 1, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 1, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             339.051304 MFLOPS
+# parameters:      3.2780780000000016 M
+----------------------------------------
+Model normalized score: 0.9746546398852227.
+Val accuracy:      0.5661870216836735
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 4]
+Flops:             330.844392 MFLOPS
+# parameters:      3.1981670000000024 M
+----------------------------------------
+Model normalized score: 0.9899046850789099.
+Val accuracy:      0.5684390943877551
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 2, 2, 0, 1, 2, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 8, 2, 3, 2, 3, 4, 3, 7, 7, 3, 3, 4, 6]
+Flops:             336.762024 MFLOPS
+# parameters:      3.240526000000002 M
+----------------------------------------
+Model normalized score: 0.9802127596843618.
+Val accuracy:      0.5645129145408163
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 1, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 4, 4, 3, 7, 6, 5, 3, 4, 4]
+Flops:             333.293608 MFLOPS
+# parameters:      3.210574000000002 M
+----------------------------------------
+Model normalized score: 0.9817029626972742.
+Val accuracy:      0.5059390943877551
+Block choices:     [0, 1, 0, 1, 0, 0, 2, 0, 2, 2, 2, 1, 2, 0, 1, 2, 2, 0, 2, 2]
+Channel choices:   [8, 7, 5, 7, 2, 2, 7, 9, 2, 3, 2, 3, 9, 2, 6, 6, 3, 3, 4, 5]
+Flops:             330.88516 MFLOPS
+# parameters:      3.2456730000000014 M
+----------------------------------------
+Model normalized score: 0.9843252790530849.
+Val accuracy:      0.463134765625
+Block choices:     [0, 1, 1, 1, 1, 2, 2, 0, 2, 3, 0, 1, 0, 2, 1, 2, 2, 0, 2, 2]
+Channel choices:   [5, 7, 5, 7, 2, 7, 7, 4, 2, 3, 2, 3, 6, 2, 6, 7, 3, 3, 4, 6]
+Flops:             329.492776 MFLOPS
+# parameters:      3.2779380000000016 M
+----------------------------------------
+Model normalized score: 0.9968184454806315.
+Val accuracy:      0.5798588966836735
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             337.006632 MFLOPS
+# parameters:      3.2850040000000016 M
+----------------------------------------
+Model normalized score: 0.9847418637015787.
+Val accuracy:      0.5604472257653061
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 3, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 8, 5, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 4, 6, 7, 5, 3, 4, 4]
+Flops:             334.325352 MFLOPS
+# parameters:      3.2306770000000027 M
+----------------------------------------
+Model normalized score: 0.9749965301291252.
+Val accuracy:      0.5354551977040817
+Block choices:     [0, 1, 0, 0, 2, 0, 1, 1, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 4, 2, 3, 4, 3, 7, 7, 3, 3, 4, 4]
+Flops:             335.281832 MFLOPS
+# parameters:      3.1544940000000024 M
+----------------------------------------
+Model normalized score: 0.9304378321377333.
+Val accuracy:      0.48549107142857145
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 0, 2, 2, 0, 2, 0]
+Channel choices:   [8, 7, 5, 7, 6, 2, 3, 4, 2, 4, 2, 3, 4, 2, 6, 6, 3, 3, 4, 4]
+Flops:             310.146792 MFLOPS
+# parameters:      3.112041000000002 M
+----------------------------------------
+Model normalized score: 0.932688492826399.
+Val accuracy:      0.5208067602040817
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 4, 6, 7, 3, 4, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 4]
+Flops:             312.715176 MFLOPS
+# parameters:      3.1007220000000015 M
+----------------------------------------
+Model normalized score: 0.9674115616929702.
+Val accuracy:      0.5258992513020834
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 2, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 5, 5, 7, 2, 2, 7, 8, 5, 3, 2, 3, 4, 2, 6, 6, 3, 3, 4, 6]
+Flops:             322.944808 MFLOPS
+# parameters:      3.2308000000000012 M
+----------------------------------------
+Model normalized score: 0.9839754512195125.
+Val accuracy:      0.539421237244898
+Block choices:     [0, 1, 0, 3, 0, 0, 1, 1, 0, 1, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 4, 2, 4, 4, 4, 6, 6, 5, 2, 4, 4]
+Flops:             339.637736 MFLOPS
+# parameters:      3.170398000000002 M
+----------------------------------------
+Model normalized score: 0.9844474383070304.
+Val accuracy:      0.5674226721938775
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             332.785576 MFLOPS
+# parameters:      3.2446360000000016 M
+----------------------------------------
+Model normalized score: 0.9944471678622671.
+Val accuracy:      0.5671436543367347
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 2, 0, 0, 0, 1, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 7, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             338.640488 MFLOPS
+# parameters:      3.2519430000000016 M
+----------------------------------------
+Model normalized score: 0.9905105229555241.
+Val accuracy:      0.5045838647959183
+Block choices:     [0, 0, 0, 0, 0, 0, 2, 0, 2, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 3, 7, 5, 2, 7, 9, 2, 3, 8, 3, 7, 3, 7, 4, 3, 3, 4, 4]
+Flops:             340.061096 MFLOPS
+# parameters:      3.2104480000000026 M
+----------------------------------------
+Model normalized score: 0.9817590896700147.
+Val accuracy:      0.5452407525510204
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 3, 0, 2, 0, 0, 1, 2, 0, 3, 2, 1]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 2, 6, 7, 3, 3, 4, 5]
+Flops:             329.455144 MFLOPS
+# parameters:      3.2608780000000017 M
+----------------------------------------
+Model normalized score: 0.9956804440459113.
+Val accuracy:      0.5728759765625
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 8, 5, 7, 7, 4, 2, 4, 5, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             338.116776 MFLOPS
+# parameters:      3.2657580000000017 M
+----------------------------------------
+Model normalized score: 0.9906032058823532.
+Val accuracy:      0.5773676658163265
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 5, 7, 7, 8, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             338.022696 MFLOPS
+# parameters:      3.2322080000000017 M
+----------------------------------------
+Model normalized score: 0.9864919383070305.
+Val accuracy:      0.5129544005102041
+Block choices:     [0, 0, 3, 0, 0, 0, 1, 3, 2, 0, 0, 0, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 2, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             336.257128 MFLOPS
+# parameters:      3.2225530000000018 M
+----------------------------------------
+Model normalized score: 0.9738630129124823.
+Val accuracy:      0.5465959821428571
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 3, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 3, 6]
+Flops:             330.60292 MFLOPS
+# parameters:      3.1952870000000018 M
+----------------------------------------
+Model normalized score: 0.9674847417503589.
+Val accuracy:      0.5567801339285714
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 2, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [9, 6, 5, 7, 6, 7, 3, 4, 2, 3, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             325.56964 MFLOPS
+# parameters:      3.204089000000001 M
+----------------------------------------
+Model normalized score: 0.9588674533715928.
+Val accuracy:      0.512451171875
+Block choices:     [0, 0, 0, 0, 0, 0, 3, 0, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 2]
+Channel choices:   [8, 6, 5, 5, 6, 7, 2, 4, 2, 3, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             318.04324 MFLOPS
+# parameters:      3.2235090000000013 M
+----------------------------------------
+Model normalized score: 0.9938257998565283.
+Val accuracy:      0.5333426339285714
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 1, 1, 0, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 5, 5, 7, 6, 2, 7, 8, 2, 3, 2, 3, 9, 2, 6, 7, 3, 3, 4, 5]
+Flops:             339.36804 MFLOPS
+# parameters:      3.2401760000000017 M
+----------------------------------------
+Model normalized score: 0.9597093350071737.
+Val accuracy:      0.49924266581632654
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [3, 5, 5, 7, 6, 7, 7, 8, 2, 3, 2, 3, 9, 2, 3, 6, 2, 3, 4, 6]
+Flops:             323.098472 MFLOPS
+# parameters:      3.176832000000001 M
+----------------------------------------
+Model normalized score: 0.9636763493543761.
+Val accuracy:      0.5090282206632653
+Block choices:     [0, 0, 0, 0, 1, 0, 1, 1, 2, 2, 0, 1, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 9, 5, 2, 5, 3, 7, 4, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             321.897384 MFLOPS
+# parameters:      3.2162580000000016 M
+----------------------------------------
+Model normalized score: 0.9816061255380204.
+Val accuracy:      0.5528340242346939
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 4, 7, 2, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             325.102376 MFLOPS
+# parameters:      3.304958000000002 M
+----------------------------------------
+Model normalized score: 0.9986705387374465.
+Val accuracy:      0.5727240114795918
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 1, 1, 0, 2, 2, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             337.106984 MFLOPS
+# parameters:      3.2965580000000014 M
+----------------------------------------
+Model normalized score: 0.9999815329985656.
+Val accuracy:      0.56573486328125
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 2, 1, 3, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 2, 7, 3, 7, 2, 3, 2, 3, 4, 6, 4, 6, 5, 3, 4, 6]
+Flops:             332.290088 MFLOPS
+# parameters:      3.355404000000002 M
+----------------------------------------
+Model normalized score: 0.9850860681492113.
+Val accuracy:      0.5394810267857143
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 1, 2, 0, 0, 2, 0, 2, 2, 1, 0, 2, 3, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 3, 4, 2, 4, 2, 4, 4, 6, 6, 6, 3, 3, 4, 4]
+Flops:             330.935336 MFLOPS
+# parameters:      3.268158000000003 M
+----------------------------------------
+Model normalized score: 0.9733923393113346.
+Val accuracy:      0.5524154974489796
+Block choices:     [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 4, 2, 5, 2, 3, 4, 4, 6, 6, 3, 2, 4, 6]
+Flops:             329.282664 MFLOPS
+# parameters:      3.2057720000000014 M
+----------------------------------------
+Model normalized score: 0.9830806901004308.
+Val accuracy:      0.5339006696428571
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [4, 6, 5, 7, 5, 2, 7, 4, 2, 4, 6, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             324.904808 MFLOPS
+# parameters:      3.3170330000000017 M
+----------------------------------------
+Model normalized score: 0.9280955121951222.
+Val accuracy:      0.45643335459183676
+Block choices:     [0, 0, 0, 0, 1, 0, 1, 0, 3, 2, 0, 0, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 2, 6, 7, 3, 3, 4, 2]
+Flops:             314.957416 MFLOPS
+# parameters:      3.0462470000000015 M
+----------------------------------------
+Model normalized score: 0.9853998909612627.
+Val accuracy:      0.5703922193877551
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 6, 3, 3, 4, 6]
+Flops:             335.861992 MFLOPS
+# parameters:      3.2192230000000013 M
+----------------------------------------
+Model normalized score: 0.9596066535150648.
+Val accuracy:      0.5400390625
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             319.78372 MFLOPS
+# parameters:      3.2104940000000015 M
+----------------------------------------
+Model normalized score: 0.9839014677187952.
+Val accuracy:      0.5057796556122449
+Block choices:     [0, 0, 0, 2, 0, 0, 1, 0, 2, 2, 0, 1, 1, 2, 1, 2, 1, 0, 2, 0]
+Channel choices:   [8, 3, 5, 3, 6, 7, 3, 4, 2, 3, 2, 9, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             329.314024 MFLOPS
+# parameters:      3.2769090000000016 M
+----------------------------------------
+Model normalized score: 0.9715991197991394.
+Val accuracy:      0.45131138392857145
+Block choices:     [0, 0, 0, 1, 3, 0, 1, 1, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [2, 6, 5, 7, 6, 7, 3, 4, 4, 4, 2, 3, 9, 3, 7, 3, 5, 3, 2, 6]
+Flops:             324.399912 MFLOPS
+# parameters:      3.2441920000000013 M
+----------------------------------------
+Model normalized score: 0.99607687302726.
+Val accuracy:      0.5775470344387755
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 9]
+Flops:             332.638184 MFLOPS
+# parameters:      3.325244000000002 M
+----------------------------------------
+Model normalized score: 0.9860927073170735.
+Val accuracy:      0.5654296875
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2, 2]
+Channel choices:   [8, 7, 5, 7, 6, 7, 2, 8, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             335.498216 MFLOPS
+# parameters:      3.2277050000000016 M
+----------------------------------------
+Model normalized score: 0.9816341700143474.
+Val accuracy:      0.5705715880102041
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 7, 4, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             334.403752 MFLOPS
+# parameters:      3.2087320000000017 M
+----------------------------------------
+Model normalized score: 0.976218735294118.
+Val accuracy:      0.5555419921875
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 6, 7, 3, 3, 2, 3, 2, 3, 4, 3, 6, 6, 4, 3, 4, 7]
+Flops:             325.422248 MFLOPS
+# parameters:      3.2650080000000017 M
+----------------------------------------
+Model normalized score: 0.9613840839311336.
+Val accuracy:      0.5098254145408163
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 1, 0, 1, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [2, 6, 5, 7, 5, 7, 2, 4, 2, 3, 2, 3, 4, 4, 6, 7, 5, 3, 4, 6]
+Flops:             313.580712 MFLOPS
+# parameters:      3.286880000000002 M
+
+Searching iter: 19
+----------------------------------------
+Model normalized score: 0.9993950035868009.
+Val accuracy:      0.5821906887755102
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             336.40452 MFLOPS
+# parameters:      3.3087660000000017 M
+----------------------------------------
+Model normalized score: 0.9968184454806315.
+Val accuracy:      0.5801777742346939
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             337.006632 MFLOPS
+# parameters:      3.2850040000000016 M
+----------------------------------------
+Model normalized score: 0.9926299949784796.
+Val accuracy:      0.5758928571428571
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 6, 7, 7, 8, 2, 3, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             340.236712 MFLOPS
+# parameters:      3.223040000000002 M
+----------------------------------------
+Model normalized score: 0.99607687302726.
+Val accuracy:      0.5788026147959183
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 3, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 9]
+Flops:             332.638184 MFLOPS
+# parameters:      3.325244000000002 M
+----------------------------------------
+Model normalized score: 0.9906032058823532.
+Val accuracy:      0.5779622395833334
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 7, 5, 7, 7, 8, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             338.022696 MFLOPS
+# parameters:      3.2322080000000017 M
+----------------------------------------
+Model normalized score: 0.986226473457676.
+Val accuracy:      0.5734016262755102
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 5, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             334.902376 MFLOPS
+# parameters:      3.2347910000000017 M
+----------------------------------------
+Model normalized score: 0.9956804440459113.
+Val accuracy:      0.5731823979591837
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 8, 5, 7, 7, 4, 2, 4, 5, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             338.116776 MFLOPS
+# parameters:      3.2657580000000017 M
+----------------------------------------
+Model normalized score: 0.9986705387374465.
+Val accuracy:      0.5749362244897959
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 1, 1, 0, 2, 2, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             337.106984 MFLOPS
+# parameters:      3.2965580000000014 M
+----------------------------------------
+Model normalized score: 0.9879020035868008.
+Val accuracy:      0.5717075892857143
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             332.804392 MFLOPS
+# parameters:      3.267932000000002 M
+----------------------------------------
+Model normalized score: 0.9954124426111911.
+Val accuracy:      0.5722249348958334
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 2, 0, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             335.36964 MFLOPS
+# parameters:      3.292412000000002 M
+----------------------------------------
+Model normalized score: 0.9950140265423244.
+Val accuracy:      0.5680604272959183
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             337.414312 MFLOPS
+# parameters:      3.2685080000000015 M
+----------------------------------------
+Model normalized score: 0.9853998909612627.
+Val accuracy:      0.5692562181122449
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 6, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 6, 3, 3, 4, 6]
+Flops:             335.861992 MFLOPS
+# parameters:      3.2192230000000013 M
+----------------------------------------
+Model normalized score: 0.9999815329985656.
+Val accuracy:      0.5639349489795918
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 2, 1, 3, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 2, 7, 3, 7, 2, 3, 2, 3, 4, 6, 4, 6, 5, 3, 4, 6]
+Flops:             332.290088 MFLOPS
+# parameters:      3.355404000000002 M
+----------------------------------------
+Model normalized score: 0.9596066535150648.
+Val accuracy:      0.5398198341836735
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             319.78372 MFLOPS
+# parameters:      3.2104940000000015 M
+----------------------------------------
+Model normalized score: 0.9839754512195125.
+Val accuracy:      0.5383450255102041
+Block choices:     [0, 1, 0, 3, 0, 0, 1, 1, 0, 1, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 4, 2, 4, 4, 4, 6, 6, 5, 2, 4, 4]
+Flops:             339.637736 MFLOPS
+# parameters:      3.170398000000002 M
+----------------------------------------
+Model normalized score: 0.9609087869440462.
+Val accuracy:      0.50079345703125
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 3, 4, 2, 8, 2, 3, 4, 3, 6, 2, 5, 3, 4, 4]
+Flops:             323.001256 MFLOPS
+# parameters:      3.185996000000002 M
+----------------------------------------
+Model normalized score: 0.9842466520803446.
+Val accuracy:      0.5534518494897959
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 2, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 9]
+Flops:             326.422632 MFLOPS
+# parameters:      3.3092280000000014 M
+----------------------------------------
+Model normalized score: 0.9851589325681495.
+Val accuracy:      0.5495655293367347
+Block choices:     [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 3, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 4, 4, 6]
+Flops:             327.711528 MFLOPS
+# parameters:      3.302071000000002 M
+----------------------------------------
+Model normalized score: 0.9795269540889531.
+Val accuracy:      0.5224609375
+Block choices:     [0, 1, 0, 3, 1, 0, 1, 2, 1, 2, 2, 3, 0, 0, 0, 2, 0, 0, 1, 0]
+Channel choices:   [6, 6, 5, 7, 6, 2, 3, 4, 2, 4, 2, 3, 4, 4, 6, 6, 5, 3, 4, 4]
+Flops:             333.303016 MFLOPS
+# parameters:      3.2058130000000022 M
+----------------------------------------
+Model normalized score: 0.9842496879483504.
+Val accuracy:      0.5721460459183674
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             331.19876 MFLOPS
+# parameters:      3.2597400000000016 M
+----------------------------------------
+Model normalized score: 0.9867507912482069.
+Val accuracy:      0.5735411352040817
+Block choices:     [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 5, 2, 3, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             330.985512 MFLOPS
+# parameters:      3.2789580000000016 M
+----------------------------------------
+Model normalized score: 0.9988270035868008.
+Val accuracy:      0.5828653971354166
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             335.375912 MFLOPS
+# parameters:      3.315566000000002 M
+----------------------------------------
+Model normalized score: 0.9759456011477764.
+Val accuracy:      0.5157445790816326
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 2, 0, 0, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 2, 7, 7, 4, 2, 9, 2, 3, 4, 2, 7, 6, 3, 3, 4, 6]
+Flops:             326.359912 MFLOPS
+# parameters:      3.2534310000000013 M
+----------------------------------------
+Model normalized score: 0.9959079548063132.
+Val accuracy:      0.5525151466836735
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 7, 4, 2, 4, 4, 3, 4, 4, 6, 6, 5, 3, 4, 3]
+Flops:             343.934056 MFLOPS
+# parameters:      3.207004000000002 M
+----------------------------------------
+Model normalized score: 0.994872680057389.
+Val accuracy:      0.5716876594387755
+Block choices:     [0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 8, 8, 6, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 6, 3, 3, 4, 6]
+Flops:             341.418984 MFLOPS
+# parameters:      3.2260350000000018 M
+----------------------------------------
+Model normalized score: 0.9822333622668582.
+Val accuracy:      0.5733617665816326
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             332.478248 MFLOPS
+# parameters:      3.2327660000000016 M
+----------------------------------------
+Model normalized score: 0.9669843565279772.
+Val accuracy:      0.5310507015306123
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 0, 2, 0, 0, 1, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 3, 4, 2, 4, 2, 6, 4, 4, 6, 7, 3, 3, 2, 6]
+Flops:             328.947112 MFLOPS
+# parameters:      3.1656760000000013 M
+----------------------------------------
+Model normalized score: 0.9634006692969874.
+Val accuracy:      0.5146280924479166
+Block choices:     [0, 1, 0, 0, 1, 0, 1, 0, 2, 0, 0, 1, 0, 2, 1, 0, 0, 0, 3, 0]
+Channel choices:   [8, 4, 5, 8, 3, 7, 3, 4, 2, 4, 2, 3, 4, 4, 6, 6, 3, 3, 4, 6]
+Flops:             314.772392 MFLOPS
+# parameters:      3.288240000000002 M
+----------------------------------------
+Model normalized score: 0.996044817073171.
+Val accuracy:      0.5488480548469388
+Block choices:     [0, 1, 0, 3, 0, 0, 1, 1, 0, 1, 0, 0, 0, 3, 2, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 3, 7, 3, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             335.43236 MFLOPS
+# parameters:      3.296062000000002 M
+----------------------------------------
+Model normalized score: 0.984667855093257.
+Val accuracy:      0.5056002869897959
+Block choices:     [0, 2, 0, 3, 0, 0, 1, 0, 2, 0, 0, 0, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 2, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 5, 3, 4, 4]
+Flops:             337.64324 MFLOPS
+# parameters:      3.195781000000002 M
+----------------------------------------
+Model normalized score: 0.980032741750359.
+Val accuracy:      0.5573381696428571
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 1, 1, 0, 2, 2, 2, 0, 0, 1, 0]
+Channel choices:   [8, 7, 5, 7, 5, 7, 3, 4, 2, 4, 2, 4, 3, 3, 6, 7, 5, 3, 4, 5]
+Flops:             329.812648 MFLOPS
+# parameters:      3.245433000000002 M
+----------------------------------------
+Model normalized score: 0.9979472783357248.
+Val accuracy:      0.5515186543367347
+Block choices:     [0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 2, 2, 2, 2, 0, 2, 0]
+Channel choices:   [8, 7, 5, 7, 6, 7, 3, 4, 2, 8, 2, 4, 4, 4, 6, 6, 3, 3, 3, 6]
+Flops:             340.462504 MFLOPS
+# parameters:      3.2568570000000014 M
+----------------------------------------
+Model normalized score: 0.9953675129124824.
+Val accuracy:      0.5483896683673469
+Block choices:     [0, 1, 0, 1, 0, 0, 2, 0, 2, 2, 0, 1, 2, 2, 1, 2, 1, 3, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             335.360232 MFLOPS
+# parameters:      3.2922040000000017 M
+----------------------------------------
+Model normalized score: 0.9667128938307032.
+Val accuracy:      0.5588582356770834
+Block choices:     [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
+Flops:             322.327016 MFLOPS
+# parameters:      3.232453000000002 M
+----------------------------------------
+Model normalized score: 0.9609009949784793.
+Val accuracy:      0.5464963329081632
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 2, 1, 0, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 8, 6, 7, 7, 4, 2, 3, 2, 3, 4, 3, 6, 6, 3, 2, 4, 6]
+Flops:             326.221928 MFLOPS
+# parameters:      3.152558000000001 M
+----------------------------------------
+Model normalized score: 0.9773847288378769.
+Val accuracy:      0.5236965880102041
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 2, 0, 3, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 4, 2, 7, 3, 4, 2, 4, 2, 3, 4, 6, 4, 6, 5, 3, 4, 6]
+Flops:             320.388968 MFLOPS
+# parameters:      3.325111000000002 M
+----------------------------------------
+Model normalized score: 0.9894978342898137.
+Val accuracy:      0.5354950573979592
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0]
+Channel choices:   [2, 6, 5, 7, 6, 7, 3, 4, 2, 5, 3, 3, 4, 3, 6, 6, 5, 6, 4, 6]
+Flops:             321.724904 MFLOPS
+# parameters:      3.3936320000000015 M
+----------------------------------------
+Model normalized score: 0.959755416786227.
+Val accuracy:      0.5413145727040817
+Block choices:     [0, 0, 1, 0, 0, 0, 1, 1, 3, 2, 0, 1, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 2, 8, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 4, 6]
+Flops:             319.608104 MFLOPS
+# parameters:      3.2133260000000017 M
+----------------------------------------
+Model normalized score: 0.9717218385939743.
+Val accuracy:      0.5395208864795918
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 1, 3, 2, 1, 0, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 5, 7, 7, 4, 2, 4, 2, 3, 4, 3, 6, 6, 3, 3, 3, 6]
+Flops:             329.966312 MFLOPS
+# parameters:      3.1873260000000014 M
+----------------------------------------
+Model normalized score: 0.988957073170732.
+Val accuracy:      0.5553385416666666
+Block choices:     [0, 3, 0, 0, 0, 0, 1, 0, 2, 2, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 7, 5, 8, 4, 7, 5, 4, 2, 4, 5, 3, 4, 4, 6, 7, 3, 3, 3, 6]
+Flops:             339.0074 MFLOPS
+# parameters:      3.2108070000000017 M
+----------------------------------------
+Model normalized score: 0.9710960581061696.
+Val accuracy:      0.5565210459183674
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 4, 6, 7, 3, 3, 4, 6]
+Flops:             325.33444 MFLOPS
+# parameters:      3.231084000000002 M
+----------------------------------------
+Model normalized score: 0.9921069325681495.
+Val accuracy:      0.5387834821428571
+Block choices:     [0, 1, 0, 0, 2, 0, 1, 1, 2, 1, 2, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 3, 5, 7, 6, 7, 2, 4, 4, 4, 2, 4, 4, 3, 6, 5, 5, 3, 4, 4]
+Flops:             339.669096 MFLOPS
+# parameters:      3.225367000000002 M
+----------------------------------------
+Model normalized score: 0.9934497639885225.
+Val accuracy:      0.5708705357142857
+Block choices:     [0, 0, 0, 0, 0, 2, 1, 1, 2, 2, 0, 2, 0, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 5, 5, 8, 6, 7, 3, 4, 2, 4, 2, 3, 4, 6, 6, 7, 3, 3, 4, 6]
+Flops:             337.420584 MFLOPS
+# parameters:      3.2578060000000018 M
+----------------------------------------
+Model normalized score: 0.9934128256814924.
+Val accuracy:      0.5578762755102041
+Block choices:     [0, 3, 0, 0, 0, 0, 1, 1, 2, 0, 0, 2, 0, 2, 1, 2, 0, 0, 2, 2]
+Channel choices:   [8, 6, 5, 7, 5, 7, 3, 8, 2, 4, 2, 3, 4, 3, 6, 7, 3, 3, 4, 6]
+Flops:             339.057576 MFLOPS
+# parameters:      3.2405860000000017 M
+----------------------------------------
+Model normalized score: 0.9720845000000002.
+Val accuracy:      0.5518391927083334
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 2, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 5, 7, 7, 7, 2, 3, 2, 3, 4, 5, 2, 6, 3, 3, 4, 6]
+Flops:             329.793832 MFLOPS
+# parameters:      3.1915800000000014 M
+----------------------------------------
+Model normalized score: 0.9979844591104737.
+Val accuracy:      0.5584343112244898
+Block choices:     [0, 0, 2, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 3, 2, 0]
+Channel choices:   [5, 6, 5, 7, 6, 7, 2, 4, 2, 4, 2, 4, 4, 3, 6, 6, 5, 3, 4, 6]
+Flops:             332.246184 MFLOPS
+# parameters:      3.3422790000000018 M
+----------------------------------------
+Model normalized score: 0.9860377295552369.
+Val accuracy:      0.5705117984693877
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 2, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 4, 6, 6, 5, 2, 4, 6]
+Flops:             332.56292 MFLOPS
+# parameters:      3.2577580000000013 M
+----------------------------------------
+Model normalized score: 0.9841494713055956.
+Val accuracy:      0.539421237244898
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 3, 0, 0, 1, 2, 3, 2, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 2, 3, 3, 4, 2, 3, 2, 3, 4, 3, 4, 6, 6, 3, 7, 6]
+Flops:             312.138152 MFLOPS
+# parameters:      3.456638000000001 M
+----------------------------------------
+Model normalized score: 0.9684609246771881.
+Val accuracy:      0.5554647640306123
+Block choices:     [0, 1, 0, 1, 0, 0, 1, 0, 2, 0, 0, 2, 1, 2, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 8, 6, 7, 3, 7, 2, 3, 2, 3, 4, 3, 4, 6, 3, 3, 4, 6]
+Flops:             328.802856 MFLOPS
+# parameters:      3.1772120000000013 M
+----------------------------------------
+Model normalized score: 0.984262823529412.
+Val accuracy:      0.5453603316326531
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 3, 4, 8, 6, 7, 7, 4, 2, 4, 2, 3, 4, 6, 6, 5, 3, 3, 4, 6]
+Flops:             331.979624 MFLOPS
+# parameters:      3.2517350000000014 M
+----------------------------------------
+Best models:
+----------------------------------------
+Model normalized score: 0.9993950035868009.
+Val accuracy:      0.5824697066326531
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             336.40452 MFLOPS
+# parameters:      3.3087660000000017 M
+----------------------------------------
+Model normalized score: 0.9993950035868009.
+Val accuracy:      0.5831871811224489
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 2, 0, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 2, 4, 2, 5, 2, 4, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             336.40452 MFLOPS
+# parameters:      3.3087660000000017 M
+----------------------------------------
+Model normalized score: 0.9988270035868008.
+Val accuracy:      0.5828653971354166
+Block choices:     [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
+Channel choices:   [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+Flops:             335.375912 MFLOPS
+# parameters:      3.315566000000002 M
