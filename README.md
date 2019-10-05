@@ -26,6 +26,10 @@ pip install -r requirements.txt
 - Genetic and random search with BN statistics update and FLOP & # parameters constraint are provided.
 
 ## Results
+ 
+![alt text](./images/search_supernet.gif)
+
+
 | Model                  | FLOPs | #Params   | Top-1 | Top-5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :---: | :------:  | :---: | :---: | :---------------------: | :----: |  :----: | 
 |    OneShot+ Supernet |  841.9M |  15.4M |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
@@ -39,8 +43,7 @@ pip install -r requirements.txt
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
 |    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
- 
-![alt text](./images/search_supernet.gif)
+
  
 ## Usage
 **Training stage**
