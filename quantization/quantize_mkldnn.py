@@ -101,7 +101,7 @@ if __name__ == '__main__':
                                                       'mobilenetv2_1.0',
                                                       'imagenet1k-resnet-152',
                                                       'imagenet1k-inception-bn',
-                                                      'custom'],
+                                                      'ShuffleNas_fixArch'],
                         help='currently only supports imagenet1k-resnet-50_v1, imagenet1k-resnet-152 or imagenet1k-inception-bn.'
                              'you can set to custom to load your pre-trained model.')
     parser.add_argument('--use-gluon-model', type=bool, default=False,
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         prefix = convert_from_gluon(model_name=args.model, image_shape=args.image_shape, classes=1000, logger=logger)
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
-    elif args.model == 'custom':
+    elif args.model == 'ShuffleNas_fixArch':
         dir_path = os.path.dirname(os.path.realpath(__file__))
         prefix = os.path.join(dir_path, 'model', args.model)
         epoch = 0
@@ -253,14 +253,14 @@ if __name__ == '__main__':
         rgb_std = '58.393, 57.12, 57.375'
         if exclude_first_conv:
             excluded_sym_names += ['inception30_conv0_fwd']
-    elif args.model == 'custom':
+    elif args.model == 'ShuffleNas_fixArch':
         # add rgb mean/std of your model.
-        rgb_mean = '0,0,0'
-        rgb_std = '0,0,0'
+        rgb_mean = '123.68,116.779,103.939'
+        rgb_std = '58.393, 57.12, 57.375'
         # add layer names you donnot want to quantize.
-        excluded_sym_names += ['layers']
+        excluded_sym_names += ['shufflenasoneshotfix0_output_flatten0_flatten0']
         if exclude_first_conv:
-            excluded_sym_names += ['layers']
+            excluded_sym_names += ['shufflenasoneshotfix0_hybridsequential0_first_conv_fwd']
     else:
         raise ValueError('model %s is not supported in this script' % args.model)
 
