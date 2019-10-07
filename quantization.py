@@ -27,17 +27,17 @@ import ctypes
 import logging
 import os
 import numpy as np
-from ..base import _LIB, check_call, py_str
-from ..base import c_array, c_str, mx_uint, c_str_array
-from ..base import NDArrayHandle, SymbolHandle
-from ..symbol import Symbol
-from ..symbol import load as sym_load
-from .. import ndarray
-from ..ndarray import load as nd_load
-from ..ndarray import NDArray
-from ..io import DataIter
-from ..context import cpu, Context
-from ..module import Module
+from mxnet.base import _LIB, check_call, py_str
+from mxnet.base import c_array, c_str, mx_uint, c_str_array
+from mxnet.base import NDArrayHandle, SymbolHandle
+from mxnet.symbol import Symbol
+from mxnet.symbol import load as sym_load
+from mxnet import ndarray
+from mxnet.ndarray import load as nd_load
+from mxnet.ndarray import NDArray
+from mxnet.io import DataIter
+from mxnet.context import cpu, Context
+from mxnet.module import Module
 
 
 def _quantize_params(qsym, params, th_dict):
