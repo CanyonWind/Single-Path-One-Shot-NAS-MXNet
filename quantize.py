@@ -18,14 +18,9 @@
 import argparse
 import os
 import logging
+from common import modelzoo
 import mxnet as mx
-import gluoncv
-from mxnet import gluon, nd, image
-from gluoncv import utils
-from gluoncv.model_zoo import get_model
-from quantization import *
-from mxnet.base import SymbolHandle, check_call, _LIB, mx_uint, c_str_array
-import ctypes
+from mxnet.contrib.quantization import *
 
 
 def download_calib_dataset(dataset_url, calib_dataset, logger=None):
@@ -34,39 +29,13 @@ def download_calib_dataset(dataset_url, calib_dataset, logger=None):
     mx.test_utils.download(dataset_url, calib_dataset)
 
 
-def convert_from_gluon(model_name, image_shape, classes=1000, logger=None):
+def download_model(model_name, logger=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     model_path = os.path.join(dir_path, 'model')
     if logger is not None:
-        logger.info('Converting model from Gluon-CV ModelZoo %s... into path %s' % (model_name, model_path))
-    net = get_model(name=model_name, classes=classes, pretrained=True)
-    net.hybridize()
-    x = mx.sym.var('data')
-    y = net(x)
-    y = mx.sym.SoftmaxOutput(data=y, name='softmax')
-    symnet = mx.symbol.load_json(y.tojson())
-    params = net.collect_params()
-    args = {}
-    auxs = {}
-    for param in params.values():
-        v = param._reduce()
-        k = param.name
-        if 'running' in k:
-            auxs[k] = v
-        else:
-            args[k] = v
-    mod = mx.mod.Module(symbol=symnet, context=mx.cpu(),
-                        label_names = ['softmax_label'])
-    mod.bind(for_training=False,
-             data_shapes=[('data', (1,) +
-                          tuple([int(i) for i in image_shape.split(',')]))])
-    mod.set_params(arg_params=args, aux_params=auxs)
-    dst_dir = os.path.join(dir_path, 'model')
-    prefix = os.path.join(dir_path, 'model', model_name)
-    if not os.path.isdir(dst_dir):
-        os.mkdir(dst_dir)
-    mod.save_checkpoint(prefix, 0)
-    return prefix
+        logger.info('Downloading model %s... into path %s' % (model_name, model_path))
+    return modelzoo.download_model(args.model, os.path.join(dir_path, 'model'))
+
 
 def save_symbol(fname, sym, logger=None):
     if logger is not None:
@@ -83,13 +52,10 @@ def save_params(fname, arg_params, aux_params, logger=None):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate a calibrated quantized model from a FP32 model with Intel MKL-DNN support')
-    parser.add_argument('--model', type=str, default='resnet50_v1',
-                        help='model to be quantized.')
-    parser.add_argument('--epoch', type=int, default=0,
-                        help='number of epochs, default is 0')
-    parser.add_argument('--no-pretrained', action='store_true', default=False,
-                        help='If enabled, will not download pretrained model from MXNet or Gluon-CV modelzoo.')
+    parser = argparse.ArgumentParser(description='Generate a calibrated quantized model from a FP32 model')
+    parser.add_argument('--ctx', type=str, default='gpu')
+    parser.add_argument('--model', type=str, choices=['imagenet1k-resnet-152', 'imagenet1k-inception-bn'],
+                        help='currently only supports imagenet1k-resnet-152 or imagenet1k-inception-bn')
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--label-name', type=str, default='softmax_label')
     parser.add_argument('--calib-dataset', type=str, default='data/val_256_q90.rec',
@@ -99,18 +65,19 @@ if __name__ == '__main__':
                         help='number of threads for data decoding')
     parser.add_argument('--num-calib-batches', type=int, default=10,
                         help='number of batches for calibration')
-    parser.add_argument('--exclude-first-conv', action='store_true', default=False,
+    parser.add_argument('--exclude-first-conv', action='store_true', default=True,
                         help='excluding quantizing the first conv layer since the'
-                             ' input data may have negative value which doesn\'t support at moment' )
+                             ' number of channels is usually not a multiple of 4 in that layer'
+                             ' which does not satisfy the requirement of cuDNN')
     parser.add_argument('--shuffle-dataset', action='store_true', default=True,
                         help='shuffle the calibration dataset')
     parser.add_argument('--shuffle-chunk-seed', type=int, default=3982304,
                         help='shuffling chunk seed, see'
-                             ' https://mxnet.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
+                             ' https://mxnet.incubator.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
                              ' for more details')
     parser.add_argument('--shuffle-seed', type=int, default=48564309,
                         help='shuffling seed, see'
-                             ' https://mxnet.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
+                             ' https://mxnet.incubator.apache.org/api/python/io/io.html?highlight=imager#mxnet.io.ImageRecordIter'
                              ' for more details')
     parser.add_argument('--calib-mode', type=str, default='entropy',
                         help='calibration mode used for generating calibration table for the quantized symbol; supports'
@@ -125,20 +92,22 @@ if __name__ == '__main__':
                              ' thresholds. This mode is expected to produce the best inference accuracy of all three'
                              ' kinds of quantized models if the calibration dataset is representative enough of the'
                              ' inference dataset.')
-    parser.add_argument('--quantized-dtype', type=str, default='auto',
-                        choices=['auto', 'int8', 'uint8'],
+    parser.add_argument('--quantized-dtype', type=str, default='int8',
+                        choices=['int8', 'uint8'],
                         help='quantization destination data type for input data')
-    parser.add_argument('--enable-calib-quantize', type=bool, default=True,
-                        help='If enabled, the quantize op will '
-                             'be calibrated offline if calibration mode is '
-                             'enabled')
     args = parser.parse_args()
-    ctx = mx.cpu(0)
+
+    if args.ctx == 'gpu':
+        ctx = mx.gpu(0)
+    elif args.ctx == 'cpu':
+        ctx = mx.cpu(0)
+    else:
+        raise ValueError('ctx %s is not supported in this script' % args.ctx)
+
     logging.basicConfig()
     logger = logging.getLogger('logger')
     logger.setLevel(logging.INFO)
 
-    logger.info(args)
     logger.info('shuffle_dataset=%s' % args.shuffle_dataset)
 
     calib_mode = args.calib_mode
@@ -149,20 +118,7 @@ if __name__ == '__main__':
         download_calib_dataset('http://data.mxnet.io/data/val_256_q90.rec', args.calib_dataset)
 
     # download model
-    if not args.no_pretrained:
-        logger.info('Get pre-trained model from MXNet or Gluoncv modelzoo.')
-        logger.info('If you want to use custom model, please set --no-pretrained.')
-
-        logger.info('model %s is converted from GluonCV' % args.model)
-        prefix = convert_from_gluon(model_name=args.model, image_shape=args.image_shape, classes=1000, logger=logger)
-        rgb_mean = '123.68,116.779,103.939'
-        rgb_std = '58.393, 57.12, 57.375'
-        epoch = 0
-    else:
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        prefix = os.path.join(dir_path, 'model', args.model)
-        epoch = args.epoch
-
+    prefix, epoch = download_model(model_name=args.model, logger=logger)
     sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
 
     # get batch size
@@ -171,9 +127,7 @@ if __name__ == '__main__':
 
     # get number of batches for calibration
     num_calib_batches = args.num_calib_batches
-    if calib_mode == 'none':
-        logger.info('skip calibration step as calib_mode is none')
-    else:
+    if calib_mode != 'none':
         logger.info('number of batches = %d for calibration' % num_calib_batches)
 
     # get number of threads for decoding the dataset
@@ -183,65 +137,41 @@ if __name__ == '__main__':
     image_shape = args.image_shape
 
     exclude_first_conv = args.exclude_first_conv
-    if args.quantized_dtype == "uint8":
-        logger.info('quantized dtype is set to uint8, will exclude first conv.')
-        exclude_first_conv = True
     excluded_sym_names = []
-    if not args.no_pretrained:
-        if args.model == 'imagenet1k-resnet-152':
-            rgb_mean = '0,0,0'
-            rgb_std = '1,1,1'
-            # stage1_unit1_bn1 & stage4_unit1_bn1 is excluded for the sake of accuracy
-            excluded_sym_names += ['flatten0', 'stage1_unit1_bn1', 'stage4_unit1_bn1']
-            if exclude_first_conv:
-                excluded_sym_names += ['conv0']
-        elif args.model == 'imagenet1k-inception-bn':
-            rgb_mean = '123.68,116.779,103.939'
-            rgb_std = '1,1,1'
-            excluded_sym_names += ['flatten']
-            if exclude_first_conv:
-                excluded_sym_names += ['conv_1']
-        elif args.model.find('resnet') != -1 and args.model.find('v1') != -1:
-            if exclude_first_conv:
-                excluded_sym_names += ['resnetv10_conv0_fwd']
-        elif args.model.find('resnet') != -1 and args.model.find('v2') != -1:
-            # resnetv20_stage1_batchnorm0_fwd is excluded for the sake of accuracy
-            excluded_sym_names += ['resnetv20_flatten0_flatten0', 'resnetv20_stage1_batchnorm0_fwd']
-            if exclude_first_conv:
-                excluded_sym_names += ['resnetv20_conv0_fwd']
-        elif args.model.find('vgg') != -1:
-            if exclude_first_conv:
-                excluded_sym_names += ['vgg0_conv0_fwd']
-        elif args.model.find('squeezenet1') != -1:
-            excluded_sym_names += ['squeezenet0_flatten0_flatten0']
-            if exclude_first_conv:
-                excluded_sym_names += ['squeezenet0_conv0_fwd']
-        elif args.model.find('mobilenet') != -1 and args.model.find('v2') == -1:
-            excluded_sym_names += ['mobilenet0_flatten0_flatten0',
-                                'mobilenet0_pool0_fwd']
-            if exclude_first_conv:
-                excluded_sym_names += ['mobilenet0_conv0_fwd']
-        elif args.model.find('mobilenet') != -1 and args.model.find('v2') != -1:
-            excluded_sym_names += ['mobilenetv20_output_flatten0_flatten0']
-            if exclude_first_conv:
-                excluded_sym_names += ['mobilenetv20_conv0_fwd']
-        elif args.model == 'inceptionv3':
-            if exclude_first_conv:
-                excluded_sym_names += ['inception30_conv0_fwd']
-        else:
-            raise ValueError('Currently, model %s is not supported in this script' % args.model)
-    else:
-        logger.info('Please set proper RGB configs for model %s' % args.model)
-        # add rgb mean/std of your model.
+    if args.model == 'imagenet1k-resnet-152':
         rgb_mean = '0,0,0'
-        rgb_std = '0,0,0'
-        # add layer names you donnot want to quantize.
-        logger.info('Please set proper excluded_sym_names for model %s' % args.model)
-        excluded_sym_names += ['layers']
+        if args.ctx == 'gpu':
+            calib_layer = lambda name: name.endswith('_output') and (name.find('conv') != -1
+                                                                     or name.find('sc') != -1
+                                                                     or name.find('fc') != -1)
+        else:
+            calib_layer = lambda name: name.endswith('_output') and (name.find('conv') != -1
+                                                                     or name.find('sc') != -1)
+            excluded_sym_names += ['flatten0', 'fc1']
         if exclude_first_conv:
-            excluded_sym_names += ['layers']
-
-    logger.info('These layers have been excluded %s' % excluded_sym_names)
+            excluded_sym_names += ['conv0']
+    elif args.model == 'imagenet1k-inception-bn':
+        rgb_mean = '123.68,116.779,103.939'
+        if args.ctx == 'gpu':
+            calib_layer = lambda name: name.endswith('_output') and (name.find('conv') != -1
+                                                                     or name.find('fc') != -1)
+            excluded_sym_names += ['ch_concat_3a_chconcat',
+                                   'ch_concat_3b_chconcat',
+                                   'ch_concat_3c_chconcat',
+                                   'ch_concat_4a_chconcat',
+                                   'ch_concat_4b_chconcat',
+                                   'ch_concat_4c_chconcat',
+                                   'ch_concat_4d_chconcat',
+                                   'ch_concat_4e_chconcat',
+                                   'ch_concat_5a_chconcat',
+                                   'ch_concat_5b_chconcat']
+        else:
+            calib_layer = lambda name: name.endswith('_output') and (name.find('conv') != -1)
+            excluded_sym_names += ['flatten', 'fc1']
+        if exclude_first_conv:
+            excluded_sym_names += ['conv_1']
+    else:
+        raise ValueError('model %s is not supported in this script' % args.model)
 
     label_name = args.label_name
     logger.info('label_name = %s' % label_name)
@@ -252,19 +182,15 @@ if __name__ == '__main__':
     logger.info('rgb_mean = %s' % rgb_mean)
     rgb_mean = [float(i) for i in rgb_mean.split(',')]
     mean_args = {'mean_r': rgb_mean[0], 'mean_g': rgb_mean[1], 'mean_b': rgb_mean[2]}
-    logger.info('rgb_std = %s' % rgb_std)
-    rgb_std = [float(i) for i in rgb_std.split(',')]
-    std_args = {'std_r': rgb_std[0], 'std_g': rgb_std[1], 'std_b': rgb_std[2]}
-    combine_mean_std = {}
-    combine_mean_std.update(mean_args)
-    combine_mean_std.update(std_args)
+
     if calib_mode == 'none':
         logger.info('Quantizing FP32 model %s' % args.model)
-        qsym, qarg_params, aux_params = quantize_model_mkldnn(sym=sym, arg_params=arg_params, aux_params=aux_params,
-                                                              ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                              calib_mode=calib_mode, quantized_dtype=args.quantized_dtype,
-                                                              logger=logger)
+        qsym, qarg_params, aux_params = quantize_model(sym=sym, arg_params=arg_params, aux_params=aux_params,
+                                                       ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                       calib_mode=calib_mode, quantized_dtype=args.quantized_dtype,
+                                                       logger=logger)
         sym_name = '%s-symbol.json' % (prefix + '-quantized')
+        save_symbol(sym_name, qsym, logger)
     else:
         logger.info('Creating ImageRecordIter for reading calibration dataset')
         data = mx.io.ImageRecordIter(path_imgrec=args.calib_dataset,
@@ -278,14 +204,14 @@ if __name__ == '__main__':
                                      shuffle=args.shuffle_dataset,
                                      shuffle_chunk_seed=args.shuffle_chunk_seed,
                                      seed=args.shuffle_seed,
-                                     **combine_mean_std)
+                                     **mean_args)
 
-        qsym, qarg_params, aux_params = quantize_model_mkldnn(sym=sym, arg_params=arg_params, aux_params=aux_params,
-                                                              ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                              calib_mode=calib_mode, calib_data=data,
-                                                              num_calib_examples=num_calib_batches * batch_size,
-                                                              quantized_dtype=args.quantized_dtype,
-                                                              label_names=(label_name,), logger=logger)
+        cqsym, qarg_params, aux_params = quantize_model(sym=sym, arg_params=arg_params, aux_params=aux_params,
+                                                        ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                        calib_mode=calib_mode, calib_data=data,
+                                                        num_calib_examples=num_calib_batches * batch_size,
+                                                        calib_layer=calib_layer, quantized_dtype=args.quantized_dtype,
+                                                        logger=logger)
         if calib_mode == 'entropy':
             suffix = '-quantized-%dbatches-entropy' % num_calib_batches
         elif calib_mode == 'naive':
@@ -294,6 +220,7 @@ if __name__ == '__main__':
             raise ValueError('unknow calibration mode %s received, only supports `none`, `naive`, and `entropy`'
                              % calib_mode)
         sym_name = '%s-symbol.json' % (prefix + suffix)
-    save_symbol(sym_name, qsym, logger)
+        save_symbol(sym_name, cqsym, logger)
+
     param_name = '%s-%04d.params' % (prefix + '-quantized', epoch)
     save_params(param_name, qarg_params, aux_params, logger)
