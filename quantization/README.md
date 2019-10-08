@@ -1,6 +1,6 @@
 # [Model Quantization with Calibration](https://github.com/apache/incubator-mxnet/tree/master/example/quantization)
 
-MXNet provides a quantization tool but it **hasn't been fully commited to the latest released build (1.5.0)**. To use this tool without building from source, some modification has been applied within this repo.
+MXNet provides a quantization tool but it **hasn't been fully commited to the latest released build (1.5.0)**. This is a modified version of it, so that we don't need to build from source every time.
 
 This folder contains examples of quantizing a FP32 model with Intel® MKL-DNN or CUDNN.
 
