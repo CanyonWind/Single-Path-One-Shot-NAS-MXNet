@@ -25,6 +25,7 @@ from mxnet import gluon, nd, image
 from gluoncv import utils
 from gluoncv.model_zoo import get_model
 from mxnet.contrib.quantization import *
+from oneshot_nas_network import get_shufflenas_oneshot
 from mxnet.base import SymbolHandle, check_call, _LIB, mx_uint, c_str_array
 import ctypes
 
@@ -75,6 +76,50 @@ def convert_from_gluon(model_name, image_shape, classes=1000, logger=None):
         os.mkdir(dst_dir)
     mod.save_checkpoint(prefix, 0)
     return prefix
+
+
+def convert_from_shufflenas(architecture, scale_ids, image_shape, model_name='ShuffleNas_fixArch',
+                            use_se=True, last_conv_after_pooling=True, logger=None):
+    '''
+    architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
+    scale_ids = [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+    '''
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    if logger is not None:
+        logger.info('Converting model from Gluon ShuffleNas. with blocks {}, channels {}'.format(architecture, scale_ids))
+    net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids,
+                                 use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
+    net.cast('float16')
+    net.load_parameters('../params_shufflenas_oneshot+_genetic/0.2497-imagenet-ShuffleNas_fixArch-170-best.params')
+    net.cast('float32')
+    net.hybridize()
+    x = mx.sym.var('data')
+    y = net(x)
+    y = mx.sym.SoftmaxOutput(data=y, name='softmax')
+    symnet = mx.symbol.load_json(y.tojson())
+    params = net.collect_params()
+    args = {}
+    auxs = {}
+    for param in params.values():
+        v = param._reduce()
+        k = param.name
+        if 'running' in k:
+            auxs[k] = v
+        else:
+            args[k] = v
+    mod = mx.mod.Module(symbol=symnet, context=mx.cpu(),
+                        label_names = ['softmax_label'])
+    mod.bind(for_training=False,
+             data_shapes=[('data', (1,) +
+                          tuple([int(i) for i in image_shape.split(',')]))])
+    mod.set_params(arg_params=args, aux_params=auxs)
+    dst_dir = os.path.join(dir_path, 'model')
+    prefix = os.path.join(dir_path, 'model', model_name)
+    if not os.path.isdir(dst_dir):
+        os.mkdir(dst_dir)
+    mod.save_checkpoint(prefix, 0)
+    return prefix
+
 
 def save_symbol(fname, sym, logger=None):
     if logger is not None:
@@ -179,8 +224,11 @@ if __name__ == '__main__':
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
     elif args.model == 'ShuffleNas_fixArch':
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        prefix = os.path.join(dir_path, 'model', args.model)
+        architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
+        scale_ids = [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+        prefix = convert_from_shufflenas(architecture=architecture, scale_ids=scale_ids, image_shape=args.image_shape,
+                                         model_name='ShuffleNas_fixArch+_genetic', use_se=True,
+                                         last_conv_after_pooling=True, logger=logger)
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
     else:
