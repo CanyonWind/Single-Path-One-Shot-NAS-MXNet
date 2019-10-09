@@ -293,9 +293,9 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = False
-LAST_CONV_AFTER_POOLING = False
-USE_SE = False
+FIX_ARCH = True
+LAST_CONV_AFTER_POOLING = True
+USE_SE = True
 
 
 def main():
@@ -329,7 +329,7 @@ def main():
         if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
         net(test_data)
-        net.export("./symbols/ShuffleNas_fixArch", epoch=1)
+        net.export("./symbols/ShuffleNas_fixArch", epoch=0)
         flops, model_size = get_flops()
         print("Last conv after pooling: {}, use se: {}".format(LAST_CONV_AFTER_POOLING, USE_SE))
         print("FLOPS: {}M, # parameters: {}M".format(flops, model_size))
