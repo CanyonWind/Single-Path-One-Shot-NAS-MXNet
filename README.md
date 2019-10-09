@@ -45,7 +45,7 @@ pip install -r requirements.txt
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
-|    [MobileNetV3 Large](https://gluon-cv.mxnet.io/model_zoo/classification.html#mobilenet)|	 **217M** |	5.4M |	75.32|	92.30 | 2.25 | - | - |
+|    MobileNetV3 Large|	 **217M** |	5.4M |	75.2|	- | 2.25 | - | - |
 |    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
