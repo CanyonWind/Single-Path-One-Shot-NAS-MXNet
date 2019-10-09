@@ -46,6 +46,7 @@ def download_model(model_name, logger=None):
         logger.info('Downloading model %s... into path %s' % (model_name, model_path))
     return modelzoo.download_model(args.model, os.path.join(dir_path, 'model'))
 
+
 def convert_from_gluon(model_name, image_shape, classes=1000, logger=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     model_path = os.path.join(dir_path, 'model')
@@ -68,7 +69,7 @@ def convert_from_gluon(model_name, image_shape, classes=1000, logger=None):
         else:
             args[k] = v
     mod = mx.mod.Module(symbol=symnet, context=mx.cpu(),
-                        label_names = ['softmax_label'])
+                        label_names=['softmax_label'])
     mod.bind(for_training=False,
              data_shapes=[('data', (1,) +
                           tuple([int(i) for i in image_shape.split(',')]))])
@@ -82,7 +83,7 @@ def convert_from_gluon(model_name, image_shape, classes=1000, logger=None):
 
 
 def convert_from_shufflenas(architecture, scale_ids, image_shape, model_name='ShuffleNas_fixArch',
-                            use_se=True, last_conv_after_pooling=True, logger=None):
+                            use_se=True, last_conv_after_pooling=True, logger=None, pretrained=True):
     '''
     architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
     scale_ids = [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
@@ -92,8 +93,14 @@ def convert_from_shufflenas(architecture, scale_ids, image_shape, model_name='Sh
         logger.info('Converting model from Gluon ShuffleNas. with blocks {}, channels {}'.format(architecture, scale_ids))
     net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids,
                                  use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
-    net.initialize()
-    net.hybridize()
+    if pretrained:
+        net.cast('float16')
+        net.load_parameters('../params_shufflenas_oneshot+_genetic/0.2484-imagenet-ShuffleNas_fixArch-179-best.params')
+        net.cast('float32')
+    else:
+        net.initialize()
+        net(nd.ones((1, 3, 224, 224)))
+    net.hybridize(mx.init.MSRAPrelu())
     x = mx.sym.var('data')
     y = net(x)
     y = mx.sym.SoftmaxOutput(data=y, name='softmax')
@@ -225,11 +232,11 @@ if __name__ == '__main__':
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
     elif args.model == 'ShuffleNas_fixArch':
-        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
+        scale_ids = [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
         prefix = convert_from_shufflenas(architecture=architecture, scale_ids=scale_ids, image_shape=args.image_shape,
-                                         model_name='ShuffleNas_OneShot+', use_se=True,
-                                         last_conv_after_pooling=True, logger=logger)
+                                         model_name='ShuffleNas_fixArch', use_se=True,
+                                         last_conv_after_pooling=True, logger=logger, pretrained=True)
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
     else:
