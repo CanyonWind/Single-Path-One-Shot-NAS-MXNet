@@ -4,7 +4,7 @@ This repository contains single path one-shot NAS networks  **MXNet (Gluon)** im
 
 **10/09/2019 Update:** 
 
-A searched model **Oneshot-S+:**, with the block choices and channel choices searched by this repo's implementation, ShuffleNetV2+ style SE and MobileNetV3 last convolution block design, reaches the **new highest** top-1 & top-5 accuracies with the **new lowest** [Google MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html). Check [here](https://github.com/CanyonWind/oneshot_nas#results) for comparison.
+A searched model **Oneshot-S+**, with the block choices and channel choices searched by this repo's implementation, ShuffleNetV2+ style SE and MobileNetV3 last convolution block design, reaches the **new highest** top-1 & top-5 accuracies with the **new lowest** [Google MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html). Check [here](https://github.com/CanyonWind/oneshot_nas#results) for comparison.
 
 **09/30/2019 Update:** 
 
