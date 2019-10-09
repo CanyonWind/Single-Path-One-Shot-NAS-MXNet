@@ -272,7 +272,7 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
             elif op in ['_plus_scalar', 'clip', '_div_scalar', 'elemwise_mul']:
                 # For hard-swish calculation, each related operation is put into the namedTuple Activation too.
                 # x * (F.clip(x + 3, 0, 6) / 6.)
-                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB'),
+                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB').replace('hard_swish', '_clip').replace('hard_sigmoid', '_clip'),
                                 Activation(output_shape=list(out_shape),
                                            activation_name=op)))
 
