@@ -111,7 +111,7 @@ The model would be automatically replaced in fusion and quantization format. It 
 
 ```
 # Launch FP32 Inference
-python imagenet_inference.py --symbol-file ../symbols/ShuffleNas_fixArchc-symbol.json --param-file ../symbols/ShuffleNas_fixArch-0000.params --rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --num-skipped-batches=50 --batch-size=64 --num-inference-batches=500 --dataset=./data/val_256_q90.rec --ctx=cpu
+python imagenet_inference.py --symbol-file ./model/ShuffleNas_fixArchc-symbol.json --param-file ./model/ShuffleNas_fixArch-0000.params --rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --num-skipped-batches=50 --batch-size=64 --num-inference-batches=500 --dataset=./data/val_256_q90.rec --ctx=cpu
 
 # Launch INT8 Inference
 python imagenet_inference.py --symbol-file ./model/ShuffleNas_fixArch-quantized-5batches-naive-symbol.json --param-file=./model/ShuffleNas_fixArch-quantized-0000.params --rgb-mean=123.68,116.779,103.939 --rgb-std=58.393,57.12,57.375 --num-skipped-batches=50 --batch-size=64 --num-inference-batches=500 --dataset=./data/val_256_q90.rec --ctx=cpu
