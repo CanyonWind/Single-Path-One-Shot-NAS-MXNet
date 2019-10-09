@@ -233,6 +233,17 @@ if __name__ == '__main__':
             ctx=args.ctx,
             **combine_mean_std)
 
+        # data = mx.io.ImageRecordIter(
+        #     path_imgrec=dataset,
+        #     preprocess_threads=data_nthreads,
+        #     shuffle=False,
+        #     batch_size=batch_size,
+        # 
+        #     resize=256,
+        #     data_shape=(3, 224, 224),
+        #     **combine_mean_std
+        # )
+
         # loading model
         sym, arg_params, aux_params = load_model(symbol_file, param_file, logger)
 
