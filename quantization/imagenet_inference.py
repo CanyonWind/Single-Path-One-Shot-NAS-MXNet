@@ -142,6 +142,7 @@ def benchmark_score(symbol_file, ctx, batch_size, num_batches, data_layer_type, 
     # return num images per second
     return num_batches*batch_size/(time.time() - tic)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Score a model on a dataset')
     parser.add_argument('--ctx', type=str, default='gpu')
@@ -217,32 +218,32 @@ if __name__ == '__main__':
         logger.info('Dataset for inference: %s' % dataset)
 
         # creating data iterator
-        data = mx.io.ImageRecordIter(
-            path_imgrec=dataset,
-            label_width=1,
-            preprocess_threads=data_nthreads,
-            batch_size=batch_size,
-            data_shape=data_shape,
-            label_name=label_name,
-            rand_crop=False,
-            rand_mirror=False,
-            shuffle=args.shuffle_dataset,
-            shuffle_chunk_seed=args.shuffle_chunk_seed,
-            seed=args.shuffle_seed,
-            dtype=data_layer_type,
-            ctx=args.ctx,
-            **combine_mean_std)
-
         # data = mx.io.ImageRecordIter(
         #     path_imgrec=dataset,
+        #     label_width=1,
         #     preprocess_threads=data_nthreads,
-        #     shuffle=False,
         #     batch_size=batch_size,
-        # 
-        #     resize=256,
-        #     data_shape=(3, 224, 224),
-        #     **combine_mean_std
-        # )
+        #     data_shape=data_shape,
+        #     label_name=label_name,
+        #     rand_crop=False,
+        #     rand_mirror=False,
+        #     shuffle=args.shuffle_dataset,
+        #     shuffle_chunk_seed=args.shuffle_chunk_seed,
+        #     seed=args.shuffle_seed,
+        #     dtype=data_layer_type,
+        #     ctx=args.ctx,
+        #     **combine_mean_std)
+
+        data = mx.io.ImageRecordIter(
+            path_imgrec=dataset,
+            preprocess_threads=data_nthreads,
+            shuffle=False,
+            batch_size=batch_size,
+
+            resize=256,
+            data_shape=(3, 224, 224),
+            **combine_mean_std
+        )
 
         # loading model
         sym, arg_params, aux_params = load_model(symbol_file, param_file, logger)
