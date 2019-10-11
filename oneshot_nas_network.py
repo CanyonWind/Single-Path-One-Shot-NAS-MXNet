@@ -274,11 +274,11 @@ class ShuffleNasOneShotFix(ShuffleNasOneShot):
         return x
 
 
-def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=False,
+def get_shufflenas_oneshot(architecture=None, n_class=1000, scale_ids=None, use_all_blocks=False,
                            use_se=False, last_conv_after_pooling=False):
     if architecture is None and scale_ids is None:
         # Nothing about architecture is specified, do random block selection and channel selection.
-        net = ShuffleNasOneShot(use_all_blocks=use_all_blocks, bn=NasBatchNorm,
+        net = ShuffleNasOneShot(n_class=n_class, use_all_blocks=use_all_blocks, bn=NasBatchNorm,
                                 use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
     elif architecture is not None and scale_ids is not None:
         # Create the specified structure
@@ -289,7 +289,7 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
         for i in range(len(scale_ids)):
             # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
             channel_scales.append(scale_list[scale_ids[i]])
-        net = ShuffleNasOneShotFix(architecture=architecture, channel_scales=channel_scales,
+        net = ShuffleNasOneShotFix(architecture=architecture, n_class=n_class, channel_scales=channel_scales,
                                    use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
     else:
         raise ValueError("architecture and scale_ids should both be None for supernet "

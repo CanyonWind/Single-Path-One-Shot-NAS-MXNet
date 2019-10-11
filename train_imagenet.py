@@ -189,10 +189,10 @@ def main():
     if model_name == 'ShuffleNas_fixArch':
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-        net = get_shufflenas_oneshot(architecture, scale_ids, use_se=opt.use_se,
+        net = get_shufflenas_oneshot(architecture=architecture, n_class=classes, scale_ids=scale_ids, use_se=opt.use_se,
                                      last_conv_after_pooling=opt.last_conv_after_pooling)
     elif model_name == 'ShuffleNas':
-        net = get_shufflenas_oneshot(use_all_blocks=opt.use_all_blocks, use_se=opt.use_se,
+        net = get_shufflenas_oneshot(n_class=classes, use_all_blocks=opt.use_all_blocks, use_se=opt.use_se,
                                      last_conv_after_pooling=opt.last_conv_after_pooling)
     else:
         net = get_model(model_name, **kwargs)
