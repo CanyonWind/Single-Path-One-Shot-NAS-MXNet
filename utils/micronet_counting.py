@@ -55,11 +55,12 @@ Attributes:
   padding: str, padding added to the input image.
   use_bias: bool, if true a bias term is added to the output.
   activation: str, type of activation applied to the output.
+  sparsity: float, the ratio of zeros in the kernel
 """  # pylint: disable=pointless-string-statement
 
 Conv2D = collections.namedtuple(
     'Conv2D', ['input_size', 'kernel_shape', 'strides', 'padding', 'use_bias',
-               'activation'])
+               'activation', 'sparsity'])
 
 """Operation definition for 2D depthwise convolution.
 
@@ -136,7 +137,7 @@ def get_sparse_size(tensor_shape, param_bits, sparsity):
   Args:
     tensor_shape: list<int>, shape of the tensor
     param_bits: int, number of bits the elements of the tensor represented in.
-    sparsity: float, sparsity level. 0 means dense.
+    sparsity: float, sparsity level. 0 means dense. # zeros / full size.
   Returns:
     int, number of bits required to represented the tensor in sparse format.
   """
@@ -205,7 +206,7 @@ def count_ops(op, sparsity, param_bits):
 
     # Size of the possibly sparse convolutional tensor.
     param_count += get_sparse_size(
-        [k_size, k_size, c_in, c_out], param_bits, sparsity)
+        [k_size, k_size, c_in, c_out], param_bits, op.sparsity)
 
     # Square stride expected.
     assert op.strides[0] == op.strides[1]
@@ -213,7 +214,7 @@ def count_ops(op, sparsity, param_bits):
 
     # Each application of the kernel can be thought as a dot product between
     # the flattened kernel and patches of the image.
-    vector_length = (k_size * k_size * c_in) * (1 - sparsity)
+    vector_length = (k_size * k_size * c_in) * (1 - op.sparsity)
     # Number of elements in the output is OUT_SIZE * OUT_SIZE * OUT_CHANNEL
     n_output_elements = get_conv_output_size(op.input_size, k_size, op.padding,
                                              stride) ** 2 * c_out
@@ -422,6 +423,8 @@ class MicroNetCounter(object):
         kernel_size = out_channels = -1
       else:
         # If it is a single operation just count.
+        if 'shufflechannel' in op_name:
+          print('found')
         param_count, flop_mults, flop_adds = count_ops(op_template, sparsity,
                                                        param_bits)
         temp_res = get_info(op_template)
