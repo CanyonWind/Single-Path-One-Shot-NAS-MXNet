@@ -14,6 +14,11 @@ import argparse
 import numpy as np
 import json
 import re
+
+import sys
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path)
 from micronet_counting import *
 
 
@@ -23,7 +28,8 @@ def parse_args():
                         help='data_shapes, format: arg_name,s1,s2,...,sn, example: data,1,3,224,224')
     parser.add_argument('-ls', '--label_shapes', type=str, nargs='+', default=['output,1,1000'],
                         help='label_shapes, format: arg_name,s1,s2,...,sn, example: label,1,1,224,224')
-    parser.add_argument('-s', '--symbol_path', type=str, default='../symbols/ShuffleNas_fixArch-symbol.json', help='')
+    parser.add_argument('-s', '--symbol_path', type=str,
+                        default='../quantization/model/ShuffleNas_fixArch-symbol.json', help='')
     parser.add_argument('-norelubn', action='store_true', help='Whether to calculate relu and bn.')
     return parser.parse_args()
 
@@ -132,7 +138,8 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
                                        strides=strides,
                                        padding=padding,
                                        use_bias=use_bias,
-                                       activation=None)))
+                                       activation=None,
+                                       sparsity=0)))
             else:
                 # Depthwise conv. MXNet is assuming the c_in should be 1, so swapping axis here is processed
                 assert kernel_shape[2] == 1 and kernel_shape[3] == int(attrs['num_group'])
@@ -244,6 +251,47 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
 
             del shape_dict
 
+        if op == 'Reshape':
+            layer_name = node["name"]
+            if layer_name[-1] == '0':
+                # Channel Shuffle is implemented by reshape-swapaxes-reshape, so that we use the last reshape as
+                # the indicator for one whole Channel Shuffle operator
+                continue
+            internal_sym = sym.get_internals()[layer_name + '_output']
+            internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
+
+            shape_dict = {}
+            for k, v in data_shapes:
+                shape_dict[k] = v
+            if internal_label_shapes != None:
+                for k, v in internal_label_shapes:
+                    shape_dict[k] = v
+
+            _, out_shapes, _ = internal_sym.infer_shape(**shape_dict)
+            out_shape = out_shapes[0]
+
+            # ---------------- Add to micronet all_ops -------------------
+            # As FAQ claimed, Channel Shuffle can be treated as a 1 x 1 conv with same input / output channel C and
+            # (C - 1) / C sparsity.
+            # infer input shape
+            input_size = out_shape[2]
+
+            # generate (k, k, c_in, c_out) kernel shape from (c_out, c_in, k, k)
+            kernel_shape = [1, 1, out_shape[1], out_shape[1]]
+
+            # others
+            strides = [1, 1]
+            padding = 'same'
+            use_bias = False
+
+            all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB')[:-9],
+                            Conv2D(input_size=input_size,
+                                   kernel_shape=kernel_shape,
+                                   strides=strides,
+                                   padding=padding,
+                                   use_bias=use_bias,
+                                   activation=None,
+                                   sparsity=(out_shape[1] - 1) / out_shape[1])))
         if not norelubn:
             if op == 'Activation':
                 if attrs['act_type'] == 'relu':
