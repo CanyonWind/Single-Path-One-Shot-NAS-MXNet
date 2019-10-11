@@ -1,8 +1,6 @@
-# Detailed profiling of the model
+## Detailed Profiling for Oneshot-S+
 
-
-|op_name                                 
-|  quantizable      |   inp_size|   kernel_size|           Cin|          Cout|       params(M)|   mults(M)|    adds(M)|     MFLOPS|
+|op_name                                 |  quantizable      |   inp_size|   kernel_size|           Cin|          Cout|       params(M)|   mults(M)|    adds(M)|     MFLOPS|
 |:-----                                   | :-----: | :-----:  | :-----:   | :-----:|  :-----: |  :-----: |   :-----:  |   :-----: |   :-----:| 
 |first_conv_fwd                          | True           |        224|             3|             3|            16|           0.000|      5.419|      5.218|     10.637|
 |HSwish0_plus0                           | False          |        112|            -1|            16|            16|           0.000|      0.000|      0.201|      0.201|
