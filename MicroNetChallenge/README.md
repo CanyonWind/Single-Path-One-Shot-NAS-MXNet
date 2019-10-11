@@ -64,14 +64,14 @@ As for the hyperparameters. We modified the GluonCV official ImageNet training s
 # Results
 
 ## Supernet Training
-![alt text](./images/Supernet.png)
+![alt text](../images/Supernet.png)
 
 As we claimed in [here], we did Block selection only in the first 60 epochs and strating from 61 epoch, we gradually allow larger range of channel choices to be sampled and used. To explain the accuracy drop between [60, 70] epochs, we need to understand there is a difficulty in evaluating the supernet performance. During training, we sampled a random combination of Block Choices and Channel Choices per batch and it results in that we only trained (120 epochs * 1,280,000 images per epoch) / 1024 batch size -> 150,000 possible subnet structures over 32^20. 
 
 If we also sample random Blocks and Channels for validation set per batch, each validation batch subnet structure is highly unlikely being seen during training. So we tried to fix the Block & Channel choices (do random block selection but all channel choices are set to be maximum) for the validation set between epoch [60, 70]. It doesn't work well so that we change back to do random samplingfor both. This random sampling for validation set surprisingly worked well. 
 
 ## Supernet Searching
-![alt text](./images/search_supernet.gif)
+![alt text](../images/search_supernet.gif)
 
 We tried both random search, random selecting 250 qualified instance to evaluate their performance, and genetic search. The genetic method easily found a better subnet structure over the random selection.
 
