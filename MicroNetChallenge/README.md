@@ -21,7 +21,7 @@ This implementation searched a new state-of-the-art subnet model which **outperf
 |    PNASNET|  1176M |  5.1M |  74.2   |   91.9   | 1.74 | - | - |
 |    MobileNetV2 (1.4) |	1170M |	6.9M |	74.7 |	- | 2.00 | - | - |
 
-* For the int8 performance, please refer [this section](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/README.md#searched-model-performance).
+*For the int8 performance, please refer [this section](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/README.md#searched-model-performance).
 
 # Our approach
 
@@ -60,14 +60,6 @@ The reason why we did this in the supernet training is that, during our experime
 ## Subnet Searching
 
 Different from the paper, we jointly searched for the Block choices and Channel Choices in the supernet at the same time. It means that, for each instance in the population of our genetic algorithm, it contains 20 Block choices gene and 20 Channel choices gene. We were aiming to find a combination of these two which optimizing for the both and being Complementary.
-
-The details of our genetic search are also not identical to the original paper, here is how we implemented:
-
-> Initial population P0 = 50
-> 
-> random_select_ratio = 0.1
-> 
-> mutate_ratio = 0.1
 
 For each sampled subnet structure passing the constraint, like most weight sharing NAS approaches did, we updated the BN statistics firstly with 20,000 fixed (or random, this doesn't influence much) training set images and then evalute this subnet ImageNet validation accuracy as the indicator for its performance.
 
@@ -145,7 +137,7 @@ We tried both random search, random selecting 250 qualified instance to evaluate
 |    PNASNET|  1176M |  5.1M |  74.2   |   91.9   | 1.74 | - | - |
 |    MobileNetV2 (1.4) |	1170M |	6.9M |	74.7 |	- | 2.00 | - | - |
  
-
+The int8 quantized OneShot-S+ model has been provided. 
 
 # Summary
 In this work, we provided an state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within 60 GPU hours (on 4 V100 GPUS) and the exporation space is about 32^20. The model searched by this implementation outperforms Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms MobileNet V2, V3, ShuffleNet V1, V2, V2+.
