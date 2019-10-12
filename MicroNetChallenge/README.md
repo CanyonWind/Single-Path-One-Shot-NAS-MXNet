@@ -88,6 +88,8 @@ We tried both random search, random selecting 250 qualified instance to evaluate
 
 ## Searched Model Profiling
 
+A detailed op to op profiling can be found [here](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/detailed_profiling.md).
+
 |op_name                                 |  quantizable      |   inp_size|   kernel_size|           Cin|          Cout|       params(M)|   mults(M)|    adds(M)|     MFLOPS|
 |:-----                                   | :-----: | :-----:  | :-----:   | :-----:|  :-----: |  :-----: |   :-----:  |   :-----: |   :-----:| 
 |First conv                                   | True          |        224|            3|             3|            16|           0.000|      5.419|      5.218|     10.637|
