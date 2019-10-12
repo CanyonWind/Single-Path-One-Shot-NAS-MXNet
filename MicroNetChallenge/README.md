@@ -66,9 +66,9 @@ For each qualified subnet structure (has lower `Σ Normalized Scores` than the b
 
 ## Subnet Training
 
-For the final searched model, we build and train it from scratch. No previous supernet weights are reused in subnet.
+For the final searched model, we **build and train it from scratch**. No previous supernet weights are reused in subnet.
 
-As for the hyperparameters. We modified the GluonCV official ImageNet training script to support both supernet training and subnet training. We trained both models with initial learning rate 1.3, weight decay 0.00003, cosine learning rate scheduler, 4 GPUs each with batch size 256, label smoothing and no weight decay for BN beta gamma. Supernet was trained 120 epochs and subnet was trained 360 epochs. 
+As for the hyperparameters. We modified the GluonCV official ImageNet training script to support both supernet training and subnet training. We trained both models with initial learning rate `1.3`, weight decay `0.00003`, cosine learning rate scheduler, 4 GPUs each with batch size `256`, label smoothing and no weight decay for BN beta gamma. Supernet was trained `120` epochs and subnet was trained `360` epochs. 
 
 
 # Results
@@ -77,7 +77,7 @@ As for the hyperparameters. We modified the GluonCV official ImageNet training s
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
-|    OneShot+ Supernet |  1684M  |  15.4M  |  62.9   |   84.5   | 3.67 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log]
+|    OneShot+ Supernet |  1684M  |  15.4M  |  62.9   |   84.5   | 3.67 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
 
 ## Supernet Searching
 ![alt text](../images/search_supernet.gif)
