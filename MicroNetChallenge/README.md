@@ -29,13 +29,13 @@ Our approach is **mainly based on the Single Path One Shot NAS in combination of
 
 ## Supernet Structure Design
 
-For each ShuffleNasBlock (SNasB), four choice blocks were explored, ShuffleNetBlock-3x3 (SNB-3), SNB-5, SNB-7 and ShuffleXceptionBlock-3x3 (SXB-3). Within each block, eight channel choices are avialable: [0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] x (BlockOutputChannel / 2). So each SNasB block explores 32 possible choices and there are 20 blocks in this implementation, counting for totaly 32^20 design choices.
+For each ShuffleNasBlock, four choice blocks were explored, ShuffleNetBlock-3x3 (SNB-3), SNB-5, SNB-7 and ShuffleXceptionBlock-3x3 (SXB-3). Within each block, eight channel choices are avialable: `[0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] * (BlockOutputChannel / 2)`. So each ShuffleNasBlock explores 32 possible choices and there are 20 blocks in this implementation, counting for totaly 32^20 design choices.
 
-We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convolution block design in the supernet. Finally, the supernet contains 15.4 Million trainable parameters and the subnet FLOPs ranges from 168M to 841M.
+We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convolution block design in the supernet. Finally, the supernet contains 15.4 Million trainable parameters and the possible subnet FLOPs ranges from 168M to 841M.
 
 ## Supernet Training
 
-Unlike what the original paper did, in the training stage, we didn't apply uniform distribution from the begining. We train the supernet totaly 120 epochs. In the first 60 epochs doing Block selection only and, for the upcoming 60 epochs, we used Channel Selection warm-up which gradually allows the supernet to be trained with larger range of channel choices.
+Unlike what the original paper did, in the training stage, we didn't apply uniform distribution from the begining. We train the supernet totaly 120 epochs. In the first 60 epochs doing Block selection only and, for the upcoming 60 epochs, we used **Channel Selection Warm-up** which gradually allows the supernet to be trained with larger range of channel choices.
 
 ``` python
    # Supernet sampling schedule: during channel selection warm-up, apply more epochs for [0.2, 0.4, 0.6, 0.8, 1.0] channel choices
@@ -59,9 +59,9 @@ The reason why we did this in the supernet training is that, during our experime
 
 ## Subnet Searching
 
-Different from the paper, we jointly searched for the Block choices and Channel Choices in the supernet at the same time. It means that, for each instance in the population of our genetic algorithm, it contains 20 Block choices gene and 20 Channel choices gene. We were aiming to find a combination of these two which optimizing for the both and being Complementary.
+Different from the paper, we **jointly searched** for the Block choices and Channel Choices in the supernet at the same time. It means that, for each instance in the population of our genetic algorithm, it contains 20 Block choices gene and 20 Channel choices gene. We were aiming to find a combination of these two which optimizing for each other and being complementary.
 
-For each sampled subnet structure passing the constraint, like most weight sharing NAS approaches did, we updated the BN statistics firstly with 20,000 fixed (or random, this doesn't influence much) training set images and then evalute this subnet ImageNet validation accuracy as the indicator for its performance.
+For each qualified subnet structure (has lower `Σ Normalized Scores` than the baseline OneShot searched model), like most weight sharing NAS approaches did, we updated the BN statistics firstly with 20,000 fixed training set images and then evalute this subnet ImageNet validation accuracy as the indicator for its performance.
 
 
 ## Subnet Training
@@ -76,7 +76,7 @@ As for the hyperparameters. We modified the GluonCV official ImageNet training s
 ## Supernet Training
 ![alt text](../images/Supernet.png)
 
-As we claimed in [here], we did Block selection only in the first 60 epochs and strating from 61 epoch, we gradually allow larger range of channel choices to be sampled and used. To explain the accuracy drop between [60, 70] epochs, we need to understand there is a difficulty in evaluating the supernet performance. During training, we sampled a random combination of Block Choices and Channel Choices per batch and it results in that we only trained (120 epochs * 1,280,000 images per epoch) / 1024 batch size -> 150,000 possible subnet structures over 32^20. 
+As we claimed in [here](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/README.md#supernet-training), we did Block selection only in the first 60 epochs and strating from 61 epoch, we gradually allow larger range of channel choices to be sampled and used. To explain the accuracy drop between [60, 70] epochs, we need to understand there is a difficulty in evaluating the supernet performance. During training, we sampled a random combination of Block Choices and Channel Choices per batch and it results in that we only trained (120 epochs * 1,280,000 images per epoch) / 1024 batch size -> 150,000 possible subnet structures over 32^20. 
 
 If we also sample random Blocks and Channels for validation set per batch, each validation batch subnet structure is highly unlikely being seen during training. So we tried to fix the Block & Channel choices (do random block selection but all channel choices are set to be maximum) for the validation set between epoch [60, 70]. It doesn't work well so that we change back to do random samplingfor both. This random sampling for validation set surprisingly worked well. 
 
