@@ -35,7 +35,7 @@ We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convo
 
 ## Supernet Training
 
-Unlike what the original paper did, in the training stage, we didn't apply uniform distribution from the begining. We train the supernet totaly 120 epochs. In the first 60 epochs doing Block selection only and, for the upcoming 60 epochs, we used **Channel Selection Warm-up** which gradually allows the supernet to be trained with larger range of channel choices.
+Unlike what the original paper did, in the training stage, we didn't apply uniform distribution from the begining. We train the supernet totaly `120` epochs. In the first `60` epochs doing Block selection only and, for the upcoming `60` epochs, we used **Channel Selection Warm-up** which gradually allows the supernet to be trained with larger range of channel choices.
 
 ``` python
    # Supernet sampling schedule: during channel selection warm-up, apply more epochs for [0.2, 0.4, 0.6, 0.8, 1.0] channel choices
@@ -53,9 +53,9 @@ Unlike what the original paper did, in the training stage, we didn't apply unifo
 
 The reason why we did this in the supernet training is that, during our experiments, we found:
 1. For supernet without SE, doing block selection alone in the first n epochs and using Channel Selection warm-up are necessary to make the model converge. Otherwise it wouldn't converge at all.
-2. For supernet with SE, Channel Selection with the full choices (0.2 ~ 2.0) can be used at the first epoch and it converges.
-   - However, doing Channel Selection from the first epoch seems like harming the accuracy. Compared to the same se-supernet with first n epoch block selection alone and --cs-warm-up, the channel selection from-scratch se-supernet only reached ~33% training accuracy and the warmed up se-supernet reaches ~44%, both at ~70th epoch.
-   - Another thing is that validation accuracy in the channel selection from-scratch se-supernet is always under 1%, while the warmed up se-supernet's validation accuracy looks reasonably increasing from 0.1% to 63%.
+2. For supernet with SE, Channel Selection with the full choices `(0.2 ~ 2.0)` can be used at the first epoch and it converges.
+   - However, doing Channel Selection from the first epoch seems like harming the accuracy. Compared to the same se-supernet with first n epoch block selection alone and --cs-warm-up, the channel selection from-scratch se-supernet only reached `33%` training accuracy and the warmed up se-supernet reaches `44%`, both at `70th` epoch.
+   - Another thing is that validation accuracy in the channel selection from-scratch se-supernet is always under `1%`, while the warmed up se-supernet's validation accuracy looks reasonably increasing from `0.1%` to `63%`.
 
 ## Subnet Searching
 
@@ -136,7 +136,7 @@ We tried both random search, random selecting 250 qualified instance to evaluate
 |    PNASNET|  1176M |  5.1M |  74.2   |   91.9   | 1.74 | - | - |
 |    MobileNetV2 (1.4) |	1170M |	6.9M |	74.7 |	- | 2.00 | - | - |
  
-*The int8 quantized OneShot-S+ model has been provided. But because of [this issue](https://github.com/apache/incubator-mxnet/issues/16424) it seems like the MXNet MKL quantization backend has some bugs and there are people from Intel working on fixing them. According to the [MXNet quantization benchmark](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/mxnet_quantization_benchmark.md), all models' accuracy drop is less than 0.5%. So we are claiming that, as long as the MXNet MKL bug has been fixed, our Oneshot-S+ model has a very high chance to pass the 75.0% criterion for MicroNet Challenge. If the bug cannot be fixed in time (before the MicroNet Challenge release date), we have to submit with the float16 score. 
+*The int8 quantized OneShot-S+ model has been provided. But because of [this issue](https://github.com/apache/incubator-mxnet/issues/16424) it seems like the MXNet MKL quantization backend has some bugs and there are people from Intel working on fixing them. According to the [MXNet quantization benchmark](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/mxnet_quantization_benchmark.md), **no model's Top-1 accuracy drops more than `0.5%`**. So we are claiming that, as long as the MXNet MKL bug has been fixed, our Oneshot-S+ model has a very high chance to pass the 75.0% criterion for MicroNet Challenge. If the bug cannot be fixed in time (before the MicroNet Challenge release date), we have to submit with the float16 score. 
 
 # Summary
 In this work, we provided an state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within 60 GPU hours (on 4 V100 GPUS) and the exporation space is about 32^20. The model searched by this implementation outperforms Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms MobileNet V2, V3, ShuffleNet V1, V2, V2+.
