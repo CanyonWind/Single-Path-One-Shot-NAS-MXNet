@@ -1,9 +1,9 @@
 
 # Abstract
 
-Designing convolutional neural networks (CNN) for mobile devices is challenging because mobile models need to be small and fast, yet still accurate. Although significant efforts have been dedicated to design and improve mobile CNNs on all dimensions, it is very difficult to manually balance these trade-offs when there are so many architectural possibilities to consider. In this work, we provided an open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be **trained and searched on ImageNet totally within 60 GPU hours** (on 4 V100 GPUs, including supernet training, supernet search and the searched best subnet training) **in the exploration space of about 32^20 choices**.
+Designing convolutional neural networks (CNN) for mobile devices is challenging because mobile models need to be small and fast, yet still accurate. Although significant efforts have been dedicated to design and improve mobile CNNs on all dimensions, it is very difficult to manually balance these trade-offs when there are so many architectural possibilities to consider. In this work, we provided an open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be **trained and searched on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet search and the searched best subnet training) **in the exploration space of about `32^20` choices**.
 
-This implementation searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), without any quantization, it **outperforms** MobileNet V2, V3, ShuffleNet V1, V2, V2+ too.
+This implementation searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), without any quantization, it **outperforms** `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too.
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
@@ -29,9 +29,9 @@ Our approach is **mainly based on the Single Path One Shot NAS in combination of
 
 ## Supernet Structure Design
 
-For each ShuffleNasBlock, four choice blocks were explored, ShuffleNetBlock-3x3 (SNB-3), SNB-5, SNB-7 and ShuffleXceptionBlock-3x3 (SXB-3). Within each block, eight channel choices are avialable: `[0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] * (BlockOutputChannel / 2)`. So each ShuffleNasBlock explores 32 possible choices and there are 20 blocks in this implementation, counting for totaly 32^20 design choices.
+For each `ShuffleNasBlock`, four choice blocks were explored, `ShuffleNetBlock-3x3 (SNB-3)`, `SNB-5`, `SNB-7` and `ShuffleXceptionBlock-3x3 (SXB-3)`. Within each block, eight channel choices are avialable: `[0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] * (BlockOutputChannel / 2)`. So each `ShuffleNasBlock` explores `32` possible choices and there are `20` blocks in this implementation, counting for totaly `32^20` design choices.
 
-We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convolution block design in the supernet. Finally, the supernet contains 15.4 Million trainable parameters and the possible subnet FLOPs ranges from 336M to 1682M.
+We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convolution block design in the supernet. Finally, the supernet contains `15.4` Million trainable parameters and the possible subnet FLOPs ranges from `336M` to `1682M`.
 
 ## Supernet Training
 
