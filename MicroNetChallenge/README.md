@@ -52,10 +52,10 @@ Unlike what the original paper did, in the training stage, we didn't apply unifo
 ```
 
 The reason why we did this in the supernet training is that, during our experiments, we found:
-> 1. For supernet without SE, doing block selection alone in the first n epochs and using Channel Selection warm-up are necessary to make the model converge. Otherwise it wouldn't converge at all.
-> 2. For supernet with SE, Channel Selection with the full choices (0.2 ~ 2.0) can be used at the first epoch and it converges.
->    - However, doing Channel Selection from the first epoch seems like harming the accuracy. Compared to the same se-supernet with first n epoch block selection alone and --cs-warm-up, the channel selection from-scratch se-supernet only reached ~33% training accuracy and the warmed up se-supernet reaches ~44%, both at ~70th epoch.
->    - Another thing is that validation accuracy in the channel selection from-scratch se-supernet is always under 1%, while the warmed up se-supernet's validation accuracy looks reasonably increasing from 0.1% to 63%.
+1. For supernet without SE, doing block selection alone in the first n epochs and using Channel Selection warm-up are necessary to make the model converge. Otherwise it wouldn't converge at all.
+2. For supernet with SE, Channel Selection with the full choices (0.2 ~ 2.0) can be used at the first epoch and it converges.
+   - However, doing Channel Selection from the first epoch seems like harming the accuracy. Compared to the same se-supernet with first n epoch block selection alone and --cs-warm-up, the channel selection from-scratch se-supernet only reached ~33% training accuracy and the warmed up se-supernet reaches ~44%, both at ~70th epoch.
+   - Another thing is that validation accuracy in the channel selection from-scratch se-supernet is always under 1%, while the warmed up se-supernet's validation accuracy looks reasonably increasing from 0.1% to 63%.
 
 ## Subnet Searching
 
