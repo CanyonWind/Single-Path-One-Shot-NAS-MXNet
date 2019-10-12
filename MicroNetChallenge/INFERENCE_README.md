@@ -1,12 +1,12 @@
 # Run Inference
 
-1. Install MXNet 1.5.0 version with MKL backend
+1. Install MXNet **1.5.0** version with MKL backend
 ```
 # if use CPU version
-pip install mxnet-mkl==1.5.0
+pip3 install mxnet-mkl==1.5.0
 
 # if use GPU version with CUDA 10.1
-pip install mxnet-cu101mkl==1.5.0
+pip3 install mxnet-cu101mkl==1.5.0
 ```
 
 2. Download imagenet validation dataset `val.rec` from ... and put it in `MicroNetChallenge/data` folder
