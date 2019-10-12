@@ -3,7 +3,7 @@
 
 Designing convolutional neural networks (CNN) for mobile devices is challenging because mobile models need to be small and fast, yet still accurate. Although significant efforts have been dedicated to design and improve mobile CNNs on all dimensions, it is very difficult to manually balance these trade-offs when there are so many architectural possibilities to consider. In this work, we provided an open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be **trained and searched on ImageNet totally within 60 GPU hours** (on 4 V100 GPUS) **in the exploration space of about 32^20 choices**.
 
-This implementation searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like Single Path One Shot, FBNet,MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it **outperforms** MobileNet V2, V3, ShuffleNet V1, V2, V2+ too.
+This implementation searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it **outperforms** MobileNet V2, V3, ShuffleNet V1, V2, V2+ too.
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
@@ -89,32 +89,32 @@ We tried both random search, random selecting 250 qualified instance to evaluate
 
 |op_name                                 |  quantizable      |   inp_size|   kernel_size|           Cin|          Cout|       params(M)|   mults(M)|    adds(M)|     MFLOPS|
 |:-----                                   | :-----: | :-----:  | :-----:   | :-----:|  :-----: |  :-----: |   :-----:  |   :-----: |   :-----:| 
-|First conv                                   | False          |        224|            -1|             3|            16|           0.000|      5.419|      5.218|     10.637|
+|First conv                                   | True          |        224|            -1|             3|            16|           0.000|      5.419|      5.218|     10.637|
 |HSwish                                   | False          |        112|            -1|            16|            16|           0.000|      0.603|      0.201|      0.804|
-|SNB0                                   | False          |        112|            -1|            16|            64|           0.005|     23.800|     21.739|     45.539|
-|SNB1                                   | False          |         56|            -1|            64|            64|           0.004|     12.136|     11.255|     23.391|
-|SNB2                                   | False          |         56|            -1|            64|            64|           0.002|     10.511|      9.697|     20.208|
-|SNB3                                   | False          |         56|            -1|            64|            64|           0.005|     16.389|     15.451|     31.840|
-|SNB4                                   | False          |         56|            -1|            64|            160|           0.021|     32.111|     30.707|     62.818|
-|SNB5                                   | False          |         28|            -1|           160|            160|           0.023|     17.573|     16.859|     34.432|
-|SNB6                                   | False          |         28|            -1|           160|            160|           0.014|      9.746|      9.232|     18.978|
-|SNB7                                   | False          |         28|            -1|           160|            160|           0.015|     11.103|     10.538|     21.641|
-|SNB8                                   | False          |         28|            -1|           160|           320|           0.082|     14.060|     13.692|     27.752|
-|SNB9                                   | False          |         14|            -1|           320|           320|           0.080|     11.834|     11.582|     23.416|
-|SNB10                                   | False          |         14|            -1|           320|           320|           0.051|      6.416|      6.215|     12.631|
-|SNB11                                   | False          |         14|            -1|           320|           320|           0.063|      8.898|      8.673|     17.571|
-|SNB12                                   | False          |         14|            -1|           320|           320|           0.080|     11.834|     11.582|     23.416|
-|SNB13                                   | False          |         14|            -1|           320|           320|           0.091|     14.168|     13.891|     28.059|
-|SNB14                                   | False          |         14|            -1|           320|           320|           0.098|     15.448|     15.146|     30.594|
-|SNB15                                   | False          |         14|            -1|           320|           320|           0.103|     16.501|     16.199|     32.700|
-|SNB16                                   | False          |         14|            -1|           320|           320|           0.323|     25.640|     25.380|     51.020|
-|SNB17                                   | False          |          7|            -1|           640|           640|           0.244|      8.311|      8.196|     16.507|
-|SNB18                                   | False          |          7|            -1|           640|           640|           0.298|     10.983|     10.856|     21.839|
-|SNB19                                   | False          |          7|            -1|           640|           640|           0.368|     14.445|     14.293|     28.738|
+|SNB0                                   | Mixed          |        112|            -1|            16|            64|           0.005|     23.800|     21.739|     45.539|
+|SNB1                                   | Mixed          |         56|            -1|            64|            64|           0.004|     12.136|     11.255|     23.391|
+|SNB2                                   | Mixed          |         56|            -1|            64|            64|           0.002|     10.511|      9.697|     20.208|
+|SNB3                                   | Mixed          |         56|            -1|            64|            64|           0.005|     16.389|     15.451|     31.840|
+|SNB4                                   | Mixed          |         56|            -1|            64|            160|           0.021|     32.111|     30.707|     62.818|
+|SNB5                                   | Mixed          |         28|            -1|           160|            160|           0.023|     17.573|     16.859|     34.432|
+|SNB6                                   | Mixed          |         28|            -1|           160|            160|           0.014|      9.746|      9.232|     18.978|
+|SNB7                                   | Mixed          |         28|            -1|           160|            160|           0.015|     11.103|     10.538|     21.641|
+|SNB8                                   | Mixed          |         28|            -1|           160|           320|           0.082|     14.060|     13.692|     27.752|
+|SNB9                                   | Mixed          |         14|            -1|           320|           320|           0.080|     11.834|     11.582|     23.416|
+|SNB10                                   | Mixed          |         14|            -1|           320|           320|           0.051|      6.416|      6.215|     12.631|
+|SNB11                                   | Mixed          |         14|            -1|           320|           320|           0.063|      8.898|      8.673|     17.571|
+|SNB12                                   | Mixed          |         14|            -1|           320|           320|           0.080|     11.834|     11.582|     23.416|
+|SNB13                                   | Mixed          |         14|            -1|           320|           320|           0.091|     14.168|     13.891|     28.059|
+|SNB14                                   | Mixed          |         14|            -1|           320|           320|           0.098|     15.448|     15.146|     30.594|
+|SNB15                                   | Mixed          |         14|            -1|           320|           320|           0.103|     16.501|     16.199|     32.700|
+|SNB16                                   | Mixed          |         14|            -1|           320|           320|           0.323|     25.640|     25.380|     51.020|
+|SNB17                                   | Mixed          |          7|            -1|           640|           640|           0.244|      8.311|      8.196|     16.507|
+|SNB18                                   | Mixed          |          7|            -1|           640|           640|           0.298|     10.983|     10.856|     21.839|
+|SNB19                                   | Mixed          |          7|            -1|           640|           640|           0.368|     14.445|     14.293|     28.738|
 |GAP                                   | False          |          7|            -1|           640|             640|           0.000|      0.001|      0.031|      0.032|
-|Last conv                                   | False          |          1|            -1|           640|          1024|           0.656|      0.655|      0.655|      1.310|
+|Last conv                                   | True          |          1|            -1|           640|          1024|           0.656|      0.655|      0.655|      1.310|
 |HSwish                                   | False          |          1|            -1|          1024|          1024|           0.000|      0.003|      0.001|      0.004|
-|Classifier                                   | False          |          1|            -1|          1024|          1000|           1.025|      1.024|      1.024|      2.048|
+|Classifier                                   | True          |          1|            -1|          1024|          1000|           1.025|      1.024|      1.024|      2.048|
 |total_quant                             | True           |           |              |              |              |           3.520|    292.820|    286.218|    579.038|
 |total_no_quant                          | False          |           |              |              |              |           0.132|      6.801|      2.105|      8.905|
 |total                                   | False          |           |              |              |              |           3.652|    299.621|    288.323|    587.943|
