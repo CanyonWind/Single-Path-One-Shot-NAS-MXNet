@@ -132,7 +132,8 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
             use_bias = layer_name + "_bias" in arg_params
 
             if int(attrs['num_group']) == 1:
-                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB'),
+                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB').
+                                replace('_squeeze_', '_').replace('_excitation_', '_'),
                                 Conv2D(input_size=input_size,
                                        kernel_shape=kernel_shape,
                                        strides=strides,
@@ -320,7 +321,10 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
             elif op in ['_plus_scalar', 'clip', '_div_scalar', 'elemwise_mul']:
                 # For hard-swish calculation, each related operation is put into the namedTuple Activation too.
                 # x * (F.clip(x + 3, 0, 6) / 6.)
-                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB').replace('hard_swish', '_clip').replace('hard_sigmoid', '_clip'),
+                all_ops.append((node["name"][40:].replace('shufflenetblock', 'SNB').
+                                replace('hard_swish', '_clip').replace('hard_sigmoid', 'clip').
+                                replace('hardswish', 'HSwish').replace('hardsigmoid', 'HSigmoid').
+                                replace('_plusscalar', 'plus').replace('_divscalar', 'div').replace('_mul', 'mul'),
                                 Activation(output_shape=list(out_shape),
                                            activation_name=op)))
 
