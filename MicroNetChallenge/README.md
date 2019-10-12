@@ -5,6 +5,22 @@ Designing convolutional neural networks (CNN) for mobile devices is challenging 
 
 This implementation searched a new state-of-the-art subnet model outperforming Single Path One Shot, FBNet,MnasNet, DARTS, NASNET, PNASNET by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms MobileNet V2, V3, ShuffleNet V1, V2, V2+ too.
 
+| Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
+| :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
+|    OneShot+ Supernet |  1684M  |  15.4M  |  62.9   |   84.5   | 3.67 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
+|    **OneShot-S+ int8** |  148M |  0.95M |  **75.0**   |   **92.0**   | **0.26** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    **OneShot-S+ float16** |  438M |  1.85M |  **75.7**   |   **92.9**   | **0.64** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    **OneShot-S+** |  588M |  3.65M |  **75.7**   |   **92.9**   | **1.03** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot (our) |  656M |  3.5M |  74.0   |   91.6   | 1.05 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
+|    OneShot (paper) |  656M |  3.5M |  74.9   |   92.0   | 1.05 | - | - |
+|    MnasNet|  634M |  4.2M |  74.0   |  91.8   | 1.15 | - | - |
+|    MobileNetV3 Large|	 **434M** |	5.4M |	75.2|	- | 1.15 | - | - |
+|    FBNet-B|  590M|  4.5M |  74.1   |   -   | 1.16 | - | - |
+|    DARTS|  1148M|  4.7M |  73.3   |   91.3  | 1.66 | - | - |
+|    NASNET-A|  1128M |  5.3M |  74.0   |   91.6   | 1.73 | - | - |
+|    PNASNET|  1176M |  5.1M |  74.2   |   91.9   | 1.74 | - | - |
+|    MobileNetV2 (1.4) |	1170M |	6.9M |	74.7 |	- | 2.00 | - | - |
+
 # Our approach
 
 Our approach is **mainly based on the Single Path One Shot NAS in combination of Squeeze and Excitation (SE), ShuffleNet V2+ and MobileNet V3**. Like the original paper, we searched for the choice blocks and block channels with multiple FLOPs and # of parameters constraints. In this section, we will elaborate the modifications from the original paper.
