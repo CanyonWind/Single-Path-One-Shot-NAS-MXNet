@@ -101,7 +101,7 @@ We tried both random search, random selecting 250 qualified instance to evaluate
 |SNB17                                   | False          |          7|            -1|           640|           320|           0.244|      8.311|      8.196|     16.507|
 |SNB18                                   | False          |          7|            -1|           640|           320|           0.298|     10.983|     10.856|     21.839|
 |SNB19                                   | False          |          7|            -1|           640|           320|           0.368|     14.445|     14.293|     28.738|
-|Global Avg Pool                                   | False          |          7|            -1|           640|             1|           0.000|      0.001|      0.031|      0.032|
+|GAP                                   | False          |          7|            -1|           640|             640|           0.000|      0.001|      0.031|      0.032|
 |Last conv                                   | False          |          1|            -1|           640|          1024|           0.656|      0.655|      0.655|      1.310|
 |HSwish                                   | False          |          1|            -1|          1024|          1024|           0.000|      0.003|      0.001|      0.004|
 |Classifier                                   | False          |          1|            -1|          1024|          1000|           1.025|      1.024|      1.024|      2.048|
