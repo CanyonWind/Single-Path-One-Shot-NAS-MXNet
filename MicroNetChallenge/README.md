@@ -5,7 +5,7 @@ Designing convolutional neural networks (CNN) for mobile devices is challenging 
 
 This implementation has searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), without any quantization, it **outperforms** `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too.
 
-To verify the model's performance, please refer to the [inference readme](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/INFERENCE_README.md).
+**To verify the model's performance**, please refer to the [inference readme](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/INFERENCE_README.md).
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
