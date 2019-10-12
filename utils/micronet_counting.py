@@ -179,7 +179,7 @@ def product(input):
   return prod
 
 
-def count_ops(op, sparsity, param_bits):
+def count_ops(op, sparsity, param_bits, op_name):
   """Given a operation class returns the flop and parameter statistics.
 
   Args:
@@ -193,13 +193,19 @@ def count_ops(op, sparsity, param_bits):
     n_adds: number of multiplications made per input sample.
   """
   flop_mults = flop_adds = param_count = 0
+  quantizable = False
   if isinstance(op, Activation):
+    if op.activation_name == 'relu':
+      quantizable = True
     # We would apply the activaiton to every single output element.
     n_output_elements = product(op.output_shape)
     n_muls, n_adds = get_flops_per_activation(op.activation_name)
     flop_mults += n_muls * n_output_elements
     flop_adds += n_adds * n_output_elements
   elif isinstance(op, Conv2D):
+    # Channel Shuffle is calculated via conv but it is not quantizable
+    if 'shufflechannel' not in op_name:
+      quantizable = True
     # Square kernel expected.
     assert op.kernel_shape[0] == op.kernel_shape[1]
     k_size, _, c_in, c_out = op.kernel_shape
@@ -236,6 +242,7 @@ def count_ops(op, sparsity, param_bits):
       flop_adds += n_adds * n_output_elements
 
   elif isinstance(op, DepthWiseConv2D):
+    quantizable = True
     # Square kernel expected.
     assert op.kernel_shape[0] == op.kernel_shape[1]
     # Last dimension of the kernel should be 1.
@@ -307,7 +314,7 @@ def count_ops(op, sparsity, param_bits):
       flop_adds += n_adds * c_out
   else:
     raise ValueError('Encountered unknown operation %s.' % str(op))
-  return param_count, flop_mults, flop_adds
+  return param_count, flop_mults, flop_adds, quantizable
 
 
 # Info
@@ -341,9 +348,9 @@ class MicroNetCounter(object):
   """Counts operations using given information.
 
   """
-  _header_str = '{:40} {:>10} {:>13} {:>13} {:>13} {:>15} {:>10} {:>10} {:>10}'
-  _line_str = ('{:40s} {:10d} {:13d} {:13d} {:13d} {:15.3f} {:10.3f}'
-               ' {:10.3f} {:10.3f}')
+  _header_str = '|{:40}|  {:15}  | {:>10}| {:>13}| {:>13}| {:>13}| {:>15}| {:>10}| {:>10}| {:>10}|'
+  _line_str = ('|{:40s}| {:15s}| {:10d}| {:13d}| {:13d}| {:13d}| {:15.3f}| {:10.3f}|'
+               ' {:10.3f}| {:10.3f}|')
 
   def __init__(self, all_ops, add_bits_base=32, mul_bits_base=32):
     self.all_ops = all_ops
@@ -356,30 +363,34 @@ class MicroNetCounter(object):
     return np.array(counts).sum(axis=0)
 
   def process_counts(self, total_params, total_mults, total_adds,
-                     mul_bits, add_bits):
+                     mul_bits, add_bits, param_bits=16., param_mb=False):
     # converting to Mbytes.
-    total_params = int(total_params) / 8. / 1e6
+    if param_mb:
+      total_params = int(total_params) / 8 / 1e6
+    else:
+      total_params = int(total_params) / param_bits / 1e6
     total_mults = total_mults * mul_bits / self.mul_bits_base / 1e6
     total_adds = total_adds * add_bits / self.add_bits_base  / 1e6
     return total_params, total_mults, total_adds
 
   def _print_header(self):
     output_string = self._header_str.format(
-        'op_name', 'inp_size', 'kernel_size', 'in channels', 'out channels',
-        'params(MBytes)', 'mults(M)', 'adds(M)', 'MFLOPS')
+        'op_name', 'quantizable', 'inp_size', 'kernel_size', 'Cin', 'Cout',
+        'params(M)', 'mults(M)', 'adds(M)', 'MFLOPS')
     print(output_string)
     print(''.join(['=']*125))
 
   def _print_line(self, name, input_size, kernel_size, in_channels,
                   out_channels, param_count, flop_mults, flop_adds, mul_bits,
-                  add_bits, base_str=None):
+                  add_bits, base_str=None, quantizable=False):
     """Prints a single line of operation counts."""
     op_pc, op_mu, op_ad = self.process_counts(param_count, flop_mults,
                                               flop_adds, mul_bits, add_bits)
     if base_str is None:
       base_str = self._line_str
+    # TODO: print quantizable
     output_string = base_str.format(
-        name, input_size, kernel_size, in_channels, out_channels, op_pc,
+        name, str(quantizable), input_size, kernel_size, in_channels, out_channels, op_pc,
         op_mu, op_ad, op_mu + op_ad)
     print(output_string)
 
@@ -399,12 +410,15 @@ class MicroNetCounter(object):
     self._print_header()
     # Let's count starting from zero.
     total_params, total_mults, total_adds = [0] * 3
+    quantizable_total_mults = 0
+    quantizable_total_adds = 0
+    quantizable_total_params = 0
     for op_name, op_template in self.all_ops:
       if op_name.startswith('block'):
         if not summarize_blocks:
           # If debug print the ops inside a block.
           for block_op_name, block_op_template in op_template:
-            param_count, flop_mults, flop_adds = count_ops(block_op_template,
+            param_count, flop_mults, flop_adds, _ = count_ops(block_op_template,
                                                            sparsity, param_bits)
             temp_res = get_info(block_op_template)
             input_size, kernel_size, in_channels, out_channels = temp_res
@@ -413,7 +427,7 @@ class MicroNetCounter(object):
                              param_count, flop_mults, flop_adds, mul_bits,
                              add_bits)
         # Count and sum all ops within a block.
-        param_count, flop_mults, flop_adds = self._aggregate_list(
+        param_count, flop_mults, flop_adds,  _ = self._aggregate_list(
             [count_ops(template, sparsity, param_bits)
              for _, template in op_template])
         # Let's extract the input_size and in_channels from the first operation.
@@ -423,25 +437,37 @@ class MicroNetCounter(object):
         kernel_size = out_channels = -1
       else:
         # If it is a single operation just count.
-        if 'shufflechannel' in op_name:
-          print('found')
-        param_count, flop_mults, flop_adds = count_ops(op_template, sparsity,
-                                                       param_bits)
+        param_count, flop_mults, flop_adds, quantizable = count_ops(op_template, sparsity,
+                                                       param_bits, op_name)
         temp_res = get_info(op_template)
         input_size, kernel_size, in_channels, out_channels = temp_res
       # At this point param_count, flop_mults, flop_adds should be read.
       total_params += param_count
       total_mults += flop_mults
       total_adds += flop_adds
+      if quantizable:
+        quantizable_total_adds += flop_adds
+        quantizable_total_mults += flop_mults
+        quantizable_total_params += param_count
       # Print the operation.
       self._print_line(op_name, input_size, kernel_size, in_channels,
                        out_channels, param_count, flop_mults, flop_adds,
-                       mul_bits, add_bits)
+                       mul_bits, add_bits, quantizable=quantizable)
 
     # Print Total values.
     # New string since we are passing empty strings instead of integers.
-    out_str = ('{:40s} {:10s} {:13s} {:13s} {:13s} {:15.3f} {:10.3f} {:10.3f} '
-               '{:10.3f}')
+    _header_str = '|{:40}|  {:15}  | {:>10}| {:>13}| {:>13}| {:>13}| {:>15}| {:>10}| {:>10}| {:>10}|'
+    _line_str = ('|{:40s}| {:15s}| {:10d}| {:13d}| {:13d}| {:13d}| {:15.3f}| {:10.3f}|'
+                 ' {:10.3f}| {:10.3f}|')
+    out_str = ('|{:40s}| {:15s}| {:10s}| {:13s}| {:13s}| {:13s}| {:15.3f}| {:10.3f}| {:10.3f}| '
+               '{:10.3f}|')
+    self._print_line(
+      'total_quant', '', '', '', '', quantizable_total_params, quantizable_total_mults, quantizable_total_adds,
+      mul_bits, add_bits, base_str=out_str, quantizable=True)
+    self._print_line(
+      'total_no_quant', '', '', '', '', total_params - quantizable_total_params, total_mults - quantizable_total_mults,
+      total_adds - quantizable_total_adds,
+      mul_bits, add_bits, base_str=out_str, quantizable=False)
     self._print_line(
         'total', '', '', '', '', total_params, total_mults, total_adds,
         mul_bits, add_bits, base_str=out_str)
