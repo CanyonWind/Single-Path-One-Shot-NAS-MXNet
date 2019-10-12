@@ -14,7 +14,7 @@ pip install mxnet-cu101mkl==1.5.0
 3. Launch Inference
 ```
 # Launch Inference
-python3 inference.py --param-file=./model/model-0000.params --symbol-file=./model/model-symbol.json --dataset=./data/val.rec
+python3 inference.py --param-file=./model/oneshot-s+model-quantized-0000.params --symbol-file=./model/oneshot-s+model-quantized-symbol.json --dataset=./data/val.rec
 ```
 
 3. If everything works fine, the result should be like:
