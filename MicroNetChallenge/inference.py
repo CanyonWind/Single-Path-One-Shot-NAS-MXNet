@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--symbol-file', type=str, required=True, help='symbol file path')
     parser.add_argument('--param-file', type=str, required=True, help='param file path')
     parser.add_argument('--dataset', type=str, required=True, help='dataset path')
-    parser.add_argument('--batch-size', type=int, default=64)
+    parser.add_argument('--batch-size', type=int, default=100)
     parser.add_argument('--rgb-mean', type=str, default='123.68,116.779,103.939')
     parser.add_argument('--rgb-std', type=str, default='58.393,57.12,57.375')
     parser.add_argument('--image-shape', type=str, default='3,224,224')
