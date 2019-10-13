@@ -23,7 +23,7 @@ This implementation has searched a new state-of-the-art subnet model which **out
 |    PNASNET|  1176M |  5.1M |  74.2   |   91.9   | 1.74 | - | - |
 |    MobileNetV2 (1.4) |	1170M |	6.9M |	74.7 |	- | 2.00 | - | - |
 
-*For the int8 performance, please refer [this section](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/README.md#searched-model-performance).
+*For the int8 performance, please refer to [this section](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/README.md#searched-model-performance).
 
 # Our approach
 
