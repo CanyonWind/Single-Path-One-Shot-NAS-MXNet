@@ -40,8 +40,8 @@ We also applied the SE, ShuffleNet V2+ SE layout and the MobileNet V3 last convo
 Unlike what the original paper did, in the training stage, we didn't apply uniform distribution from the begining. We train the supernet totaly `120` epochs. In the first `60` epochs doing Block selection only and, for the upcoming `60` epochs, we used **Channel Selection Warm-up** which gradually allows the supernet to be trained with larger range of channel choices.
 
 ``` python
-   # Supernet sampling schedule: during channel selection warm-up, apply more epochs for [0.2, 0.4, 0.6, 0.8, 1.0] channel choices
-   1 - 60 epochs:          Only block selection (BS)
+   # Supernet sampling schedule: during channel selection warm-up
+   1 - 60 epochs:          Only block selection (BS), Channels are set to maximum (here [2.0])
    61 epoch:               [1.8, 2.0] + BS
    62 epoch:               [1.6, 1.8, 2.0] + BS
    63 epoch:               [1.4, 1.6, 1.8, 2.0] + BS
@@ -49,15 +49,9 @@ Unlike what the original paper did, in the training stage, we didn't apply unifo
    65 - 66 epochs:         [1.0, 1.2, 1.4, 1.6, 1.8, 2.0] + BS
    67 - 69 epochs:         [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] + BS
    70 - 73 epochs:         [0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] + BS 
-   74 - 78 epochs:         [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] + BS 
-   79 - 120 epochs:        [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0] + BS
 ```
 
-The reason why we did this in the supernet training is that, during our experiments, we found:
-1. For supernet without SE, doing block selection alone in the first n epochs and using Channel Selection warm-up are necessary to make the model converge. Otherwise it wouldn't converge at all.
-2. For supernet with SE, Channel Selection with the full choices `(0.2 ~ 2.0)` can be used at the first epoch and it converges.
-   - However, doing Channel Selection from the first epoch seems like harming the accuracy. Compared to the same se-supernet with first n epoch block selection alone and --cs-warm-up, the channel selection from-scratch se-supernet only reached `33%` training accuracy and the warmed up se-supernet reaches `44%`, both at `70th` epoch.
-   - Another thing is that validation accuracy in the channel selection from-scratch se-supernet is always under `1%`, while the warmed up se-supernet's validation accuracy looks reasonably increasing from `0.1%` to `63%`.
+The reason why we did this in the supernet training is that during our experiments we found, **for supernet without SE**, doing Block Selection from begining works well, nevertheless doing Channel Selection from begining will cause the network not converging at all. The channel Selection range needs to be gradually enlarged otherwise it will be crashed with free fall drop accuracy. And the range can only be allowed for `(0.6 ~ 2.0)`. Smaller channel scales will make the network crashed too. **For supernet with SE**, Channel Selection with the full choices `(0.2 ~ 2.0)` can be used from begining and it converges. However, doing this seems like harming the accuracy. Compared to the same se-supernet with Channel Selection warm-up, the Channel Selection from scratch model was always left `10%` training accuracy befind during the whole procedure. 
 
 ## Subnet Searching
 
