@@ -134,7 +134,7 @@ python search_supernet.py \
     - [ ] **In progress:** Search within the pretrained se-supernet
     - [ ] Train the searched se-subnet
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
-- [ ] Quantization
+- [x] Quantization
 
 
 ## Citation
