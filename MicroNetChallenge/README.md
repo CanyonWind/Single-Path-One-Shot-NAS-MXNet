@@ -116,29 +116,22 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 |total_no_quant                          | False          |           |              |              |              |           0.132|      6.801|      2.105|      8.905|
 |total                                   | False          |           |              |              |              |           3.652|    299.621|    288.323|    587.943|
 
+```python
 Float32 scores: 
-
-> param score: 3.652 / 6.9 = 0.529
->
-> flop score: 587.9 / 1170 = 0.502
->
-> Σ scores: 1.03
+param score: 3.652 / 6.9 = 0.529
+flop score: 587.9 / 1170 = 0.502
+Σ scores: 1.03
 
 Float16 scores: 
-
-> param score: 3.652 / 2 / 6.9 = 0.265
->
-> flop score: (299.6 / 2 + 288.3) / 1170 = 0.374
->
-> Σ scores: 0.639
+param score: 3.652 / 2 / 6.9 = 0.265
+flop score: (299.6 / 2 + 288.3) / 1170 = 0.374
+Σ scores: 0.639
 
 Int8 scores: 
-
-> param score: (3.52 / 4 + 0.132) / 6.9 = 0.147
->
-> flop score: ((292.8 / 4 + 6.80) + (286.2 / 4 + 2.11)) / 1170 = 0.131
->
-> Σ scores: 0.278
+param score: (3.52 / 4 + 0.132) / 6.9 = 0.147
+flop score: ((292.8 / 4 + 6.80) + (286.2 / 4 + 2.11)) / 1170 = 0.131
+Σ scores: 0.278
+```
 
 ## Searched Model Performance
 
