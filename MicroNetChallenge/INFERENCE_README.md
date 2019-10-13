@@ -9,7 +9,7 @@ pip3 install mxnet-mkl==1.5.0
 pip3 install mxnet-cu101mkl==1.5.0
 ```
 
-2. Download imagenet validation dataset `val.rec` from ... and put it in `MicroNetChallenge/data` folder
+2. Download imagenet validation dataset `val.rec` from [here](https://drive.google.com/file/d/1ROcv60huSp7Y-fLV29Iau_RFY8S1s5Au/view?usp=sharing) and put it in `MicroNetChallenge/data` folder
 
 3. Launch Inference
 ```
