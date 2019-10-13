@@ -1,16 +1,16 @@
 
 # Abstract
 
-Designing convolutional neural networks (CNN) for mobile devices is challenging because mobile models need to be small and fast, yet still accurate. Although significant efforts have been dedicated to design and improve mobile CNNs on all dimensions, it is very difficult to manually balance these trade-offs when there are so many architectural possibilities to consider[[1]](https://arxiv.org/pdf/1807.11626.pdf). In this work, we provided an open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be **trained and searched on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet search and the searched best subnet training) **in the exploration space of about `32^20` choices**.
+Designing convolutional neural networks (CNN) for mobile devices is challenging because mobile models need to be small and fast, yet still accurate. Although significant efforts have been dedicated to design and improve mobile CNNs on all dimensions, it is very difficult to manually balance these trade-offs when there are so many architectural possibilities to consider[[1]](https://arxiv.org/pdf/1807.11626.pdf). In this work, we provided an open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be **trained and searched on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**.
 
-This implementation has searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), without any quantization, it **outperforms** `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too.
+This implementation has searched a new state-of-the-art subnet model which **outperforms** other NAS searched models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), before any quantization, it **outperforms** `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too. For `float16`, OneShot-S+ score is `0.64` and `0.28` for `int8`. Check [here](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/tree/master/MicroNetChallenge#searched-model-profiling) for porfiling and score calculation. 
 
 **To verify the model's performance**, please refer to the [inference readme](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/INFERENCE_README.md).
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
 |    OneShot+ Supernet |  1684M  |  15.4M  |  62.9   |   84.5   | 3.67 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
-|    **OneShot-S+ int8** |  148M |  0.95M |  **75.0***   |   **92.0***   | **0.26** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    **OneShot-S+ int8** |  154M |  1.01M |  **75.0***   |   **92.0***   | **0.28** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    **OneShot-S+ float16** |  438M |  1.85M |  **75.7**   |   **92.9**   | **0.64** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    **OneShot-S+** |  588M |  3.65M |  **75.7**   |   **92.9**   | **1.03** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    OneShot (our) |  656M |  3.5M |  74.0   |   91.6   | 1.05 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
@@ -122,12 +122,36 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 |total_no_quant                          | False          |           |              |              |              |           0.132|      6.801|      2.105|      8.905|
 |total                                   | False          |           |              |              |              |           3.652|    299.621|    288.323|    587.943|
 
+Float32 scores: 
+
+> param score: 3.652 / 6.9 = 0.529
+>
+> flop score: 587.9 / 1170 = 0.502
+>
+> Σ scores: 1.03
+
+Float16 scores: 
+
+> param score: 3.652 / 2 / 6.9 = 0.265
+>
+> flop score: (299.6 / 2 + 288.3) / 1170 = 0.374
+>
+> Σ scores: 0.639
+
+Int8 scores: 
+
+> param score: (3.52 / 4 + 0.132) / 6.9 = 0.147
+>
+> flop score: ((292.8 / 4 + 6.80) + (286.2 / 4 + 2.11)) / 1170 = 0.131
+>
+> Σ scores: 0.278
+
 ## Searched Model Performance
 
 | Model   | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
 |    OneShot+ Supernet |  1684M  |  15.4M  |  62.9   |   84.5   | 3.67 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
-|    **OneShot-S+ int8** |  148M |  0.95M |  **75.0***   |   **92.0***   | **0.26** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    **OneShot-S+ int8** |  154M |  1.01M |  **75.0***   |   **92.0***   | **0.28** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    **OneShot-S+ float16** |  438M |  1.85M |  **75.5**   |   **92.7**   | **0.64** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    **OneShot-S+** |  588M |  3.65M |  **75.5**   |   **92.7**   | **1.03** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    OneShot (our) |  656M |  3.5M |  74.0   |   91.6   | 1.05 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
@@ -144,3 +168,5 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 
 # Summary
 In this work, we provided an state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exporation space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`.
+
+We have not tried to use more aggressive weight/channel pruning or more complex low-bit quantization methods, because, if we want to take full advantage of them, most compression methods and low-bit quantization models require custom hardware. However, in general pratical situations, we need to build / design a model that meets hardware constraints, but not build the hardware architecture based on the algorithm. The good thing about the MicroNet Challenge is, of course, that because of Google's backing, excellent quantization algorithms along with hardware can be put into usage easier in the near future. But that is the next step. Focusing on what we currently have, we believe that our direction - design optimal searching space and search for more optimized network structure - is more suitable for direct application. Based on these NAS searched models and other efficient base networks such as `MobileNet series`, `ShuffleNet series` and `EfficientNet`, in the future also combined with the compression / low-bit methods which already supported by the hardware, the edge-side neural network will be better serving the industry and people's daily life.
