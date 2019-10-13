@@ -78,7 +78,7 @@ As for the hyperparameters. We modified the GluonCV official ImageNet training s
 ## Supernet Searching
 ![alt text](../images/search_supernet.gif)
 
-We tried both random search, random selecting 250 qualified instances to evaluate their performance, and genetic search. The genetic method easily found a better subnet structure over the random selection.
+We tried both random search, randomly selecting 250 qualified instances to evaluate their performance, and genetic search. The genetic method easily found a better subnet structure over the random selection.
 
 ## Searched Model Profiling
 
