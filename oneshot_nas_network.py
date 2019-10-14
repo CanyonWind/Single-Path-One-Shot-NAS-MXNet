@@ -6,7 +6,8 @@ import os
 from sys import maxsize
 
 import random
-from oneshot_nas_blocks import NasHybridSequential, ShuffleNetBlock, ShuffleNasBlock, NasBatchNorm, Activation, SE
+from oneshot_nas_blocks import NasHybridSequential, ShuffleNetBlock, ShuffleNasBlock, NasBatchNorm, Activation, SE, \
+                               ShuffleChannelsConv, ShuffleChannels
 
 import sys
 sys.path.append('./utils')
@@ -18,7 +19,8 @@ __all__ = ['get_shufflenas_oneshot', 'ShuffleNasOneShot', 'ShuffleNasOneShotFix'
 
 class ShuffleNasOneShot(HybridBlock):
     def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None,
-                 use_all_blocks=False, bn=nn.BatchNorm, use_se=False, last_conv_after_pooling=False):
+                 use_all_blocks=False, bn=nn.BatchNorm, use_se=False, last_conv_after_pooling=False,
+                 shuffle_method=ShuffleChannels):
         """
         scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
         scale_candidate_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
@@ -85,19 +87,23 @@ class ShuffleNasOneShot(HybridBlock):
                             if block_choice == 0:
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, bn=bn,
                                                                   block_mode='ShuffleNetV2', ksize=3, stride=stride,
-                                                                  use_se=block_use_se, act_name=act_name))
+                                                                  use_se=block_use_se, act_name=act_name,
+                                                                  shuffle_method=shuffle_method))
                             elif block_choice == 1:
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, bn=bn,
                                                                   block_mode='ShuffleNetV2', ksize=5, stride=stride,
-                                                                  use_se=block_use_se, act_name=act_name))
+                                                                  use_se=block_use_se, act_name=act_name,
+                                                                  shuffle_method=shuffle_method))
                             elif block_choice == 2:
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, bn=bn,
                                                                   block_mode='ShuffleNetV2', ksize=7, stride=stride,
-                                                                  use_se=block_use_se, act_name=act_name))
+                                                                  use_se=block_use_se, act_name=act_name,
+                                                                  shuffle_method=shuffle_method))
                             elif block_choice == 3:
                                 self.features.add(ShuffleNetBlock(input_channel, output_channel, mid_channel, bn=bn,
                                                                   block_mode='ShuffleXception', ksize=3, stride=stride,
-                                                                  use_se=block_use_se, act_name=act_name))
+                                                                  use_se=block_use_se, act_name=act_name,
+                                                                  shuffle_method=shuffle_method))
                             else:
                                 raise NotImplementedError
                         else:
@@ -229,12 +235,16 @@ class ShuffleNasOneShot(HybridBlock):
                 channel_mask.append(local_mask)
         return nd.array(channel_mask).astype(dtype, copy=False), channel_choices
 
-    def _initialize(self, force_reinit=True, ctx=mx.cpu()):
+    def _initialize(self, force_reinit=True, ctx=mx.cpu(), dtype='float32'):
         for k, v in self.collect_params().items():
             if 'conv' in k:
                 if 'weight' in k:
                     if 'first' in k or 'output' in k or 'fc' in k or 'squeeze' in k or 'excitation' in k:
                         v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit, ctx=ctx)
+                    elif 'transpose' in k:
+                        v.initialize(mx.init.Normal(0.01), force_reinit=force_reinit, ctx=ctx)
+                        v.set_data(nd.cast(generate_transpose_conv_kernel(v.shape[0]), dtype=dtype))
+                        v.grad_req = 'null'
                     else:
                         v.initialize(mx.init.Normal(1.0 / v.shape[1]), force_reinit=force_reinit, ctx=ctx)
                 if 'bias' in k:
@@ -253,11 +263,23 @@ class ShuffleNasOneShot(HybridBlock):
         return x
 
 
+def generate_transpose_conv_kernel(channels):
+    c = channels
+    if c % 2 != 0:
+        raise ValueError('Channel number should be even.')
+    idx = np.zeros(c)
+    idx[np.arange(0, c, 2)] = np.arange(c / 2)
+    idx[np.arange(1, c, 2)] = np.arange(c / 2, c, 1)
+    weights = np.zeros((c, c))
+    weights[np.arange(c), idx.astype(int)] = 1.0
+    return nd.expand_dims(nd.expand_dims(nd.array(weights), axis=2), axis=3)
+
+
 class ShuffleNasOneShotFix(ShuffleNasOneShot):
     # Unlike its parent class, fix-arch model does not have the control of "use_all_blocks" and "bn"(for NasBN).
     # It should use the default False and nn.BatchNorm correspondingly.
     def __init__(self, input_size=224, n_class=1000, architecture=None, channel_scales=None,
-                 use_se=False, last_conv_after_pooling=False):
+                 use_se=False, last_conv_after_pooling=False, shuffle_method=ShuffleChannels):
         """
         scale_cand_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
         scale_candidate_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
@@ -266,7 +288,8 @@ class ShuffleNasOneShotFix(ShuffleNasOneShot):
         """
         super(ShuffleNasOneShotFix, self).__init__(input_size=input_size, n_class=n_class,
                                                    architecture=architecture, channel_scales=channel_scales,
-                                                   use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
+                                                   use_se=use_se, last_conv_after_pooling=last_conv_after_pooling,
+                                                   shuffle_method=shuffle_method)
 
     def hybrid_forward(self, F, x, *args, **kwargs):
         x = self.features(x)
@@ -275,7 +298,7 @@ class ShuffleNasOneShotFix(ShuffleNasOneShot):
 
 
 def get_shufflenas_oneshot(architecture=None, n_class=1000, scale_ids=None, use_all_blocks=False,
-                           use_se=False, last_conv_after_pooling=False):
+                           use_se=False, last_conv_after_pooling=False, shuffle_by_conv=False):
     if architecture is None and scale_ids is None:
         # Nothing about architecture is specified, do random block selection and channel selection.
         net = ShuffleNasOneShot(n_class=n_class, use_all_blocks=use_all_blocks, bn=NasBatchNorm,
@@ -284,13 +307,16 @@ def get_shufflenas_oneshot(architecture=None, n_class=1000, scale_ids=None, use_
         # Create the specified structure
         if use_all_blocks:
             raise ValueError("For fixed structure, use_all_blocks should not be allowed.")
+        shuffle_method = ShuffleChannelsConv if shuffle_by_conv else ShuffleChannels
+
         scale_list = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
         channel_scales = []
         for i in range(len(scale_ids)):
             # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
             channel_scales.append(scale_list[scale_ids[i]])
         net = ShuffleNasOneShotFix(architecture=architecture, n_class=n_class, channel_scales=channel_scales,
-                                   use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
+                                   use_se=use_se, last_conv_after_pooling=last_conv_after_pooling,
+                                   shuffle_method=shuffle_method)
     else:
         raise ValueError("architecture and scale_ids should both be None for supernet "
                          "or both not None for fixed structure model.")
@@ -300,6 +326,7 @@ def get_shufflenas_oneshot(architecture=None, n_class=1000, scale_ids=None, use_
 FIX_ARCH = True
 LAST_CONV_AFTER_POOLING = True
 USE_SE = True
+SHUFFLE_BY_CONV = True
 
 
 def main():
