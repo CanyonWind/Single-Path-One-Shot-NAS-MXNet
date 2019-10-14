@@ -110,6 +110,48 @@ class ShuffleChannels(HybridBlock):
         return data_project, data_x
 
 
+class ShuffleChannelsConv(HybridBlock):
+    """
+    ShuffleNet channel shuffle Block.
+    For reshape 0, -1, -2, -3, -4 meaning:
+    https://mxnet.incubator.apache.org/api/python/ndarray/ndarray.html?highlight=reshape#mxnet.ndarray.NDArray.reshape
+    """
+    def __init__(self, mid_channel, groups=2, **kwargs):
+        super(ShuffleChannelsConv, self).__init__()
+        # For ShuffleNet v2, groups is always set 2
+        assert groups == 2
+        self.groups = groups
+        self.mid_channel = int(mid_channel)
+        self.channels = int(mid_channel * 2)
+        self.transpose_conv = nn.Conv2D(self.channels, in_channels=self.channels, kernel_size=1, strides=1,
+                                        padding=0, use_bias=False, prefix='transpose_conv_')
+
+    def transpose_init(self):
+        for i, param in enumerate(self.transpose_conv.collect_params().values()):
+            if i > 0:
+                raise ValueError('Transpose conv should only have the weights parameter.')
+            param.set_data(self.generate_transpose_conv_kernel())
+            param.grad_req = 'null'
+
+    def generate_transpose_conv_kernel(self):
+        c = self.channels
+        if c % 2 != 0:
+            raise ValueError('Channel number should be even.')
+        idx = np.zeros(c)
+        idx[np.arange(0, c, 2)] = np.arange(c / 2)
+        idx[np.arange(1, c, 2)] = np.arange(c / 2, c, 1)
+        weights = np.zeros((c, c))
+        weights[np.arange(c), idx.astype(int)] = 1.0
+        print(weights)
+        return nd.expand_dims(nd.expand_dims(nd.array(weights), axis=2), axis=3)
+
+    def hybrid_forward(self, F, x, *args, **kwargs):
+        data = self.transpose_conv(x)
+        data_project = F.slice(data, begin=(None, None, None, None), end=(None, self.mid_channel, None, None))
+        data_x = F.slice(data, begin=(None, self.mid_channel, None, None), end=(None, None, None, None))
+        return data_project, data_x
+
+
 class ChannelSelector(HybridBlock):
     """
     Random channel # selection
@@ -130,7 +172,7 @@ class ChannelSelector(HybridBlock):
 
 
 class ShuffleNetBlock(HybridBlock):
-    def __init__(self, input_channel, output_channel, mid_channel, ksize, stride,
+    def __init__(self, input_channel, output_channel, mid_channel, ksize, stride, shuffle_method=ShuffleChannels,
                  block_mode='ShuffleNetV2', fix_arch=True, bn=nn.BatchNorm, act_name='relu', use_se=False, **kwargs):
         super(ShuffleNetBlock, self).__init__()
         assert stride in [1, 2]
@@ -169,7 +211,8 @@ class ShuffleNetBlock(HybridBlock):
 
             Since scale ~ (0, 2), this is guaranteed: main mid channel < final output channel
             """
-            self.channel_shuffle_and_split = ShuffleChannels(mid_channel=input_channel // 2, groups=2)
+            if stride == 1:
+                self.channel_shuffle_and_split = shuffle_method(mid_channel=input_channel // 2, groups=2)
             self.main_branch = nn.HybridSequential() if fix_arch else NasBaseHybridSequential()
 
             if block_mode == 'ShuffleNetV2':
@@ -619,6 +662,16 @@ def main():
     print("Defined std: {}, running var: {}".format(std, bn.running_var.data()))
     print("Finished testing NasBatchNorm\n")
 
+    """ Test Transpose Conv """
+    dummy = nd.ones((1, 6, 5, 5))
+    for i in range(6):
+        dummy[:, i, :, :] = i
+    transpose_conv = ShuffleChannelsConv(mid_channel=6 / 2)
+    transpose_conv.initialize()
+    transpose_conv.transpose_init()
+    print(transpose_conv(dummy))
+
 
 if __name__ == '__main__':
     main()
+
