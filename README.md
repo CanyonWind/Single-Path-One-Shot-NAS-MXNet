@@ -48,8 +48,10 @@ Train & search
 ```
 # Train supernet
 sh ./scripts/train_supernet.sh
+
 # Search supernet
 sh ./scripts/search_supernet.sh
+
 # Train best searched model
 sh ./scripts/train_fixArch+.sh
 ```
