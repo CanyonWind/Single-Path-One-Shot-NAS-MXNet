@@ -1,10 +1,10 @@
 
 import sys
 from mxnet import ndarray as nd
+from oneshot_nas_network_nobn import get_shufflenas_oneshot as get_noBN_shufflenas_oneshot
 
 sys.path.append('..')
 from oneshot_nas_network import get_shufflenas_oneshot
-from oneshot_nas_network_nobn import get_shufflenas_oneshot as get_noBN_shufflenas_oneshot
 
 
 def merge(conv_w, gamma, beta, running_mean, running_var):
@@ -15,7 +15,7 @@ def merge(conv_w, gamma, beta, running_mean, running_var):
     return new_w, new_b
 
 
-def merge_bn(param_file='../params_shufflenas_oneshot+_genetic/0.2448-imagenet-ShuffleNas_fixArch-357-best.params'):
+def merge_bn(param_file='../models/oneshot-s+model-0000.params'):
     architecture = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
     scale_ids = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
     net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids,
@@ -51,7 +51,7 @@ def merge_bn(param_file='../params_shufflenas_oneshot+_genetic/0.2448-imagenet-S
         nobn_param_dict[info['conv_name'].replace('fix0', 'fix1')].set_data(new_w)
         nobn_param_dict[info['conv_name'][:-6].replace('fix0', 'fix1') + 'bias'].set_data(new_b)
 
-    nobn_net.save_parameters('./ShuffleNas-fixArch-noBN.params')
+    nobn_net.save_parameters('../models/oneshot-s+model-noBN-0000.params')
 
 
 if __name__ == '__main__':
