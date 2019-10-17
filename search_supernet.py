@@ -15,6 +15,10 @@ from oneshot_nas_network import get_shufflenas_oneshot
 from utils.calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
 
+FLOP_MAX = 1
+PARAM_MAX = 1
+SCORE_ACC_RATIO = 1    # flop_param_score_weight/acc_weight for fitness
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
@@ -225,25 +229,27 @@ def update_log(elem, logger=None):
     """
     Print log
     Args:
-        elem: a tuple of (accuracy, norm_score, flops, model_size, block_choice, channel_choice)
+        elem: a tuple of (overall_score, accuracy, norm_score, flops, model_size, block_choice, channel_choice)
         logger:
     """
     if logger:
         logger.info('-' * 40)
-        logger.info("Model normalized score: {}.".format(elem[1]))
-        logger.info("Val accuracy:      {}".format(elem[0]))
-        logger.info("Block choices:     {}".format(elem[4]))
-        logger.info("Channel choices:   {}".format(elem[5]))
-        logger.info('Flops:             {} MFLOPS'.format(elem[2]))
-        logger.info('# parameters:      {} M'.format(elem[3]))
+        logger.info("Overall score:     {}".format(elem[0]))
+        logger.info("Val accuracy:      {}".format(elem[1]))
+        logger.info("Model normalized score: {}.".format(elem[2]))
+        logger.info('Flops:             {} MFLOPS'.format(elem[3]))
+        logger.info('# parameters:      {} M'.format(elem[4]))
+        logger.info("Block choices:     {}".format(elem[5]))
+        logger.info("Channel choices:   {}".format(elem[6]))
     else:
         print('-' * 40)
-        print("Model normalized score: {}.".format(elem[1]))
-        print("Val accuracy:      {}".format(elem[0]))
-        print("Block choices:     {}".format(elem[4]))
-        print("Channel choices:   {}".format(elem[5]))
-        print('Flops:             {} MFLOPS'.format(elem[2]))
-        print('# parameters:      {} M'.format(elem[3]))
+        print("Overall score:     {}".format(elem[0]))
+        print("Val accuracy:      {}".format(elem[1]))
+        print("Model normalized score: {}.".format(elem[2]))
+        print('Flops:             {} MFLOPS'.format(elem[3]))
+        print('# parameters:      {} M'.format(elem[4]))
+        print("Block choices:     {}".format(elem[5]))
+        print("Channel choices:   {}".format(elem[6]))
 
 
 class TopKHeap(object):
@@ -307,7 +313,14 @@ class Evolver():
                 get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
             combined_score = 0.5 * flop_score + 0.5 * model_size_score
-            if combined_score > 1:
+            if flop_score > FLOP_MAX:
+                print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                continue
+            if model_size_score > PARAM_MAX:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
@@ -393,20 +406,21 @@ class Evolver():
         """
 
         # fitness
-        selected = [(self.fitness(person['block'], person['channel']), person) for person in population]
-        for item in selected:
-            net_obj = (item[0], item[1]['score'], item[1]['flops'], item[1]['model_size'],
-                       copy.deepcopy(item[1]['block']), copy.deepcopy(item[1]['channel']))
-            topk_items.push(net_obj)
-            update_log(net_obj, logger)
-
-        selected = [x[1] for x in sorted(selected, key=lambda x: x[0], reverse=True)]
+        for person in population:
+            if 'acc' not in person.keys():
+                person['acc'] = self.fitness(person['block'], person['channel'])
+                net_obj = (SCORE_ACC_RATIO * person['acc'] + person['score'],
+                           person['acc'], person['score'], person['flops'], person['model_size'],
+                           copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
+                topk_items.push(net_obj)
+                update_log(net_obj, logger)
+        population = population.sort(key=lambda x: SCORE_ACC_RATIO * x['acc'] + x['score'], reverse=True)
 
         # The parents are every network we want to keep.
-        parents = selected[:self.retain_length]
+        parents = population[:self.retain_length]
 
         # For those we aren't keeping, randomly keep some anyway.
-        for individual in selected[self.retain_length:]:
+        for individual in population[self.retain_length:]:
             if self.random_select > random.random():
                 parents.append(individual)
 
@@ -442,7 +456,14 @@ class Evolver():
                         get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
                     combined_score = 0.5 * flop_score + 0.5 * model_size_score
-                    if combined_score > 1:
+                    if flop_score > FLOP_MAX:
+                        print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                        print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                        print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                        print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                        print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                        continue
+                    if model_size_score > PARAM_MAX:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
