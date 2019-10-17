@@ -409,12 +409,12 @@ class Evolver():
         for person in population:
             if 'acc' not in person.keys():
                 person['acc'] = self.fitness(person['block'], person['channel'])
-                net_obj = (SCORE_ACC_RATIO * person['score'] + person['acc'],
+                net_obj = (-SCORE_ACC_RATIO * person['score'] + person['acc'],
                            person['acc'], person['score'], person['flops'], person['model_size'],
                            copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
                 topk_items.push(net_obj)
                 update_log(net_obj, logger)
-        population = population.sort(key=lambda x: SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
+        population = population.sort(key=lambda x: -SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
 
         # The parents are every network we want to keep.
         parents = population[:self.retain_length]
