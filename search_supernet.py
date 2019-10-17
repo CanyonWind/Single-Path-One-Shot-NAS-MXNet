@@ -142,7 +142,8 @@ def get_data(batch_size, num_gpus, rec_train, rec_train_idx, rec_val, rec_val_id
 def get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot'):
     """ Return the flops and num of params """
     # build fix_arch network and calculate flop
-    fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices)
+    fixarch_net = get_shufflenas_oneshot(block_choices, channel_choices,
+                                         use_se=args.use_se, last_conv_after_pooling=args.last_conv_after_pooling)
     fixarch_net._initialize()
     if not os.path.exists('./symbols'):
         os.makedirs('./symbols')
