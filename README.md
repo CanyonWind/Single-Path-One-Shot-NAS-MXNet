@@ -186,17 +186,19 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop and # parameters constraint(s)
-- [ ] Train with heuristic constraint --> To limit unuseful subnet training
-    - [ ] Do offiline calculation for each pair of (block, channels) and build an efficient heuristic flops estimator.
-    - [ ] In training stage, the pair of choices that doen't reach heuristic constraint will be ignored.
+- [ ] Train with constraint --> To limit unuseful subnet training
+    - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
+    - [ ] Only the candidates from the pool will be trained.
 - [ ] Two stage searching
     - [ ] Do Block search firstly
     - [ ] Based on the best searched blocks, do channel search
-- [ ] Search and train an ShufflNetV2+ style se-subnet.
-    - [ ] **In progress:** Search within the pretrained se-supernet
-    - [ ] Train the searched se-subnet
+- [ ] Search a model having both less FLOPs and # of parameters than MobileNet V3
+    - [ ] **In progress:** Add a searching mode which can specify hard constrains but not just the normlaized score.
+    - [ ] Train the best searched model
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
+    - [ ] **In progress** Build a tool to generate repeating blocks
 - [x] Quantization
+    - [x] Follow up on [this issue](https://github.com/apache/incubator-mxnet/issues/16424)
 - [ ] [PR](http://hzwer.com/8955.html)
 
 # Summary
