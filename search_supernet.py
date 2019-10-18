@@ -215,8 +215,8 @@ def set_nas_bn(net, inference_update_stat=False):
 def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
               ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
     train_data.reset()
-    net.cast('float16')
-    net.load_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
+    net.cast(args.dtype)
+    net.load_parameters(args.supernet_params)
     net.cast('float32')
     set_nas_bn(net, inference_update_stat=True)
     for i, batch in enumerate(train_data):
@@ -615,9 +615,7 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
 def main():
     context = [mx.gpu(i) for i in range(args.num_gpus)] if args.num_gpus > 0 else [mx.cpu()]
     net = get_shufflenas_oneshot(use_se=args.use_se, last_conv_after_pooling=args.last_conv_after_pooling)
-    # net = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True)
     net.cast(args.dtype)
-    # net.cast('float16')
     net.load_parameters(args.supernet_params, ctx=context)
     net.cast('float32')
     print(net)
