@@ -186,19 +186,23 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
         - [x] Replace nn.batchnorm with the customized BN
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop and # parameters constraint(s)
-- [ ] Train with constraint --> To limit unuseful subnet training
-    - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
-    - [ ] Only the candidates from the pool will be trained.
+- [x] Quantization
+    - [x] Follow up on [this issue](https://github.com/apache/incubator-mxnet/issues/16424)
+- [x] Search a model having both less FLOPs and # of parameters than MobileNet V3
+    - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σ normlaized score.
+    - [x] Search within the OneShot supernet with provided stage channels, se and MobilNet V3 style last convolution block
+      - [x] This supernet setting cannot (quickly) find enough qualified candidates for population
+    - [ ] **In progress**: Train ShuffleNetV2 channels layout supernet with se and MobilNet V3 style last convolution block.
+    - [ ] Train the best searched subnet model
+- [ ] Estimate each (block, # channel) combination cpu & gpu latency
+    - [x] Build a tool to generate repeating blocks
+    - [ ] Estimate speeds for 4 choice blocks with different input/mid/output channels
 - [ ] Two stage searching
     - [ ] Do Block search firstly
     - [ ] Based on the best searched blocks, do channel search
-- [ ] Search a model having both less FLOPs and # of parameters than MobileNet V3
-    - [ ] **In progress:** Add a searching mode which can specify hard constrains but not just the normlaized score.
-    - [ ] Train the best searched model
-- [ ] Estimate each (block, # channel) combination cpu & gpu latency
-    - [ ] **In progress** Build a tool to generate repeating blocks
-- [x] Quantization
-    - [x] Follow up on [this issue](https://github.com/apache/incubator-mxnet/issues/16424)
+- [ ] Train with constraint --> To limit unuseful subnet training
+    - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
+    - [ ] Only the candidates from the pool will be trained.
 - [ ] [PR](http://hzwer.com/8955.html)
 
 # Summary
