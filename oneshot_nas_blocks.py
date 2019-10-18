@@ -339,7 +339,7 @@ class ShuffleNasBlock(HybridBlock):
             """
             Four pre-defined blocks
             """
-            max_mid_channel = int(output_channel // 2 * max_channel_scale)
+            max_mid_channel = make_divisible(int(output_channel // 2 * max_channel_scale))
             self.block_sn_3x3 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
                                                   3, stride, 'ShuffleNetV2', bn=bn, act_name=act_name, use_se=use_se)
             self.block_sn_5x5 = ShuffleNetCSBlock(input_channel, output_channel, max_mid_channel,
@@ -486,6 +486,10 @@ class NasBatchNorm(HybridBlock):
         return s.format(name=self.__class__.__name__,
                         content=', '.join(['='.join([k, v.__repr__()])
                                            for k, v in self._kwargs.items()]))
+
+
+def make_divisible(x, divisible_by=8):
+    return int(np.ceil(x * 1. / divisible_by) * divisible_by)
 
 
 def random_block_choices(stage_repeats=None, num_of_block_choices=4):
