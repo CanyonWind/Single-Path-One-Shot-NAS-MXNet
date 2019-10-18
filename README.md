@@ -189,8 +189,8 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 - [x] Quantization
     - [x] Follow up on [this issue](https://github.com/apache/incubator-mxnet/issues/16424)
 - [x] Search a model having both less FLOPs and # of parameters than MobileNet V3
-    - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σ normlaized score.
-    - [x] Search within the OneShot supernet with provided stage channels, se and MobilNet V3 style last convolution block
+    - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σscores.
+    - [x] Search within the OneShot supernet with provided stage channels, se and MobilNet V3 style conv
       - [x] This supernet setting cannot (quickly) find enough qualified candidates for population
     - [ ] **In progress**: Train ShuffleNetV2 channels layout supernet with se and MobilNet V3 style last convolution block.
     - [ ] Train the best searched subnet model
