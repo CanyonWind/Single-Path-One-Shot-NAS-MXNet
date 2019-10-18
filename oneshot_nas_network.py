@@ -310,7 +310,7 @@ def make_divisible(x, divisible_by=8):
 
 def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=False, n_class=1000,
                            use_se=False, last_conv_after_pooling=False, shuffle_by_conv=False,
-                           channels_layout='ShuffleNetV2+'):
+                           channels_layout='OneShot'):
     if channels_layout == 'OneShot':
         stage_out_channels = [64, 160, 320, 640]
         candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
