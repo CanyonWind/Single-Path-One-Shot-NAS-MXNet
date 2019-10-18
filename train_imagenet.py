@@ -117,6 +117,8 @@ def parse_args():
     parser.add_argument('--cs-warm-up', action='store_true',
                         help='Whether to do warm up for Channel Selection so that gradually selects '
                              'larger range of channels')
+    parser.add_argument('--channels-layout', type=str, default='OneShot',
+                        help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
 
     opt = parser.parse_args()
     return opt
@@ -190,10 +192,12 @@ def main():
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
         net = get_shufflenas_oneshot(architecture=architecture, n_class=classes, scale_ids=scale_ids, use_se=opt.use_se,
-                                     last_conv_after_pooling=opt.last_conv_after_pooling)
+                                     last_conv_after_pooling=opt.last_conv_after_pooling,
+                                     channels_layout=opt.channels_layout)
     elif model_name == 'ShuffleNas':
         net = get_shufflenas_oneshot(n_class=classes, use_all_blocks=opt.use_all_blocks, use_se=opt.use_se,
-                                     last_conv_after_pooling=opt.last_conv_after_pooling)
+                                     last_conv_after_pooling=opt.last_conv_after_pooling,
+                                     channels_layout=opt.channels_layout)
     else:
         net = get_model(model_name, **kwargs)
 
@@ -361,13 +365,16 @@ def main():
             if model_name == 'ShuffleNas':
                 # For evaluating validation accuracy, random select block and channels.
                 block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
+                ignore_first_two_cs = True if opt.channels_layout == 'OneShot' else False
                 if opt.cs_warm_up:
                     full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
                                                                    epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                   dtype=opt.dtype)
+                                                                   dtype=opt.dtype,
+                                                                   ignore_first_two_cs=ignore_first_two_cs)
                 else:
                     full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                   dtype=opt.dtype)
+                                                                   dtype=opt.dtype,
+                                                                   ignore_first_two_cs=ignore_first_two_cs)
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -506,6 +513,7 @@ def main():
         net.hybridize(static_alloc=True, static_shape=True)
         if distillation:
             teacher.hybridize(static_alloc=True, static_shape=True)
+    print(net)
     train(context)
 
 
