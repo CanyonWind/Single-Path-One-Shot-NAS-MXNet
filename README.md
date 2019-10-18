@@ -187,6 +187,8 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
     - [x] Evolution algorithm 
     - [x] Evolution algorithm with flop and # parameters constraint(s)
 - [x] Quantization
+    - [x] To eliminate the possibility that BN may cause quantization problem, add merge BN tool
+    - [x] To eliminate the possibility that reshape may cause quantization problem, add ShuffleChannelByConv option
     - [x] Follow up on [this issue](https://github.com/apache/incubator-mxnet/issues/16424)
 - [x] Search a model having both less FLOPs and # of parameters than MobileNet V3
     - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σscores.
