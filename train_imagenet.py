@@ -119,6 +119,9 @@ def parse_args():
                              'larger range of channels')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
+    parser.add_argument('--reduced-dataset-scale', type=int, default=1,
+                        help='How many times the dataset would be reduced, so that in each epoch '
+                             'only num_batches / reduced_dataset_scale batches will be trained.')
 
     opt = parser.parse_args()
     return opt
@@ -157,7 +160,7 @@ def main():
     else:
         lr_decay_epoch = [int(i) for i in opt.lr_decay_epoch.split(',')]
     lr_decay_epoch = [e - opt.warmup_epochs for e in lr_decay_epoch]
-    num_batches = num_training_samples // batch_size
+    num_batches = num_training_samples // batch_size // opt.reduced_dataset_scale
 
     lr_scheduler = LRSequential([
         LRScheduler('linear', base_lr=0, target_lr=opt.lr,
@@ -365,7 +368,7 @@ def main():
             if model_name == 'ShuffleNas':
                 # For evaluating validation accuracy, random select block and channels.
                 block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                ignore_first_two_cs = True if opt.channels_layout == 'OneShot' else False
+                ignore_first_two_cs = True  # 0.2 and 0.4 scales are ignored
                 if opt.cs_warm_up:
                     full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
                                                                    epoch_after_cs=epoch - opt.epoch_start_cs,
@@ -415,16 +418,11 @@ def main():
 
         best_val_score = 1
 
-        for epoch in range(opt.resume_epoch, opt.num_epochs):
-            if epoch == opt.epoch_start_cs:
-                opt.use_all_channels = False
-            tic = time.time()
-            if opt.use_rec:
-                train_data.reset()
-            train_metric.reset()
+        def train_epoch():
             btic = time.time()
-
             for i, batch in enumerate(train_data):
+                if i == num_batches:
+                    return i
                 data, label = batch_fn(batch, ctx)
 
                 if opt.mixup:
@@ -450,13 +448,16 @@ def main():
                 with ag.record():
                     if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
+                        ignore_first_two_cs = True
                         if opt.cs_warm_up:
                             full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
                                                                            epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                           dtype=opt.dtype)
+                                                                           dtype=opt.dtype,
+                                                                           ignore_first_two_cs=ignore_first_two_cs)
                         else:
                             full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                           dtype=opt.dtype)
+                                                                           dtype=opt.dtype,
+                                                                           ignore_first_two_cs=ignore_first_two_cs)
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -486,7 +487,17 @@ def main():
                                 epoch, i, batch_size*opt.log_interval/(time.time()-btic),
                                 train_metric_name, train_metric_score, trainer.learning_rate))
                     btic = time.time()
+            return i
 
+        for epoch in range(opt.resume_epoch, opt.num_epochs):
+            if epoch == opt.epoch_start_cs:
+                opt.use_all_channels = False
+            tic = time.time()
+            if opt.use_rec:
+                train_data.reset()
+            train_metric.reset()
+
+            i = train_epoch()
             train_metric_name, train_metric_score = train_metric.get()
             throughput = int(batch_size * i / (time.time() - tic))
 
