@@ -126,7 +126,7 @@ class ShuffleNasOneShot(HybridBlock):
                         nn.GlobalAvgPool2D(),
                         # no last SE for MobileNet V3 style
                         nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
-                                  padding=0, use_bias=False, prefix='conv_fc_'),
+                                  padding=0, use_bias=True, prefix='conv_fc_'),
                         # No bn for the conv after pooling
                         Activation('hard_swish' if self.use_se else 'relu')
                     )
@@ -134,13 +134,15 @@ class ShuffleNasOneShot(HybridBlock):
                     if self.use_se:
                         # ShuffleNetV2+ approach
                         self.features.add(
-                            nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
+                            nn.Conv2D(make_divisible(last_conv_out_channel * 0.75), in_channels=input_channel,
+                                      kernel_size=1, strides=1,
                                       padding=0, use_bias=False, prefix='last_conv_'),
                             bn(momentum=0.1),
                             Activation('hard_swish' if self.use_se else 'relu'),
                             nn.GlobalAvgPool2D(),
-                            SE(last_conv_out_channel),
-                            nn.Conv2D(last_conv_out_channel, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
+                            SE(make_divisible(last_conv_out_channel * 0.75)),
+                            nn.Conv2D(last_conv_out_channel, in_channels=make_divisible(last_conv_out_channel * 0.75),
+                                      kernel_size=1, strides=1,
                                       padding=0, use_bias=True, prefix='conv_fc_'),
                             # No bn for the conv after pooling
                             Activation('hard_swish' if self.use_se else 'relu')
@@ -214,6 +216,7 @@ class ShuffleNasOneShot(HybridBlock):
             for _ in range(self.stage_repeats[i]):
                 if select_all_channels:
                     local_mask = [1] * global_max_length
+                    channel_choices = [len(self.candidate_scales) - 1] * sum(self.stage_repeats)
                 else:
                     local_mask = [0] * global_max_length
                     if mode == 'dense':
@@ -314,8 +317,8 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
         last_conv_out_channel = 1024
     elif channels_layout == 'ShuffleNetV2+':
         stage_out_channels = [48, 128, 256, 512]
-        candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]
-        last_conv_out_channel = 1280
+        candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+        last_conv_out_channel = 1024
     else:
         raise ValueError("Unrecognized channels_layout: {}. "
                          "Please choose from ['ShuffleNetV2', 'OneShot']".format(channels_layout))
@@ -348,19 +351,23 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
 
 
 FIX_ARCH = True
-LAST_CONV_AFTER_POOLING = True
+LAST_CONV_AFTER_POOLING = False
 USE_SE = True
-SHUFFLE_BY_CONV = True
+SHUFFLE_BY_CONV = False
+CHANNELS_LAYOUT = 'ShuffleNetV2+'
 
 
 def main():
     if FIX_ARCH:
-        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-        net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids,
+        # architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+        # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        architecture = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+        scale_ids = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
+        net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids, channels_layout=CHANNELS_LAYOUT,
                                      use_se=USE_SE, last_conv_after_pooling=LAST_CONV_AFTER_POOLING)
     else:
-        net = get_shufflenas_oneshot(use_se=USE_SE, last_conv_after_pooling=LAST_CONV_AFTER_POOLING)
+        net = get_shufflenas_oneshot(use_se=USE_SE, last_conv_after_pooling=LAST_CONV_AFTER_POOLING,
+                                     channels_layout=CHANNELS_LAYOUT)
 
     """ Test customized initialization """
     net._initialize(force_reinit=True)
@@ -390,7 +397,21 @@ def main():
         if not os.path.exists('./params'):
             os.makedirs('./params')
         net.save_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
-    print(test_outputs.shape)
+
+        """ Test generating random channels """
+        epoch_start_cs = 30
+        use_all_channels = True if epoch_start_cs != -1 else False
+        dtype = 'float16'
+
+        for epoch in range(120):
+            if epoch == epoch_start_cs:
+                use_all_channels = False
+            for batch in range(1):
+                full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=use_all_channels,
+                                                                             epoch_after_cs=epoch - epoch_start_cs,
+                                                                             dtype=dtype,
+                                                                             ignore_first_two_cs=True)
+                print("Epoch {}: {}".format(epoch, channel_choices))
 
 
 if __name__ == '__main__':

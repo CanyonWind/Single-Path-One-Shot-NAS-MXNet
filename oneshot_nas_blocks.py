@@ -156,12 +156,8 @@ class ChannelSelector(HybridBlock):
     """
     Random channel # selection
     """
-    def __init__(self, channel_number, candidate_scales=None):
+    def __init__(self, channel_number):
         super(ChannelSelector, self).__init__()
-        if candidate_scales is None:
-            self.candidate_scales = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
-        else:
-            self.candidate_scales = candidate_scales
         self.channel_number = channel_number
 
     def hybrid_forward(self, F, x, block_channel_mask, *args, **kwargs):
