@@ -18,7 +18,8 @@ from oneshot_nas_blocks import NasBatchNorm
 FLOP_MAX = 1
 PARAM_MAX = 1
 SCORE_ACC_RATIO = 1    # flop_param_score_weight/acc_weight for fitness
-
+BLOCK_CHOICE = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+CHANNEL_CHOICE = None  # [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
@@ -305,8 +306,18 @@ class Evolver():
         while len(population) < self.population_size:
             # Create a random network.
             instance = {}
-            for param_name in self.param_dict:
-                instance[param_name] = [random.choice(self.param_dict[param_name]) for _ in range(20)]
+
+            # for param_name in self.param_dict:
+            #     instance[param_name] = [random.choice(self.param_dict[param_name]) for _ in range(20)]
+            assert BLOCK_CHOICE is None or CHANNEL_CHOICE is None
+            if BLOCK_CHOICE:
+                instance['block'] = BLOCK_CHOICE
+            else:
+                instance['block'] = [random.choice(self.param_dict['block']) for _ in range(20)]
+            if CHANNEL_CHOICE:
+                instance['channel'] = CHANNEL_CHOICE
+            else:
+                instance['channel'] = [random.choice(self.param_dict['channel']) for _ in range(20)]
 
             block_choices = nd.array(instance['block']).astype(self.dtype, copy=False)
             channel_choices = instance['channel']
@@ -383,14 +394,32 @@ class Evolver():
             child = {}
 
             # Crossover: loop through the parameters and pick params for the kid.
-            for param_name in self.param_dict.keys():
-                child[param_name] = [0] * len(father[param_name])
-                for i in range(len(father[param_name])):
-                    child[param_name][i] = random.choice([mother[param_name][i], father[param_name][i]])
-
+            # for param_name in self.param_dict.keys():
+            #     child[param_name] = [0] * len(father[param_name])
+            #     for i in range(len(father[param_name])):
+            #         child[param_name][i] = random.choice([mother[param_name][i], father[param_name][i]])
+            #
+            #         # Mutation: randomly mutate some of the children.
+            #         if self.mutate_chance > random.random():
+            #             child[param_name][i] = random.choice(self.param_dict[param_name])
+            if BLOCK_CHOICE:
+                child['block'] = BLOCK_CHOICE
+            else:
+                child['block'] = [0] * len(father['block'])
+                for i in range(len(father['block'])):
+                    child['block'][i] = random.choice([mother['block'][i], father['block'][i]])
                     # Mutation: randomly mutate some of the children.
                     if self.mutate_chance > random.random():
-                        child[param_name][i] = random.choice(self.param_dict[param_name])
+                        child['block'][i] = random.choice(self.param_dict['block'])
+            if CHANNEL_CHOICE:
+                child['channel'] = CHANNEL_CHOICE
+            else:
+                child['channel'] = [0] * len(father['channel'])
+                for i in range(len(father['channel'])):
+                    child['channel'][i] = random.choice([mother['channel'][i], father['channel'][i]])
+                    # Mutation: randomly mutate some of the children.
+                    if self.mutate_chance > random.random():
+                        child['channel'][i] = random.choice(self.param_dict['channel'])
 
             children.append(child)
 
