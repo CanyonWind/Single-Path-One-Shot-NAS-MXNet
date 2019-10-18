@@ -18,7 +18,7 @@ from oneshot_nas_blocks import NasBatchNorm
 FLOP_MAX = 1
 PARAM_MAX = 1
 SCORE_ACC_RATIO = 1    # flop_param_score_weight/acc_weight for fitness
-BLOCK_CHOICE = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+BLOCK_CHOICE = None    # [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
 CHANNEL_CHOICE = None  # [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
 
 def parse_args():
