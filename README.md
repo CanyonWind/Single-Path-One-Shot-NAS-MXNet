@@ -199,9 +199,9 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
     - [x] Build a tool to generate repeating blocks
     - [ ] Estimate speeds for 4 choice blocks with different input/mid/output channels
-- [ ] Two stage searching
-    - [ ] Do Block search firstly
-    - [ ] Based on the best searched blocks, do channel search
+- [x] Two stage searching
+    - [x] Do Block search firstly
+    - [x] Based on the best searched blocks, do channel search
 - [ ] Train with constraint --> To limit unuseful subnet training
     - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
     - [ ] Only the candidates from the pool will be trained.
