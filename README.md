@@ -202,6 +202,12 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 - [x] Two stage searching
     - [x] Do Block search firstly
     - [x] Based on the best searched blocks, do channel search
+- [ ] **Debug** why training accuracy catastrophicly drops after several epochs of Channel Selection
+    - [ ] Save parameters' value and gradient in MXBorad to visualize
+    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled after 60 epochs
+      - [ ] Search in this supernet and compare with previous Block Selection alone supernet searching performance
+    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled from the beginning
+      - [ ] Search in this supernet and compare with the BS alone one, BS + 60 CS one and this one's performance
 - [ ] Train with constraint --> To limit unuseful subnet training
     - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
     - [ ] Only the candidates from the pool will be trained.
