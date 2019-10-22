@@ -212,7 +212,7 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
     - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
     - [ ] Only the candidates from the pool will be trained.
 - [ ] [PR](http://hzwer.com/8955.html)
-    - [x] Medium post: [Is NAS monopolized? We open-sourced a NAS pipeline outperforming Google, Facebook, and the others](https://medium.com/@kangyan.cn/is-nas-monopolized-we-open-sourced-a-nas-pipeline-outperforming-google-facebook-and-the-others-345ad7f4257b?sk=b5fbf9eb0763f895e1c9126dd543fd1b)
+    - [x] Medium: [Is NAS monopolized? We open-sourced a NAS pipeline outperforming Google, Facebook, and the others](https://medium.com/@kangyan.cn/is-nas-monopolized-we-open-sourced-a-nas-pipeline-outperforming-google-facebook-and-the-others-345ad7f4257b?sk=b5fbf9eb0763f895e1c9126dd543fd1b)
 
 # Summary
 In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`.
