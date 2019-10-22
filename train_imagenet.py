@@ -530,7 +530,7 @@ def main():
             return i
 
         for epoch in range(opt.resume_epoch, opt.num_epochs):
-            if epoch == opt.epoch_start_cs:
+            if epoch >= opt.epoch_start_cs:
                 opt.use_all_channels = False
             tic = time.time()
             if opt.use_rec:
