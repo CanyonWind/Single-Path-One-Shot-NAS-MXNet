@@ -187,18 +187,30 @@ class ShuffleNasOneShot(HybridBlock):
         assert len(self.stage_repeats) == len(self.stage_out_channels)
         # From [1.0, 1.2, 1.4, 1.6, 1.8, 2.0] to [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0], warm-up stages are
         # not just 1 epoch, but 2, 3, 4, 5 accordingly.
-        if 0 <= epoch_after_cs <= 23:
-            epoch_delay = {0: 0,
-                           1: 1,
-                           2: 2,
-                           3: 3,
-                           4: 4,  5: 4,                               # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
-                           6: 5,  7: 5,  8: 5,                        # warm up epoch: 3 ...
-                           9: 6,  10: 6, 11: 6, 12: 6,                # warm up epoch: 4 ...
-                           13: 7, 14: 7, 15: 7, 16: 7, 17: 7,         # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
-                           18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, actually this stage is useless
 
-            delayed_epoch_after_cs = epoch_delay[epoch_after_cs]
+        epoch_delay_early = {0: 0,  # 8
+                             1: 1, 2: 1,  # 7
+                             3: 2, 4: 2, 5: 2,  # 6
+                             6: 3, 7: 3, 8: 3, 9: 3,  # 5
+                             10: 4, 11: 4, 12: 4, 13: 4, 14: 4,
+                             15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
+                             21: 6, 22: 6, 23: 6, 24: 6, 25: 6, 27: 6, 28: 6,
+                             29: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6, 35: 6, 36: 7,
+                           }
+        epoch_delay_late = {0: 0,
+                            1: 1,
+                            2: 2,
+                            3: 3,
+                            4: 4, 5: 4,  # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                            6: 5, 7: 5, 8: 5,  # warm up epoch: 3 ...
+                            9: 6, 10: 6, 11: 6, 12: 6,  # warm up epoch: 4 ...
+                            13: 7, 14: 7, 15: 7, 16: 7, 17: 7,  # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
+                            18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, after 17, use all scales
+
+        if 0 <= epoch_after_cs <= 23 and self.stage_out_channels[0] >= 64:
+            delayed_epoch_after_cs = epoch_delay_late[epoch_after_cs]
+        elif 0 <= epoch_after_cs <= 36 and self.stage_out_channels[0] < 64:
+            delayed_epoch_after_cs = epoch_delay_early[epoch_after_cs]
         else:
             delayed_epoch_after_cs = epoch_after_cs
 
