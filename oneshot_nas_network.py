@@ -366,7 +366,7 @@ FIX_ARCH = True
 LAST_CONV_AFTER_POOLING = False
 USE_SE = True
 SHUFFLE_BY_CONV = False
-CHANNELS_LAYOUT = 'ShuffleNetV2+'
+CHANNELS_LAYOUT = 'OneShot'
 
 
 def main():
