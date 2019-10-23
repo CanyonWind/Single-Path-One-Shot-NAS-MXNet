@@ -122,11 +122,20 @@ def parse_args():
     parser.add_argument('--reduced-dataset-scale', type=int, default=1,
                         help='How many times the dataset would be reduced, so that in each epoch '
                              'only num_batches / reduced_dataset_scale batches will be trained.')
+    parser.add_argument('--block-choices', type=str, 
+                        default='0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2',
+                        help='Block choices')
+    parser.add_argument('--channel-choices', type=str, 
+                        default='6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3',
+                        help='Channel choices')
 
     opt = parser.parse_args()
     return opt
 
-
+def parse_str_list(str_list):
+    num_list = str_list.split(',')
+    return list(map(int, num_list)) 
+    
 def main():
     opt = parse_args()
 
@@ -192,8 +201,8 @@ def main():
         optimizer_params['multi_precision'] = True
 
     if model_name == 'ShuffleNas_fixArch':
-        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+        architecture = parse_str_list(opt.block_choices)
+        scale_ids = parse_str_list(opt.channel_choices)
         net = get_shufflenas_oneshot(architecture=architecture, n_class=classes, scale_ids=scale_ids, use_se=opt.use_se,
                                      last_conv_after_pooling=opt.last_conv_after_pooling,
                                      channels_layout=opt.channels_layout)
