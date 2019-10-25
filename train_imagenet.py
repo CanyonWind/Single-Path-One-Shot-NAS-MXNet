@@ -119,6 +119,9 @@ def parse_args():
                              'larger range of channels')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
+    parser.add_argument('--ignore-first-two-cs', action='store_true',
+                        help='whether to ignore the first two channel selection scales. This will be stable for no'
+                             'SE supernet training.')
     parser.add_argument('--reduced-dataset-scale', type=int, default=1,
                         help='How many times the dataset would be reduced, so that in each epoch '
                              'only num_batches / reduced_dataset_scale batches will be trained.')
@@ -380,35 +383,37 @@ def main():
             if model_name == 'ShuffleNas':
                 # For evaluating validation accuracy, random select block and channels.
                 block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                ignore_first_two_cs = True  # 0.2 and 0.4 scales are ignored
                 if opt.cs_warm_up:
                     # TODO: edit in the issue, readme and medium article that all channels need to be selected in
                     #       testing.
                     full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=True,
                                                                                  epoch_after_cs=epoch - opt.epoch_start_cs,
                                                                                  dtype=opt.dtype,
-                                                                                 ignore_first_two_cs=ignore_first_two_cs)
-                    # TODO: remove debug code
-                    stage_repeats = net.stage_repeats
-                    stage_out_channels = net.stage_out_channels
-                    candidate_scales = net.candidate_scales
-                    channel_scales = []
-                    for c in range(len(channel_choices)):
-                        # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-                        channel_scales.append(candidate_scales[channel_choices[c]])
-                    channels = [stage_out_channels[0]] * stage_repeats[0] + \
-                               [stage_out_channels[1]] * stage_repeats[1] + \
-                               [stage_out_channels[2]] * stage_repeats[2] + \
-                               [stage_out_channels[3]] * stage_repeats[3]
-                    channels = [make_divisible(channel // 2 * channel_scales[j]) for (j, channel) in enumerate(channels)]
-                    if i == 0:
-                        print("Val batch channel choices: {}".format(channel_choices))
-                        print("Val batch channels: {}".format(channels))
-                    # TODO: end of debug code
+                                                                                 ignore_first_two_cs=opt.ignore_first_two_cs)
                 else:
                     full_channel_mask, _ = net.random_channel_mask(select_all_channels=True,
                                                                    dtype=opt.dtype,
-                                                                   ignore_first_two_cs=ignore_first_two_cs)
+                                                                   ignore_first_two_cs=opt.ignore_first_two_cs)
+
+                # TODO: remove debug code
+                stage_repeats = net.stage_repeats
+                stage_out_channels = net.stage_out_channels
+                candidate_scales = net.candidate_scales
+                channel_scales = []
+                for c in range(len(channel_choices)):
+                    # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+                    channel_scales.append(candidate_scales[channel_choices[c]])
+                channels = [stage_out_channels[0]] * stage_repeats[0] + \
+                           [stage_out_channels[1]] * stage_repeats[1] + \
+                           [stage_out_channels[2]] * stage_repeats[2] + \
+                           [stage_out_channels[3]] * stage_repeats[3]
+                channels = [make_divisible(channel // 2 * channel_scales[j]) for (j, channel) in
+                            enumerate(channels)]
+                if i == 0:
+                    print("Val batch channel choices: {}".format(channel_choices))
+                    print("Val batch channels: {}".format(channels))
+                # TODO: end of debug code
+
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
@@ -479,34 +484,34 @@ def main():
                 with ag.record():
                     if model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                        ignore_first_two_cs = True
                         if opt.cs_warm_up:
                             full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
                                                                            epoch_after_cs=epoch - opt.epoch_start_cs,
                                                                            dtype=opt.dtype,
-                                                                           ignore_first_two_cs=ignore_first_two_cs)
-                            # TODO: remove debug code
-                            stage_repeats = net.stage_repeats
-                            stage_out_channels = net.stage_out_channels
-                            candidate_scales = net.candidate_scales
-                            channel_scales = []
-                            for c in range(len(channel_choices)):
-                                # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-                                channel_scales.append(candidate_scales[channel_choices[c]])
-                            channels = [stage_out_channels[0]] * stage_repeats[0] + \
-                                       [stage_out_channels[1]] * stage_repeats[1] + \
-                                       [stage_out_channels[2]] * stage_repeats[2] + \
-                                       [stage_out_channels[3]] * stage_repeats[3]
-                            channels = [make_divisible(channel / 2 * channel_scales[j]) for (j, channel)
-                                        in enumerate(channels)]
-                            if i < 5:
-                                print("Train batch channel choices: {}".format(channel_choices))
-                                print("Train batch channels: {}".format(channels))
-                            # TODO: end of debug code
+                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
                         else:
-                            full_channel_mask, _ = net.random_channel_mask(select_all_channels=opt.use_all_channels,
+                            full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
                                                                            dtype=opt.dtype,
-                                                                           ignore_first_two_cs=ignore_first_two_cs)
+                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
+                        # TODO: remove debug code
+                        stage_repeats = net.stage_repeats
+                        stage_out_channels = net.stage_out_channels
+                        candidate_scales = net.candidate_scales
+                        channel_scales = []
+                        for c in range(len(channel_choices)):
+                            # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+                            channel_scales.append(candidate_scales[channel_choices[c]])
+                        channels = [stage_out_channels[0]] * stage_repeats[0] + \
+                                   [stage_out_channels[1]] * stage_repeats[1] + \
+                                   [stage_out_channels[2]] * stage_repeats[2] + \
+                                   [stage_out_channels[3]] * stage_repeats[3]
+                        channels = [make_divisible(channel / 2 * channel_scales[j]) for (j, channel)
+                                    in enumerate(channels)]
+                        if i < 5:
+                            print("Train batch channel choices: {}".format(channel_choices))
+                            print("Train batch channels: {}".format(channels))
+                        # TODO: end of debug code
+
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
