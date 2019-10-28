@@ -7,5 +7,5 @@ python train_imagenet.py \
     --num-epochs 120 --batch-size 64 --num-gpus 1 -j 16 \
     --label-smoothing --no-wd --warmup-epochs 5 --use-rec \
     --model ShuffleNas \
-    --epoch-start-cs 0 --channels-layout OneShot \
+    --epoch-start-cs 60 --cs-warm-up --channels-layout OneShot \
     --save-dir params_shufflenas_supernet --logging-file ./logs/shufflenas_supernet.log
