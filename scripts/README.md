@@ -1,6 +1,6 @@
 ## Explaination
 
-- [train_oneshot.sh](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot.sh) for the model with **original** B/C choices but no se or last-conv-after-pooling.
+- [train_oneshot.sh](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot.sh) for the model with **original** B/C choices, no se or last-conv-after-pooling.
 - [train_oneshot+.sh](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot%2B.sh) for the model with **original** B/C choices, se and last-conv-after-pooling.
 - [train_oneshot-s+.sh](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s%2B.sh) for the model with **searched** B/C choices, se and last-conv-after-pooling.
 - [train_oneshot-s+_mobilenetv3.sh](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s%2B_mobilenetv3.sh) for the model with **searched** B/C choices, **ShuffleNetV2+ channels layout**, se and conv-after-last-pooling. This model has both fewer FLOPs and parameter amount than MobileNetV3
