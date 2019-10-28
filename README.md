@@ -53,7 +53,7 @@ sh ./scripts/train_supernet.sh
 sh ./scripts/search_supernet.sh
 
 # Train best searched model
-sh ./scripts/train_fixArch+.sh
+sh ./scripts/train_oneshot.sh
 ```
 # Approach breakdown
 
