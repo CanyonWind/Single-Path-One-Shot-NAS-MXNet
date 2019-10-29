@@ -352,7 +352,7 @@ class ShuffleNasBlock(HybridBlock):
             temp2 = self.block_sn_5x5(x, block_channel_mask)
             temp3 = self.block_sn_7x7(x, block_channel_mask)
             temp4 = self.block_sx_3x3(x, block_channel_mask)
-            x = temp1 + temp2 + temp3 + temp4
+            x = (temp1 + temp2 + temp3 + temp4) / 4
         else:
             if block_choice == 0:
                 x = self.block_sn_3x3(x, block_channel_mask)

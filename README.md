@@ -19,9 +19,9 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 | Model                  | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
 |    OneShot+ Supernet |  841.9M  |  15.4M  |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
-|    OneShot-S+ |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot (our) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
+|    OneShot-S+ (ours) |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot+ (ours) |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot (ours) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_oneshot.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
@@ -53,7 +53,7 @@ sh ./scripts/train_supernet.sh
 sh ./scripts/search_supernet.sh
 
 # Train best searched model
-sh ./scripts/train_fixArch+.sh
+sh ./scripts/train_oneshot.sh
 ```
 # Approach breakdown
 
@@ -115,10 +115,9 @@ We tried both random search, randomly selecting 250 qualified instances to evalu
 | Model                  | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
 |    OneShot+ Supernet |  841.9M  |  15.4M  |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
-|    OneShot-S+ |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot-S+ noBN |  291M |  3.5M |  **75.6**   |   **92.8**   | **1.9166** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch%2B.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot (our) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_fixArch.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
+|    OneShot-S+ |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot+ |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot (our) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_oneshot.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
@@ -211,8 +210,7 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 - [ ] Train with constraint --> To limit unuseful subnet training
     - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
     - [ ] Only the candidates from the pool will be trained.
-- [ ] [PR](http://hzwer.com/8955.html)
-    - [x] Medium: [Is NAS monopolized? We open-sourced a NAS pipeline outperforming Google, Facebook, and the others](https://medium.com/@kangyan.cn/is-nas-monopolized-we-open-sourced-a-nas-pipeline-outperforming-google-facebook-and-the-others-345ad7f4257b?sk=b5fbf9eb0763f895e1c9126dd543fd1b)
+
 
 # Summary
 In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`.

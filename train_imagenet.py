@@ -390,6 +390,7 @@ def main():
                                                                                  epoch_after_cs=epoch - opt.epoch_start_cs,
                                                                                  dtype=opt.dtype,
                                                                                  ignore_first_two_cs=opt.ignore_first_two_cs)
+
                 else:
                     full_channel_mask, _ = net.random_channel_mask(select_all_channels=True,
                                                                    dtype=opt.dtype,
@@ -579,20 +580,8 @@ def main():
         if distillation:
             teacher.hybridize(static_alloc=True, static_shape=True)
     print(net)
-    if not DEBUG:
-        train(context)
-    else:
-        net = get_shufflenas_oneshot(n_class=classes, use_all_blocks=False, use_se=True,
-                                     last_conv_after_pooling=False,
-                                     channels_layout='ShuffleNetV2+')
-        net.cast('float16')
-        net.load_parameters('params_shufflenas_v2+_supernet/0.6594-imagenet-ShuffleNas-43-best.params', ctx=context)
-        opt.use_all_channels = True
-        err_top1_val, err_top5_val = test(ctx=context, val_data=val_data, epoch=43)
-        logger.info('[Epoch %d] validation: err-top1=%f err-top5=%f' % (43, err_top1_val, err_top5_val))
-
-
-DEBUG = False
+    train(context)
+   
 
 if __name__ == '__main__':
     main()
