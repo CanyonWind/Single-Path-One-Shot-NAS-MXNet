@@ -1,6 +1,7 @@
 # For MicroNet Challenge PLEASE 👉[CHECK HERE](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/tree/master/MicroNetChallenge)👈
 
 # [MXNet Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
+![alt text](./images/nas-block-640.gif)
 This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
 [the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). In this work, an open-sourced weights sharing Neural Architecture Search (NAS) pipeline is provided. It can finish **training and searching on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**.
 
