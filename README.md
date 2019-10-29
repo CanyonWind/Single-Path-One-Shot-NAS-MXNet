@@ -218,12 +218,20 @@ In this work, we provided a state-of-the-art open-sourced weight sharing Neural 
 We have not tried to use more aggressive weight / channel pruning or more complex low-bit quantization methods, because, if we want to take full advantage of them, most compression methods and low-bit quantization models require custom hardware. However, in general practical situations, we need to build / design a model that meets hardware constraints, but not build the hardware architecture based on the algorithm. We believe that this direction - design optimal searching space and search for further optimized network structures - is suitable for direct application.
 
 # Citation
-If you use these models in your research, please cite:
-
+If you use these models in your research, please cite the original paper.
 
     @article{guo2019single,
             title={Single path one-shot neural architecture search with uniform sampling},
             author={Guo, Zichao and Zhang, Xiangyu and Mu, Haoyuan and Heng, Wen and Liu, Zechun and Wei, Yichen and Sun, Jian},
             journal={arXiv preprint arXiv:1904.00420},
             year={2019}
+    }
+    
+And we would appreciate references to the following BibTex entry too.
+
+    @misc{yan2019sposmxnet,
+          title={single-path-one-shot-mxnet},
+          author={Yan, Kang},
+          howpublished={\url{https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet}},
+          year={2019}
     }
