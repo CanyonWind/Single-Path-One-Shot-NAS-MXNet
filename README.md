@@ -1,6 +1,6 @@
 # For MicroNet Challenge PLEASE 👉[CHECK HERE](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/tree/master/MicroNetChallenge)👈
 
-# [MXNet Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
+# [Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
 
 ![alt text](./images/nas-block.gif)
 
