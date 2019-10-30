@@ -119,18 +119,18 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 ```python
 Float32 scores: 
 param score: 3.652 / 6.9 = 0.529
-flop score: 587.9 / 1170 = 0.502
+flop score: 589.6 / 1170 = 0.504
 Σ scores: 1.03
 
 Float16 scores: 
 param score: 3.652 / 2 / 6.9 = 0.265
-flop score: (299.6 / 2 + 288.3) / 1170 = 0.374
-Σ scores: 0.639
+flop score: (301.4 / 2 + 288.3) / 1170 = 0.375
+Σ scores: 0.640
 
 Int8 scores: 
 param score: (3.52 / 4 + 0.132) / 6.9 = 0.147
-flop score: ((292.8 / 4 + 6.80) + (286.2 / 4 + 2.11)) / 1170 = 0.131
-Σ scores: 0.278
+flop score: ((292.8 / 4 + 8.55) + (286.2 / 4 + 2.11)) / 1170 = 0.133
+Σ scores: 0.280
 ```
 
 ## Searched Model Performance
