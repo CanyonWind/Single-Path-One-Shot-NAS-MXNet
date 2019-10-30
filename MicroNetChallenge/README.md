@@ -112,9 +112,9 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 |Last conv                                   | True          |          1|            1|           640|          1024|           0.656|      0.655|      0.655|      1.310|
 |HSwish                                   | False          |          1|            -1|          1024|          1024|           0.000|      0.003|      0.001|      0.004|
 |Classifier                                   | True          |          1|            1|          1024|          1000|           1.025|      1.024|      1.024|      2.048|
-|total_quant                             | True           |           |              |              |              |           3.520|    292.820|    286.218|    579.038|
-|total_no_quant                          | False          |           |              |              |              |           0.132|      6.801|      2.105|      8.905|
-|total                                   | False          |           |              |              |              |           3.652|    299.621|    288.323|    587.943|
+|Total_quant                             | True           |           |              |              |              |           3.520|      292.8|      286.2|      579.0|
+|Total_no_quant                          | False          |           |              |              |              |           0.132|      8.553|      2.105|      10.66|
+|Total                                   |           |           |              |              |              |                3.652|      301.4|      288.3|      589.6|
 
 ```python
 Float32 scores: 
