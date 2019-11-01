@@ -83,7 +83,9 @@ class ShuffleNasOneShot(HybridBlock):
                         stride = 2 if i == 0 else 1
                         if fix_arch:
                             block_choice = architecture[block_id]
-                            mid_channel = make_divisible(int(output_channel // 2 * channel_scales[block_id]))
+                            # TODO: change back to make_divisible
+                            # mid_channel = make_divisible(int(output_channel // 2 * channel_scales[block_id]))
+                            mid_channel = int(output_channel // 2 * channel_scales[block_id])
                             # print("Block {} mid channel: {}".format(block_id, mid_channel))
                             # print("Mid channel: {}".format(mid_channel))
                             block_id += 1
