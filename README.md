@@ -1,11 +1,12 @@
-# [Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
+# [Single Path One Shot NAS MXNet](https://arxiv.org/abs/1904.00420)
+
+This repository contains Single Path One-shot NAS implementation on **MXNet (Gluon)**. It can finish **the whole training and searching pipeline on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**. By utilizing this implementation, a new state-of-the-art NAS searched model has been found which **outperforms** other NAS models like `FBNet, MnasNet, DARTS, NASNET, PNASNET and the original Single Path One Shot` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [Google's MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), before any quantization, it **outperforms** other popular base models like `MobileNet V1 V2, V3, ShuffleNet V1, V2, V2+` too.
+
 ![alt text](./images/nas-blocks-optimized.gif)
-This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
-[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). In this work, an open-sourced weights sharing Neural Architecture Search (NAS) pipeline is provided. It can finish **training and searching on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**.
 
 Several things different from the official version: **for training,** it supports block & channel selection for the supernet model, ShuffleNetV2+ style SE for supernet / subnet and the MobileNet V3 style last convolutin block; **for searching,** it supports both genetic and random search with BN statistics update and the FLOP / number of parameters constraint; **for evaluation and deployment,** tools for FLOPs and parameters calculation, per operator profiling, int8 quantizatin and Batch Norm merging are provided.
 
-By utilizing this implementation, a new state-of-the-art NAS searched model has been found which **outperforms** other NAS models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), before any quantization, it **outperforms** other popular base models like `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too. 
+ 
 
 **10/09/2019 Update:** 
 
