@@ -45,8 +45,10 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | Genetic Search                        | ×           | √          |
 | SE                                    | -           | √          |
 | Efficient Last Conv Block             | -           | √          |
+| Op to Op Profiling Tool               | -           | √          |
 | Merge BN                              | -           | √          |
 | Int8 Quantization                     | -           | √          |
+
 
 
 # Usage
