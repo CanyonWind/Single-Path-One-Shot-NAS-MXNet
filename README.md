@@ -242,7 +242,7 @@ And we would appreciate references to the following BibTex entry too.
 
     @misc{yan2019sposmxnet,
           title={single-path-one-shot-mxnet},
-          author={Yan, Kang},
+          author={Kang, Yan},
           howpublished={\url{https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet}},
           year={2019}
     }
