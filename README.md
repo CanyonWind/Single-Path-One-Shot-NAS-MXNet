@@ -4,10 +4,6 @@ This repository contains Single Path One-shot NAS implementation on **MXNet (Glu
 
 ![alt text](./images/nas-blocks-optimized.gif)
 
-Several things different from the official version: **for training,** it supports block & channel selection for the supernet model, ShuffleNetV2+ style SE for supernet / subnet and the MobileNet V3 style last convolutin block; **for searching,** it supports both genetic and random search with BN statistics update and the FLOP / number of parameters constraint; **for evaluation and deployment,** tools for FLOPs and parameters calculation, per operator profiling, int8 quantizatin and Batch Norm merging are provided.
-
- 
-
 **10/09/2019 Update:** 
 
 A searched model **Oneshot-S+**, with the block choices and channel choices searched by this repo's implementation, ShuffleNetV2+ style SE and MobileNetV3 last convolution block design, reaches the **new highest** top-1 & top-5 accuracies with the **new lowest** [Google MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html). Check [here](https://github.com/CanyonWind/oneshot_nas#results) for comparison.
@@ -30,6 +26,28 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
 |    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
+
+
+## Comparision to [the official release](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot)
+
+Single Path One Shot NAS provides an elegent idea to effortlessly search for optimized subnet structures, under different model size/latency constraints, with single time supernet training and multiple times low-cost searching procedures. The flexibility and efficiency of this approach can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of approach, manually tuning the structures to meet the hardware constraits can be avoided. Unfortunately, the author hasn't released this valuable Supernet Training and Searching parts yet. This repo makes up for the missing of them.
+
+
+| Model                                 | Official    | This repo   |
+| :------------------------------------ | :------    | :------  |
+| Subnet Training                       | √           | √          |
+| Block Selection                       | ×           | √          |
+| Channel Selection                     | ×           | √          |
+| Supernet Training                     | ×           | √          |
+| FLOPs & Parameters Counting Tool      | ×           | √          |
+| BN Statistics Update                  | ×           | √          |
+| Random Search                         | ×           | √          |
+| Genetic Search                        | ×           | √          |
+| SE                                    | -           | √          |
+| Efficient Last Conv Block             | -           | √          |
+| Merge BN                              | -           | √          |
+| Int8 Quantization                     | -           | √          |
+
 
 # Usage
 Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset). 
