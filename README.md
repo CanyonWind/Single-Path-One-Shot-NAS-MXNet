@@ -30,7 +30,7 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 
 ## Comparision to [the official release](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot)
 
-Single Path One Shot NAS provides an elegent idea to effortlessly search for optimized subnet structures, under different model size/latency constraints, with single time supernet training and multiple times low-cost searching procedures. The flexibility and efficiency of this approach can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of approach, manually tuning the structures to meet different hardware constraits can be avoided. Unfortunately, the author hasn't released this valuable Supernet Training and Searching parts yet. This repo makes up for the missing of them.
+Single Path One Shot NAS provides an elegent idea to effortlessly search for optimized subnet structures, under different model size/latency constraints, with single time supernet training and multiple times low-cost searching procedures. The flexibility and efficiency of this approach can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the structures to meet different hardware constraits can be avoided. Unfortunately, the author hasn't released this valuable Supernet Training and Searching parts yet. This repo makes up for the missing of them.
 
 
 | Model                                 | Official    | This repo   |
@@ -225,9 +225,8 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 
 
 # Summary
-In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`.
+In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`. This implementation can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the model structures to meet different hardware constraits can be avoided.
 
-We have not tried to use more aggressive weight / channel pruning or more complex low-bit quantization methods, because, if we want to take full advantage of them, most compression methods and low-bit quantization models require custom hardware. However, in general practical situations, we need to build / design a model that meets hardware constraints, but not build the hardware architecture based on the algorithm. We believe that this direction - design optimal searching space and search for further optimized network structures - is suitable for direct application.
 
 # Citation
 If you use these models in your research, please cite the original paper.
