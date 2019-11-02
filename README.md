@@ -1,4 +1,5 @@
 # [Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
+![alt text](./images/nas-blocks-optimized.gif)
 This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
 [the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). In this work, an open-sourced weights sharing Neural Architecture Search (NAS) pipeline is provided. It can finish **training and searching on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**.
 
@@ -191,23 +192,15 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
     - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σscores.
     - [x] Search within the OneShot supernet with provided stage channels, se and MobilNet V3 style conv
       - [x] This supernet setting cannot (quickly) find enough qualified candidates for population
-    - [ ] **In progress**: Train ShuffleNetV2+ channels layout supernet with se and MobilNet V3 style last convolution block.
-    - [ ] Train the best searched subnet model
+    - [x] **In progress**: Train ShuffleNetV2+ channels layout supernet with se and MobilNet V3 style last convolution block.
+    - [x] Train the best searched subnet model
 - [x] Two stage searching
     - [x] Do Block search firstly
     - [x] Based on the best searched blocks, do channel search
-- [ ] **Debug** why training accuracy catastrophicly drops after several epochs of Channel Selection
-    - [ ] Save parameters' value and gradient in MXBorad to visualize
-    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled after 60 epochs
-      - [ ] Search in this supernet and compare with previous Block Selection alone supernet searching performance
-    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled from the beginning
-      - [ ] Search in this supernet and compare with the BS alone one, BS + 60 CS one and this one's performance
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
     - [x] Build a tool to generate repeating blocks
     - [ ] Estimate speeds for 4 choice blocks with different input/mid/output channels
-- [ ] Train with constraint --> To limit unuseful subnet training
-    - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
-    - [ ] Only the candidates from the pool will be trained.
+- [ ] More upcoming features/plans are moved into [the project section](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet/projects) 
 
 
 # Summary
