@@ -493,21 +493,31 @@ class Evolver():
                         get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
                     combined_score = 0.5 * flop_score + 0.5 * model_size_score
-                    if flop_score > FLOP_MAX:
+                    if FLOP_MAX != -1 and flop_score > FLOP_MAX:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                         print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                         print('[SKIPPED] # parameters:      {} M'.format(model_size))
                         continue
-                    if model_size_score > PARAM_MAX:
+                    if PARAM_MAX != -1 and model_size_score > PARAM_MAX:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                         print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                         print('[SKIPPED] # parameters:      {} M'.format(model_size))
                         continue
-                    print("Children size + 1, size {}, with normalized score: {}".format(len(children) + 1, combined_score))
+                    if combined_score > 1:
+                        print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                        print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                        print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                        print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                        print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                        continue
+
+                    print("Children size + 1, total {}, with normalized score: {}, flop score: {}, param score: {}"
+                          .format(len(population) + 1, combined_score, flop_score, model_size_score))
+
                     # Add the network to our population.
                     baby['flops'] = flops
                     baby['model_size'] = model_size
