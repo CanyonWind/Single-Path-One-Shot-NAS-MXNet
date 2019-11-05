@@ -451,7 +451,7 @@ class Evolver():
                            person['acc'], person['score'], person['flops'], person['model_size'],
                            copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
                 topk_items.push(net_obj)
-                update_log(net_obj, logger)
+            update_log(net_obj, logger)
         population.sort(key=lambda x: -SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
         # The parents are every network we want to keep.
         parents = population[:self.retain_length]
