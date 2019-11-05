@@ -12,6 +12,7 @@ def parse_args():
     parser.add_argument('--title', type=str, default='Genetic Search Supernet', help='Title of the plot')
     parser.add_argument('--save-dir', type=str, default='./images', help='save dir name')
     parser.add_argument('--save-file', type=str, default='genetic_search_supernet.png', help='save file name')
+    parser.add_argument('--old-ver', action='store_true', help='Whether the log is old version.')
     args = vars(parser.parse_args())
     return args
     
@@ -52,7 +53,9 @@ def plot(rows, iter):
         for i, row in enumerate(rows):
             if 'score' in row:
                 score = float(row[row.find(':') + 1: row.rfind('.')])
-                if 'Val' not in rows[i + 1]:
+                if args["old_ver"] and 'Val' not in rows[i + 1]:
+                    continue
+                if not args["old_ver"] and 'Val' not in rows[i - 1]:
                     continue
                 score_list.append(1 - score)
             if 'Val' in row:
@@ -65,8 +68,8 @@ def plot(rows, iter):
         plt.style.use("ggplot")
         plt.figure()
         axes = plt.gca()
-        axes.set_xlim([-0.005, 0.2])
-        axes.set_ylim([0.15, 0.6])
+        axes.set_xlim([-0.005, 0.5])
+        axes.set_ylim([0.15, 0.7])
         summed_scores = [score_list[i] + val_acc_list[i] for i in range(len(val_acc_list))]
         color_list = ['steelblue' if summed_score != max(summed_scores) else 'indianred'
                       for summed_score in summed_scores]
@@ -77,6 +80,7 @@ def plot(rows, iter):
         plt.legend(loc="lower right")
         plt.savefig(os.path.join(args["save_dir"], args["save_file"][:-4] + '_iter' + str(iter) + '.png'))
         # plt.show()
+        plt.close()
 
 
 def parse_iter(rows):
