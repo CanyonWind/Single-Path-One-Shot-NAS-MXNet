@@ -16,10 +16,11 @@ from utils.calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
 
 FLOP_MAX = 1
-PARAM_MAX = 1
+PARAM_MAX = -1
 SCORE_ACC_RATIO = 1    # flop_param_score_weight/acc_weight for fitness
 BLOCK_CHOICE = None    # [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
 CHANNEL_CHOICE = None  # [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
@@ -236,22 +237,22 @@ def update_log(elem, logger=None):
     """
     if logger:
         logger.info('-' * 40)
-        logger.info("Overall score:     {}".format(elem[0]))
-        logger.info("Val accuracy:      {}".format(elem[1]))
-        logger.info("Model normalized score: {}.".format(elem[2]))
-        logger.info('Flops:             {} MFLOPS'.format(elem[3]))
-        logger.info('# parameters:      {} M'.format(elem[4]))
-        logger.info("Block choices:     {}".format(elem[5]))
-        logger.info("Channel choices:   {}".format(elem[6]))
+        logger.info("Acc/computation balanced score: {}".format(elem[0]))
+        logger.info("Val accuracy:                   {}".format(elem[1]))
+        logger.info("Model normalized score:         {}.".format(elem[2]))
+        logger.info('Flops:                          {} MFLOPS'.format(elem[3]))
+        logger.info('# parameters:                   {} M'.format(elem[4]))
+        logger.info("Block choices:                  {}".format(elem[5]))
+        logger.info("Channel choices:                {}".format(elem[6]))
     else:
         print('-' * 40)
-        print("Overall score:     {}".format(elem[0]))
-        print("Val accuracy:      {}".format(elem[1]))
-        print("Model normalized score: {}.".format(elem[2]))
-        print('Flops:             {} MFLOPS'.format(elem[3]))
-        print('# parameters:      {} M'.format(elem[4]))
-        print("Block choices:     {}".format(elem[5]))
-        print("Channel choices:   {}".format(elem[6]))
+        print("Acc/computation balanced score: {}".format(elem[0]))
+        print("Val accuracy:                   {}".format(elem[1]))
+        print("Model normalized score:         {}.".format(elem[2]))
+        print('Flops:                          {} MFLOPS'.format(elem[3]))
+        print('# parameters:                   {} M'.format(elem[4]))
+        print("Block choices:                  {}".format(elem[5]))
+        print("Channel choices:                {}".format(elem[6]))
 
 
 class TopKHeap(object):
@@ -325,21 +326,30 @@ class Evolver():
                 get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
             combined_score = 0.5 * flop_score + 0.5 * model_size_score
-            if flop_score > FLOP_MAX:
+            if FLOP_MAX != -1 and flop_score > FLOP_MAX:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                 print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                 print('[SKIPPED] # parameters:      {} M'.format(model_size))
                 continue
-            if model_size_score > PARAM_MAX:
+            if PARAM_MAX != -1 and model_size_score > PARAM_MAX:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                 print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                 print('[SKIPPED] # parameters:      {} M'.format(model_size))
                 continue
-            print("Population size + 1, total {}, with normalized score: {}".format(len(population) + 1, combined_score))
+            if combined_score > 1:
+                print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
+                print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
+                print("[SKIPPED] Channel choices:   {}".format(channel_choices))
+                print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
+                print('[SKIPPED] # parameters:      {} M'.format(model_size))
+                continue
+
+            print("Population size + 1, total {}, with normalized score: {}, flop score: {}, param score: {}"
+                  .format(len(population) + 1, combined_score, flop_score, model_size_score))
             # Add the network to our population.
             instance['flops'] = flops
             instance['model_size'] = model_size
@@ -390,9 +400,7 @@ class Evolver():
         """
         children = []
         for _ in range(2):
-
             child = {}
-
             # Crossover: loop through the parameters and pick params for the kid.
             # for param_name in self.param_dict.keys():
             #     child[param_name] = [0] * len(father[param_name])
@@ -444,8 +452,7 @@ class Evolver():
                            copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
                 topk_items.push(net_obj)
                 update_log(net_obj, logger)
-        population = population.sort(key=lambda x: -SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
-
+        population.sort(key=lambda x: -SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
         # The parents are every network we want to keep.
         parents = population[:self.retain_length]
 
@@ -579,7 +586,7 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
     topk_nets = TopKHeap(topk)  # a list of tuple (acc, score, flops, model_size, block_choices, channel_choices)
 
     # set channel and block value list
-    param_dict = {'channel': [2, 3, 4, 5, 6, 7, 8, 9],
+    param_dict = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                   'block': [0, 1, 2, 3]}
 
     # evolution
