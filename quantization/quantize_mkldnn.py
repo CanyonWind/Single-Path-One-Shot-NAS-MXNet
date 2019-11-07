@@ -95,7 +95,7 @@ def convert_from_shufflenas(architecture, scale_ids, image_shape, model_name='Sh
                                  use_se=use_se, last_conv_after_pooling=last_conv_after_pooling)
     if pretrained:
         net.cast('float16')
-        net.load_parameters('../params_shufflenas_oneshot+_genetic/0.2484-imagenet-ShuffleNas_fixArch-179-best.params')
+        net.load_parameters('../models/oneshot-s+model-0000.params')
         net.cast('float32')
     else:
         net.initialize(mx.init.MSRAPrelu())
@@ -232,8 +232,8 @@ if __name__ == '__main__':
         epoch = 0
         sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
     elif args.model == 'ShuffleNas_fixArch':
-        architecture = [0, 0, 0, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 2, 2, 0, 2, 0]
-        scale_ids = [8, 6, 5, 7, 6, 7, 3, 4, 2, 4, 2, 3, 4, 3, 6, 7, 5, 3, 4, 6]
+        architecture = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+        scale_ids = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
         prefix = convert_from_shufflenas(architecture=architecture, scale_ids=scale_ids, image_shape=args.image_shape,
                                          model_name='ShuffleNas_fixArch', use_se=True,
                                          last_conv_after_pooling=True, logger=logger, pretrained=True)
@@ -337,10 +337,11 @@ if __name__ == '__main__':
     combine_mean_std.update(std_args)
     if calib_mode == 'none':
         logger.info('Quantizing FP32 model %s' % args.model)
-        qsym, qarg_params, aux_params = quantize_model(sym=sym, arg_params=arg_params, aux_params=aux_params,
-                                                       ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                       calib_mode=calib_mode, quantized_dtype=args.quantized_dtype,
-                                                       logger=logger)
+        qsym, qarg_params, aux_params = quantize_model_mkldnn(sym=sym, arg_params=arg_params, aux_params=aux_params,
+                                                              ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                              calib_mode=calib_mode,
+                                                              quantized_dtype=args.quantized_dtype,
+                                                              logger=logger)
         sym_name = '%s-symbol.json' % (prefix + '-quantized')
     else:
         logger.info('Creating ImageRecordIter for reading calibration dataset')
@@ -357,12 +358,12 @@ if __name__ == '__main__':
                                      seed=args.shuffle_seed,
                                      **combine_mean_std)
 
-        qsym, qarg_params, aux_params = quantize_model(sym=sym, arg_params=arg_params, aux_params=aux_params,
-                                                        ctx=ctx, excluded_sym_names=excluded_sym_names,
-                                                        calib_mode=calib_mode, calib_data=data,
-                                                        num_calib_examples=num_calib_batches * batch_size,
-                                                        calib_layer=calib_layer, quantized_dtype=args.quantized_dtype,
-                                                        label_names=(label_name,), logger=logger)
+        qsym, qarg_params, aux_params = quantize_model_mkldnn(sym=sym, arg_params=arg_params, aux_params=aux_params,
+                                                              ctx=ctx, excluded_sym_names=excluded_sym_names,
+                                                              calib_mode=calib_mode, calib_data=data,
+                                                              num_calib_examples=num_calib_batches * batch_size,
+                                                              quantized_dtype=args.quantized_dtype,
+                                                              label_names=(label_name,), logger=logger)
         if calib_mode == 'entropy':
             suffix = '-quantized-%dbatches-entropy' % num_calib_batches
         elif calib_mode == 'naive':
