@@ -15,9 +15,6 @@ from oneshot_nas_network import get_shufflenas_oneshot
 from utils.calculate_flops import get_flops
 from oneshot_nas_blocks import NasBatchNorm
 
-FLOP_MAX = 1
-PARAM_MAX = -1
-SCORE_ACC_RATIO = 1    # flop_param_score_weight/acc_weight for fitness
 BLOCK_CHOICE = None    # [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
 CHANNEL_CHOICE = None  # [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
 
@@ -75,6 +72,21 @@ def parse_args():
                         help='how many search iterations')
     parser.add_argument('--update-bn-images', type=int, default=20000,
                         help='How many images to update the BN statistics.')
+    parser.add_argument('--search-target', type=str, default='acc',
+                        help="searching target, options: ['acc', 'balanced_flop_acc'] ")
+    parser.add_argument('--flop-max', type=float, default=1,
+                        help="The maximum ratio to the comparison model's flop. So that the searched model's FLOP will"
+                             "always < comparison_model_FLOP * args.flop_max. -1 means unbounded.")
+    parser.add_argument('--param-max', type=float, default=-1,
+                        help="The maximum ratio to the comparison model's # param. So that the searched model's # param"
+                             "will always < comparison_model_#param * args.param_max. -1 means unbounded")
+    parser.add_argument('--score-acc-ratio', type=float, default=1,
+                        help="Normalized_MicroNet_score/acc_weight for fitness. The evolver will search for the model"
+                             "with highest balanced score (-micronet_score * args.score_acc_ratio + acc).")
+    parser.add_argument('--fixed-block-choices', type=str, default=None, help="Block choices. It should be a str of"
+                        "block_ids separated with comma : '0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2'")
+    parser.add_argument('--fixed-channel-choices', type=str, default=None, help="Channel choices. It should be a str of"
+                        "channel_ids separated by comma: '6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3'")
 
     # ----------------------- genetic search -------------------------- #
     parser.add_argument('--population-size', type=int, default=50,
@@ -277,7 +289,7 @@ class Evolver():
 
     def __init__(self, net, train_data, val_data, batch_fn, param_dict,
                  dtype='float32', ctx=[mx.cpu()], comparison_model='SinglePathOneShot',
-                 update_bn_images=20000, search_iters=50, batch_size=256,
+                 update_bn_images=20000, search_iters=50, batch_size=256, search_target='acc',
                  population_size=500, retain_length=100, random_select=0.1, mutate_chance=0.1):
 
         self.net = net
@@ -295,6 +307,7 @@ class Evolver():
         self.retain_length = retain_length
         self.random_select = random_select
         self.mutate_chance = mutate_chance
+        self.search_target = search_target
 
     def create_population(self):
         """Create a population of random networks.
@@ -323,17 +336,17 @@ class Evolver():
             block_choices = nd.array(instance['block']).astype(self.dtype, copy=False)
             channel_choices = instance['channel']
             flops, model_size, flop_score, model_size_score = \
-                get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
+                get_flop_param_score(block_choices, channel_choices, comparison_model=self.comparision_model)
 
             combined_score = 0.5 * flop_score + 0.5 * model_size_score
-            if FLOP_MAX != -1 and flop_score > FLOP_MAX:
+            if args.flop_max != -1 and flop_score >= args.flop_max:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                 print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                 print('[SKIPPED] # parameters:      {} M'.format(model_size))
                 continue
-            if PARAM_MAX != -1 and model_size_score > PARAM_MAX:
+            if args.param_max != -1 and model_size_score >= args.param_max:
                 print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                 print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                 print("[SKIPPED] Channel choices:   {}".format(channel_choices))
@@ -447,12 +460,17 @@ class Evolver():
         for person in population:
             if 'acc' not in person.keys():
                 person['acc'] = self.fitness(person['block'], person['channel'])
-                net_obj = (-SCORE_ACC_RATIO * person['score'] + person['acc'],
+                net_obj = (-args.score_acc_ratio * person['score'] + person['acc'],
                            person['acc'], person['score'], person['flops'], person['model_size'],
                            copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
                 topk_items.push(net_obj)
-            update_log(net_obj, logger)
-        population.sort(key=lambda x: -SCORE_ACC_RATIO * x['score'] + x['acc'], reverse=True)
+                update_log(net_obj, logger)
+        if self.search_target == 'balanced_flop_acc':
+            population.sort(key=lambda x: -args.score_acc_ratio * x['score'] + x['acc'], reverse=True)
+        elif self.search_target == 'acc':
+            population.sort(key=lambda x: x['acc'], reverse=True)
+        else:
+            raise ValueError("Unrecognized search target: {}".format(self.search_target))
         # The parents are every network we want to keep.
         parents = population[:self.retain_length]
 
@@ -493,14 +511,14 @@ class Evolver():
                         get_flop_param_score(block_choices, channel_choices, comparison_model='SinglePathOneShot')
 
                     combined_score = 0.5 * flop_score + 0.5 * model_size_score
-                    if FLOP_MAX != -1 and flop_score > FLOP_MAX:
+                    if args.flop_max != -1 and flop_score > args.flop_max:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
                         print('[SKIPPED] Flops:             {} MFLOPS'.format(flops))
                         print('[SKIPPED] # parameters:      {} M'.format(model_size))
                         continue
-                    if PARAM_MAX != -1 and model_size_score > PARAM_MAX:
+                    if args.param_max != -1 and model_size_score > args.param_max:
                         print("[SKIPPED] Current model normalized score: {}.".format(combined_score))
                         print("[SKIPPED] Block choices:     {}".format(block_choices.asnumpy()))
                         print("[SKIPPED] Channel choices:   {}".format(channel_choices))
@@ -587,7 +605,7 @@ def random_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_
 
 
 def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison_model='SinglePathOneShot',
-                   update_bn_images=20000, search_iters=50000, batch_size=128, topk=3,
+                   update_bn_images=20000, search_iters=50000, batch_size=128, topk=3, search_target='acc',
                    population_size=500, retain_length=100, random_select=0.1, mutate_chance=0.1, **data_kwargs):
 
     # get data
@@ -610,7 +628,8 @@ def genetic_search(net, dtype='float32', logger=None, ctx=[mx.cpu()], comparison
                       population_size=population_size,
                       retain_length=retain_length,
                       random_select=random_select,
-                      mutate_chance=mutate_chance)
+                      mutate_chance=mutate_chance,
+                      search_target=search_target)
     population = evolver.create_population()
 
     for i in range(search_iters):
@@ -684,6 +703,7 @@ def main():
                        retain_length=args.retain_length,
                        random_select=args.random_select,
                        mutate_chance=args.mutate_chance,
+                       search_target=args.search_target,
                        **data_kwargs)
     else:
         raise ValueError("Unrecognized search mode: {}".format(args.search_mode))
