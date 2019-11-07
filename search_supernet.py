@@ -277,7 +277,13 @@ class TopKHeap(object):
             heapq.heappush(self.data, elem)
         else:
             topk_small = self.data[0]
-            if elem[0] > topk_small[0]:
+            if args.search_target == 'balanced_flop_acc':
+                target_score = elem[0]
+            elif args.search_target == 'acc':
+                target_score = elem[1]
+            else:
+                raise ValueError("Unrecognized search-target: {}".format(args.search_target))
+            if target_score > topk_small[0]:
                 heapq.heapreplace(self.data, elem)
 
     def topk(self):
@@ -464,7 +470,11 @@ class Evolver():
                            person['acc'], person['score'], person['flops'], person['model_size'],
                            copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
                 topk_items.push(net_obj)
-                update_log(net_obj, logger)
+            else:
+                net_obj = (-args.score_acc_ratio * person['score'] + person['acc'],
+                           person['acc'], person['score'], person['flops'], person['model_size'],
+                           copy.deepcopy(person['block']), copy.deepcopy(person['channel']))
+            update_log(net_obj, logger)
         if self.search_target == 'balanced_flop_acc':
             population.sort(key=lambda x: -args.score_acc_ratio * x['score'] + x['acc'], reverse=True)
         elif self.search_target == 'acc':
