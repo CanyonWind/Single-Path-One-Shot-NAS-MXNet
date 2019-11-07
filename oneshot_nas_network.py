@@ -11,7 +11,8 @@ import numpy as np
 from oneshot_nas_blocks import NasHybridSequential, ShuffleNetBlock, ShuffleNasBlock, NasBatchNorm, Activation, SE, \
                                ShuffleChannelsConv, ShuffleChannels
 
-sys.path.append('./utils')
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path + '/utils')
 from calculate_flops import get_flops
 
 
