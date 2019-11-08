@@ -1,26 +1,27 @@
-quantized_sg_mkldnn_conv_bn_1
-quantized_sg_mkldnn_conv_bn_4
-quantized_sg_mkldnn_conv_bn_7
-quantized_sg_mkldnn_conv_bn_10
-quantized_sg_mkldnn_conv_bn_13
-quantized_sg_mkldnn_conv_bn_15
-quantized_sg_mkldnn_conv_bn_18
-quantized_sg_mkldnn_conv_bn_21
-quantized_sg_mkldnn_conv_bn_24
-quantized_sg_mkldnn_conv_bn_27
-quantized_sg_mkldnn_conv_bn_29
-quantized_sg_mkldnn_conv_bn_31
-quantized_sg_mkldnn_conv_bn_33
-quantized_sg_mkldnn_conv_bn_35
-quantized_sg_mkldnn_conv_bn_40
-quantized_sg_mkldnn_conv_bn_45
-quantized_sg_mkldnn_conv_bn_50
-quantized_sg_mkldnn_conv_bn_55
-quantized_sg_mkldnn_conv_bn_60
-quantized_sg_mkldnn_conv_bn_65
-quantized_sg_mkldnn_conv_bn_70
-quantized_sg_mkldnn_conv_bn_74
-quantized_sg_mkldnn_conv_bn_77
-quantized_sg_mkldnn_conv_bn_82
-quantized_sg_mkldnn_conv_bn_87
-quantized_sg_mkldnn_conv_bn_92
+excluded_sym_names += [
+            'quantized_sg_mkldnn_conv_bn_1',
+            'quantized_sg_mkldnn_conv_bn_4',
+            'quantized_sg_mkldnn_conv_bn_7',
+            'quantized_sg_mkldnn_conv_bn_10',
+            'quantized_sg_mkldnn_conv_bn_13',
+            'quantized_sg_mkldnn_conv_bn_15',
+            'quantized_sg_mkldnn_conv_bn_18',
+            'quantized_sg_mkldnn_conv_bn_21',
+            'quantized_sg_mkldnn_conv_bn_24',
+            'quantized_sg_mkldnn_conv_bn_27',
+            'quantized_sg_mkldnn_conv_bn_29',
+            'quantized_sg_mkldnn_conv_bn_31',
+            'quantized_sg_mkldnn_conv_bn_33',
+            'quantized_sg_mkldnn_conv_bn_35',
+            'quantized_sg_mkldnn_conv_bn_40',
+            'quantized_sg_mkldnn_conv_bn_45',
+            'quantized_sg_mkldnn_conv_bn_50',
+            'quantized_sg_mkldnn_conv_bn_55',
+            'quantized_sg_mkldnn_conv_bn_60',
+            'quantized_sg_mkldnn_conv_bn_65',
+            'quantized_sg_mkldnn_conv_bn_70',
+            'quantized_sg_mkldnn_conv_bn_74',
+            'quantized_sg_mkldnn_conv_bn_77',
+            'quantized_sg_mkldnn_conv_bn_82',
+            'quantized_sg_mkldnn_conv_bn_87',
+            'quantized_sg_mkldnn_conv_bn_92']
