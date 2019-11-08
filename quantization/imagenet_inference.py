@@ -239,9 +239,9 @@ if __name__ == '__main__':
             preprocess_threads=data_nthreads,
             shuffle=False,
             batch_size=batch_size,
-
             resize=256,
             data_shape=(3, 224, 224),
+            ctx=args.ctx,
             **combine_mean_std
         )
 
