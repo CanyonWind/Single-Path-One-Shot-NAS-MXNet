@@ -42,7 +42,8 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | FLOPs & Parameters Counting Tool      | ×           | √          |
 | BN Statistics Update                  | ×           | √          |
 | Random Search                         | ×           | √          |
-| Genetic Search                        | ×           | √          |
+| Genetic Search - Jointly              | ×           | √          |
+| Genetic Search - Two Stage            | ×           | √          |
 | SE                                    | -           | √          |
 | Efficient Last Conv Block             | -           | √          |
 | Op to Op Profiling Tool               | -           | √          |
