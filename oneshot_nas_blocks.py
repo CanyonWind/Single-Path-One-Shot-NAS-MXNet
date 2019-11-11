@@ -163,7 +163,7 @@ class ChannelSelector(HybridBlock):
     def hybrid_forward(self, F, x, block_channel_mask, *args, **kwargs):
         block_channel_mask = F.slice(block_channel_mask, begin=(None, None), end=(None, self.channel_number))
         block_channel_mask = F.reshape(block_channel_mask, shape=(1, self.channel_number, 1, 1))
-        x = F.broadcast_mul(x, block_channel_mask.as_in_context(x.context))
+        x = F.broadcast_mul(x, block_channel_mask)
         return x
 
 
