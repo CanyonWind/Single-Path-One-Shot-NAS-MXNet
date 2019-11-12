@@ -1,15 +1,8 @@
-# For MicroNet Challenge PLEASE 👉[CHECK HERE](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/tree/master/MicroNetChallenge)👈
+# [Single Path One Shot NAS MXNet](https://arxiv.org/abs/1904.00420)
 
-# [Single Path One Shot NAS](https://arxiv.org/abs/1904.00420)
+This repository contains Single Path One-shot NAS implementation on **MXNet (Gluon)**. It can finish **the whole training and searching pipeline on ImageNet within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**. By utilizing this implementation, a new state-of-the-art NAS searched model has been found which **outperforms** other NAS models like `FBNet, MnasNet, DARTS, NASNET, PNASNET and the original SinglePathOneShot` by a good margin in all factors of FLOPs, parameters amount and top-1/5 accuracies. Also for considering [Google's MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), before any quantization, it **outperforms** other popular efficient hand crafted models like `MobileNet V1 V2, V3, ShuffleNet V1, V2, V2+` too.
 
-![alt text](./images/nas-block.gif)
-
-This repository contains single path one-shot NAS networks  **MXNet (Gluon)** implementation, modified from
-[the official pytorch implementation](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot). In this work, an open-sourced weights sharing Neural Architecture Search (NAS) pipeline is provided. It can finish **training and searching on ImageNet totally within `60` GPU hours** (on 4 V100 GPUs, including supernet training, supernet searching and the searched best subnet training) **in the exploration space of about `32^20` choices**.
-
-Several things different from the official version: **for training,** it supports block & channel selection for the supernet model, ShuffleNetV2+ style SE for supernet / subnet and the MobileNet V3 style last convolutin block; **for searching,** it supports both genetic and random search with BN statistics update and the FLOP / number of parameters constraint; **for evaluation and deployment,** tools for FLOPs and parameters calculation, per operator profiling, int8 quantizatin and Batch Norm merging are provided.
-
-By utilizing this implementation, a new state-of-the-art NAS searched model has been found which **outperforms** other NAS models like `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, number of parameters and Top-1 / Top-5 accuracies. Also for considering [the MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html), before any quantization, it **outperforms** other popular base models like `MobileNet V2, V3, ShuffleNet V1, V2, V2+` too. 
+![alt text](./images/nas-blocks-optimized.gif)
 
 **10/09/2019 Update:** 
 
@@ -24,15 +17,52 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 |    OneShot+ Supernet |  841.9M  |  15.4M  |  62.90   |   84.49   | 7.09 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_supernet.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_supernet.log) |
 |    OneShot-S+ (ours) |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
 |    OneShot+ (ours) |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
-|    OneShot (ours) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_oneshot.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
-|    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
+|    OneShot (ours) |  328M |  3.4M |  74.02*   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_oneshot.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
+|    OneShot (official) |  328M |  3.4M |  74.9*   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
-|    MobileNetV3 Large|	 **217M** |	5.4M |	75.2|	- | 2.25 | - | - |
 |    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
-|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
+
+*According to [this issue](https://github.com/megvii-model/ShuffleNet-Series/issues/5), the official released model has been exhaustedly tuned and trained multiple times with the reported top-1 accuracy ranging `[74.1 ~ 74.9]`. Others using the official pytorch release can obtain accuracies ranging `[73.7 ~ 73.9]`. Our implementation has only been trained once and not been specifically tuned. 
+
+| Model                  | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
+| :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
+|    OneShot-S+ (ours) |  291M |  3.5M |  **75.75**   |   **92.77**   | **1.9166** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot-s+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot+ (ours) |  297M |  3.7M |  **75.24**   |   **92.58**   | **1.9937** | [script](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/scripts/train_oneshot+.sh) | [log](https://github.com/CanyonWind/oneshot_nas/blob/master/logs/shufflenas_oneshot%2B.log) |
+|    OneShot (ours) |  328M |  3.4M |  74.02   |   91.60   | 2 | [script](https://github.com/CanyonWind/oneshot_nas/blob/master/scripts/train_oneshot.sh) | [log](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/logs/shufflenas_oneshot.log) |
+|    MobileNetV3 Large|	 **217M** |	5.4M |	75.2 |	-  | 2.25 | - | - |
+|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	-  | 3.81 | - | - |
+|    MobileNetV1       |	569M |   4.2M |   70.6 |   -  | 2.97   | - | - |
+|    ShuffleNetV2 2.0x  |  591M |   7.4M |   75.0 | 92.4 | 3.98    | - | - |
+|    ShuffleNetV1 2.0x  |	524M |	5.4M |	74.1 | 91.4  |  3.19  | - | - |
+
+
+
+## Comparision to [the official release](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot)
+
+Single Path One Shot NAS provides an elegent idea to effortlessly search for optimized subnet structures, under different model size/latency constraints, with single time supernet training and multiple times low-cost searching procedures. The flexibility and efficiency of this approach can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the structures to meet different hardware constraits can be avoided. Unfortunately, the author hasn't released this valuable Supernet Training and Searching parts yet. This repo makes up for the missing of them.
+
+
+| Model                                 | Official    | This repo  |
+| :------------------------------------ | :------     | :------    |
+| Subnet Training                       | √           | √          |
+| Block Selection                       | ×           | √          |
+| Channel Selection                     | ×           | √          |
+| Supernet Training                     | ×           | √          |
+| FLOPs & Parameters Counting Tool      | ×           | √          |
+| BN Statistics Update                  | ×           | √          |
+| Random Search                         | ×           | √          |
+| Genetic Search - Jointly              | ×           | √          |
+| Genetic Search - Two Stage            | ×           | √          |
+| SE                                    | -           | √          |
+| Efficient Last Conv Block             | -           | √          |
+| Op to Op Profiling Tool               | -           | √          |
+| Merge BN                              | -           | √          |
+| Int8 Quantization                     | -           | √          |
+
+
 
 # Usage
 Download the ImageNet dataset, reorgnize the raw data and create MXNet RecordIO files (or just put the validation images in its corresponding class folder) by following [this script](https://gluon-cv.mxnet.io/build/examples_datasets/imagenet.html#prepare-the-imagenet-dataset). 
@@ -124,11 +154,14 @@ We tried both random search, randomly selecting 250 qualified instances to evalu
 |    OneShot (official) |  328M |  3.4M |  74.9   |   92.0   | 2 | - | - |
 |    FBNet-B|  295M|  4.5M |  74.1   |   -   | 2.19 | - | - |
 |    MnasNet|  317M |  4.2M |  74.0   |  91.8   | 2.20 | - | - |
-|    MobileNetV3 Large|	 **217M** |	5.4M |	75.2|	- | 2.25 | - | - |
 |    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
-|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	- | 3.81 | - | - |
+|    MobileNetV3 Large|	 **217M** |	5.4M |	75.2 |	-  | 2.25 | - | - |
+|    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	-  | 3.81 | - | - |
+|    MobileNetV1       |	569M |   4.2M |   70.6 |   -  | 2.97   | - | - |
+|    ShuffleNetV2 2.0x  |  591M |   7.4M |   75.0 | 92.4 | 3.98    | - | - |
+|    ShuffleNetV1 2.0x  |	524M |	5.4M |	74.1 | 91.4  |  3.19  | - | - |
 
 ## OneShot-S+ Profiling
 
@@ -196,37 +229,36 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
     - [x] Add a searching mode which can specify hard FLOP and # of parameter constrains but not just the Σscores.
     - [x] Search within the OneShot supernet with provided stage channels, se and MobilNet V3 style conv
       - [x] This supernet setting cannot (quickly) find enough qualified candidates for population
-    - [ ] **In progress**: Train ShuffleNetV2+ channels layout supernet with se and MobilNet V3 style last convolution block.
-    - [ ] Train the best searched subnet model
+    - [x] **In progress**: Train ShuffleNetV2+ channels layout supernet with se and MobilNet V3 style last convolution block.
+    - [x] Train the best searched subnet model
 - [x] Two stage searching
     - [x] Do Block search firstly
     - [x] Based on the best searched blocks, do channel search
-- [ ] **Debug** why training accuracy catastrophicly drops after several epochs of Channel Selection
-    - [ ] Save parameters' value and gradient in MXBorad to visualize
-    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled after 60 epochs
-      - [ ] Search in this supernet and compare with previous Block Selection alone supernet searching performance
-    - [ ] Train a 'OneShot' channels layout supernet like before with channel selection enabled from the beginning
-      - [ ] Search in this supernet and compare with the BS alone one, BS + 60 CS one and this one's performance
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
     - [x] Build a tool to generate repeating blocks
     - [ ] Estimate speeds for 4 choice blocks with different input/mid/output channels
-- [ ] Train with constraint --> To limit unuseful subnet training
-    - [ ] Maintain a candidate pool which always contains enough (> 10) qualified candidates in background
-    - [ ] Only the candidates from the pool will be trained.
+- [ ] More upcoming features/plans are moved into [the project section](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet/projects) 
 
 
 # Summary
-In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`.
+In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`. This implementation can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the model structures to meet different hardware constraits can be avoided.
 
-We have not tried to use more aggressive weight / channel pruning or more complex low-bit quantization methods, because, if we want to take full advantage of them, most compression methods and low-bit quantization models require custom hardware. However, in general practical situations, we need to build / design a model that meets hardware constraints, but not build the hardware architecture based on the algorithm. We believe that this direction - design optimal searching space and search for further optimized network structures - is suitable for direct application.
 
 # Citation
-If you use these models in your research, please cite:
-
+If you use these models in your research, please cite the original paper.
 
     @article{guo2019single,
             title={Single path one-shot neural architecture search with uniform sampling},
             author={Guo, Zichao and Zhang, Xiangyu and Mu, Haoyuan and Heng, Wen and Liu, Zechun and Wei, Yichen and Sun, Jian},
             journal={arXiv preprint arXiv:1904.00420},
             year={2019}
+    }
+    
+And references to the following BibTex entry would be appreciated too.
+
+    @misc{yan2019sposmxnet,
+          title={single-path-one-shot-mxnet},
+          author={Kang, Yan},
+          howpublished={\url{https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet}},
+          year={2019}
     }
