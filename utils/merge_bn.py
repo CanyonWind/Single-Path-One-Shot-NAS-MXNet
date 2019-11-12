@@ -1,10 +1,11 @@
-
+import os
 import sys
 from mxnet import ndarray as nd
 from oneshot_nas_network_nobn import get_shufflenas_oneshot as get_noBN_shufflenas_oneshot
 
-sys.path.append('..')
-from oneshot_nas_network import get_shufflenas_oneshot
+dir_path = os.path.dirname(os.path.realpath(__file__))
+parent_path = dir_path[:dir_path.rfind('/')]
+sys.path.append(parent_path)
 
 
 def merge(conv_w, gamma, beta, running_mean, running_var):
