@@ -118,7 +118,8 @@ NAS related arguments:
   -h, --help            show this help message and exit
   --warmup-epochs       WARMUP_EPOCHS
                         number of warmup epochs.
-  --model MODEL         type of model to use. see vision_model for options.
+  --model               MODEL
+                        type of model to use. see vision_model for options.
   --use-se              use SE layers or not in resnext and ShuffleNas.
                         default is false.
   --use-all-blocks      whether to use all the choice blocks.
@@ -178,7 +179,8 @@ optional arguments:
   -h, --help            show this help message and exit
   --shuffle-train       SHUFFLE_TRAIN
                         whether to do shuffle in training data for BN update
-  --num-gpus NUM_GPUS   number of gpus to use
+  --num-gpus            NUM_GPUS   
+                        number of gpus to use
   --use-se              use SE layers or not in resnext and ShuffleNas
   --last-conv-after-pooling
                         whether to follow MobileNet V3 last conv after pooling
@@ -191,7 +193,8 @@ optional arguments:
                         model to compare with when searching, options:
                         ['MobileNetV3_large', 'MobileNetV2_1.4',
                         'SinglePathOneShot', 'ShuffleNetV2+_medium']
-  --topk TOPK           get top k models
+  --topk                TOPK           
+                        save top k models
   --search-iters        SEARCH_ITERS
                         how many search iterations
   --update-bn-images    UPDATE_BN_IMAGES
@@ -199,7 +202,8 @@ optional arguments:
   --search-target       SEARCH_TARGET
                         searching target, options: ['acc',
                         'balanced_flop_acc']
-  --flop-max FLOP_MAX   The maximum ratio to the comparison model's flop. So
+  --flop-max            FLOP_MAX
+                        The maximum ratio to the comparison model's flop. So
                         that the searched model's FLOP willalways <
                         comparison_model_FLOP * args.flop_max. -1 means
                         unbounded.
