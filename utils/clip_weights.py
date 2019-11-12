@@ -1,16 +1,17 @@
 import sys
 import os
 import argparse
-import mxnet.ndarray as nd
 import copy
 import numpy as np
 
-sys.path.append(os.path.dirname(os.getcwd()))
+dir_path = os.path.dirname(os.path.realpath(__file__))
+parent_path = dir_path[:dir_path.rfind('/')]
+sys.path.append(parent_path)
 from oneshot_nas_network import get_shufflenas_oneshot
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Verify Two Stream Attention model for IBDI.')
+    parser = argparse.ArgumentParser(description='Clip weights to/from a small value')
     parser.add_argument('--param-file', type=str, default='../models/oneshot-s+model-0000.params',
                         help='The absolute path of pre-trained model.')
     parser.add_argument('--block-choices', type=str, help='Block choices',
