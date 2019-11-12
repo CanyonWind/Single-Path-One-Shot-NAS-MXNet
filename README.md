@@ -4,6 +4,10 @@ This repository contains Single Path One-shot NAS implementation on **MXNet (Glu
 
 ![alt text](./images/nas-blocks-optimized.gif)
 
+**11/12/2019 Update:** 
+
+Single Path One Shot NAS author has released [their Supernet Training and Searching codes](https://github.com/megvii-model/SinglePathOneShot). The comparison table between the official version and this repo's implementation has been updated. Check [here](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet#comparision-to-the-official-release) for more details.
+
 **10/09/2019 Update:** 
 
 A searched model **Oneshot-S+**, with the block choices and channel choices searched by this repo's implementation, ShuffleNetV2+ style SE and MobileNetV3 last convolution block design, reaches the **new highest** top-1 & top-5 accuracies with the **new lowest** [Google MicroNet Challenge Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) among other NAS searched or popular handcrafted efficient models. Check [here](https://github.com/CanyonWind/oneshot_nas#results) for comparison.
