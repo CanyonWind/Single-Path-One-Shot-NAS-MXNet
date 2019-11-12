@@ -40,7 +40,7 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 
 
 
-## Comparision to [the official release](https://github.com/megvii-model/ShuffleNet-Series/tree/master/OneShot)
+## Comparision to [the official release](https://github.com/megvii-model/SinglePathOneShot)
 
 Single Path One Shot NAS provides an elegent idea to effortlessly search for optimized subnet structures, under different model size/latency constraints, with single time supernet training and multiple times low-cost searching procedures. The flexibility and efficiency of this approach can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the structures to meet different hardware constraits can be avoided. Unfortunately, the author hasn't released this valuable Supernet Training and Searching parts yet. This repo makes up for the missing of them.
 
@@ -48,14 +48,16 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | Model                                 | Official    | This repo  |
 | :------------------------------------ | :------     | :------    |
 | Subnet Training                       | √           | √          |
-| Block Selection                       | ×           | √          |
+| Block Selection                       | √           | √          |
 | Channel Selection                     | ×           | √          |
-| Supernet Training                     | ×           | √          |
-| FLOPs & Parameters Counting Tool      | ×           | √          |
+| Supernet Training - With Block Choices| √           | √          |
+| Supernet Training - With Channel Choices | ×           | √          |
+| FLOPs & Parameters Counting Tool      | √           | √          |
 | BN Statistics Update                  | ×           | √          |
 | Random Search                         | ×           | √          |
+| Genetic Search - On Block Choices     | √           | √          |
+| Genetic Search - On Channel Choices   | ×           | √          |
 | Genetic Search - Jointly              | ×           | √          |
-| Genetic Search - Two Stage            | ×           | √          |
 | SE                                    | -           | √          |
 | Efficient Last Conv Block             | -           | √          |
 | Op to Op Profiling Tool               | -           | √          |
