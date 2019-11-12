@@ -97,7 +97,7 @@ search_supernet.py [-h]   [--rec-train REC_TRAIN]
 
 Search on a pretrained supernet.
 
-optional arguments:
+Search related arguments:
   -h, --help            show this help message and exit
   --shuffle-train       SHUFFLE_TRAIN
                         whether to do shuffle in training data for BN update
