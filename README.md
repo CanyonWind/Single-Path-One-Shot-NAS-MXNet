@@ -17,6 +17,7 @@ This repository contains Single Path One-shot NAS implementation on **MXNet (Glu
 |    DARTS|  574M|  4.7M |  73.3   |   91.3  | 3.13 | - | - |
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
+|     |    |    |     |       |   |   |   |
 | **Handcrafted Model**                  | **FLOPs** | **# of Params**   | **Top - 1** | **Top - 5** | **[Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html)** | **Scripts** | **Logs** |
 |    MobileNetV3 Large|	 **217M** |	5.4M |	75.2 |	-  | 2.25 | - | - |
 |    MobileNetV2 (1.4) |	585M |	6.9M |	74.7 |	-  | 3.81 | - | - |
