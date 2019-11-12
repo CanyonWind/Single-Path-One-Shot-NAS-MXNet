@@ -88,6 +88,9 @@ sh ./scripts/search_supernet.sh
 # Train best searched model
 sh ./scripts/train_oneshot.sh
 ```
+
+Detailed usage for training and searching can be found [here](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet/blob/master/logs/train_search_options.md).
+
 # Approach breakdown
 
 Our approach is **mainly based on the Single Path One Shot NAS in the combination of Squeeze and Excitation (SE), ShuffleNet V2+ and MobileNet V3**. Like the original paper, we searched for the choice blocks and block channels with multiple FLOPs and parameter amount constraints. In this section, we will elaborate on the modifications from the original paper.
@@ -237,7 +240,7 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 - [ ] Estimate each (block, # channel) combination cpu & gpu latency
     - [x] Build a tool to generate repeating blocks
     - [ ] Estimate speeds for 4 choice blocks with different input/mid/output channels
-- [ ] More upcoming features/plans are moved into [the project section](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet/projects) 
+- [x] More upcoming features/plans are moved into [the project section](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet/projects) 
 
 
 # Summary
