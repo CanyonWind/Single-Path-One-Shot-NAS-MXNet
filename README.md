@@ -172,26 +172,10 @@ search_supernet.py [-h]   [--rec-train REC_TRAIN]
                           [--random-select RANDOM_SELECT]
                           [--mutate-chance MUTATE_CHANCE]
 
-Train a model for image classification.
+Search on a pretrained supernet.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --rec-train           REC_TRAIN
-                        the training data
-  --rec-train-idx       REC_TRAIN_IDX
-                        the index of training data
-  --rec-val REC_VAL     the validation data
-  --rec-val-idx         REC_VAL_IDX
-                        the index of validation data
-  --input-size          INPUT_SIZE
-                        the size of the input image
-  --crop-ratio          CROP_RATIO
-                        crop ratio during validation. default is 0.875
-  --num-workers         NUM_WORKERS
-                        number of preprocessing workers
-  --batch-size          BATCH_SIZE
-                        training batch size per device (CPU/GPU)
-  --dtype DTYPE         data type for training
   --shuffle-train       SHUFFLE_TRAIN
                         whether to do shuffle in training data for BN update
   --num-gpus NUM_GPUS   number of gpus to use
