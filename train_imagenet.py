@@ -390,12 +390,14 @@ def main():
         train_data.reset()
         # Updating bn needs the model to be float32
         net.cast('float32')
+        full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
         set_nas_bn(net, inference_update_stat=True)
         for i, batch in enumerate(train_data):
             if (i + 1) * batch_size * len(ctx) >= update_bn_images:
                 break
             data, _ = batch_fn(batch, ctx)
-            _ = [net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
+            _ = [net(X.astype('float32', copy=False), block_choices.astype('float32', copy=False),
+                     channel_mask.astype('float32', copy=False)) for X, channel_mask in zip(data, full_channel_masks)]
         set_nas_bn(net, inference_update_stat=False)
         net.cast(dtype)
 
