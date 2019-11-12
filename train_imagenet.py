@@ -13,6 +13,7 @@ from gluoncv.model_zoo import get_model
 from gluoncv.utils import makedirs, LRSequential, LRScheduler
 
 from oneshot_nas_network import get_shufflenas_oneshot
+from oneshot_nas_blocks import NasBatchNorm
 
 
 # CLI
@@ -375,7 +376,49 @@ def main():
     def make_divisible(x, divisible_by=8):
         return int(np.ceil(x * 1. / divisible_by) * divisible_by)
 
+    def set_nas_bn(net, inference_update_stat=False):
+        if isinstance(net, NasBatchNorm):
+            net.inference_update_stat = inference_update_stat
+        elif len(net._children) != 0:
+            for k, v in net._children.items():
+                set_nas_bn(v, inference_update_stat=inference_update_stat)
+        else:
+            return
+
+    def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
+                  ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
+        train_data.reset()
+        # Updating bn needs the model to be float32
+        net.cast('float32')
+        set_nas_bn(net, inference_update_stat=True)
+        for i, batch in enumerate(train_data):
+            if (i + 1) * batch_size * len(ctx) >= update_bn_images:
+                break
+            data, _ = batch_fn(batch, ctx)
+            _ = [net(X.astype(dtype, copy=False), block_choices, full_channel_mask) for X in data]
+        set_nas_bn(net, inference_update_stat=False)
+        net.cast(dtype)
+
     def test(ctx, val_data, epoch):
+        if model_name == 'ShuffleNas':
+            # For evaluating validation accuracy, random select block and channels and update bn stats
+            block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
+            if opt.cs_warm_up:
+                # TODO: edit in the issue, readme and medium article that
+                #  bn stat needs to be updated before verifying val acc
+                full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False,
+                                                                             epoch_after_cs=epoch - opt.epoch_start_cs,
+                                                                             dtype=opt.dtype,
+                                                                             ignore_first_two_cs=opt.ignore_first_two_cs)
+            else:
+                full_channel_mask, _ = net.random_channel_mask(select_all_channels=False,
+                                                               dtype=opt.dtype,
+                                                               ignore_first_two_cs=opt.ignore_first_two_cs)
+            update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx,
+                      dtype=opt.dtype, batch_size=batch_size)
+        else:
+            block_choices, full_channel_mask = None, None
+
         if opt.use_rec:
             val_data.reset()
         acc_top1.reset()
@@ -383,20 +426,6 @@ def main():
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
-                # For evaluating validation accuracy, random select block and channels.
-                block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                if opt.cs_warm_up:
-                    # TODO: edit in the issue, readme and medium article that bn stat needs to be updated before verifying val acc
-                    full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=True,
-                                                                                 epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                                 dtype=opt.dtype,
-                                                                                 ignore_first_two_cs=opt.ignore_first_two_cs)
-
-                else:
-                    full_channel_mask, _ = net.random_channel_mask(select_all_channels=True,
-                                                                   dtype=opt.dtype,
-                                                                   ignore_first_two_cs=opt.ignore_first_two_cs)
-               
                 full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
                 outputs = [net(X.astype(opt.dtype, copy=False), block_choices, channel_mask)
                            for X, channel_mask in zip(data, full_channel_masks)]
