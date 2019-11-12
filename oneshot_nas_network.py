@@ -365,68 +365,42 @@ def get_shufflenas_oneshot(architecture=None, scale_ids=None, use_all_blocks=Fal
     return net
 
 
-FIX_ARCH = True
-LAST_CONV_AFTER_POOLING = False
-USE_SE = True
-SHUFFLE_BY_CONV = False
-CHANNELS_LAYOUT = 'OneShot'
-
-
 def main():
-    if FIX_ARCH:
-        # architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-        architecture = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
-        scale_ids = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
-        net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids, channels_layout=CHANNELS_LAYOUT,
-                                     use_se=USE_SE, last_conv_after_pooling=LAST_CONV_AFTER_POOLING)
-    else:
-        net = get_shufflenas_oneshot(use_se=USE_SE, last_conv_after_pooling=LAST_CONV_AFTER_POOLING,
-                                     channels_layout=CHANNELS_LAYOUT)
-
-    """ Test customized initialization """
-    net._initialize(force_reinit=True)
-    print(net)
-
-    """ Test ShuffleNasOneShot """
+    # Save a toy SE SuperNet for playing with the search codes
+    supernet = get_shufflenas_oneshot(use_se=True, last_conv_after_pooling=True, channels_layout='OneShot')
+    supernet._initialize(force_reinit=True)
+    if not os.path.exists('./params'):
+        os.makedirs('./params')
     test_data = nd.ones([5, 3, 224, 224])
     for step in range(1):
-        if FIX_ARCH:
-            test_outputs = net(test_data)
-            net.summary(test_data)
-            net.hybridize()
-        else:
-            block_choices = net.random_block_choices(select_predefined_block=False, dtype='float32')
-            full_channel_mask, _ = net.random_channel_mask(select_all_channels=False, dtype='float32')
-            test_outputs = net(test_data, block_choices, full_channel_mask)
-            net.summary(test_data, block_choices, full_channel_mask)
-    if FIX_ARCH:
-        if not os.path.exists('./symbols'):
+        block_choices = supernet.random_block_choices(select_predefined_block=False, dtype='float32')
+        full_channel_mask, _ = supernet.random_channel_mask(select_all_channels=False, dtype='float32')
+        _ = supernet(test_data, block_choices, full_channel_mask)
+
+    if not os.path.exists('./params'):
+        os.makedirs('./params')
+    supernet.save_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
+
+    # Profiling the OneShot-s+
+    architecture = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
+    scale_ids = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
+    net = get_shufflenas_oneshot(architecture=architecture, scale_ids=scale_ids, channels_layout='OneShot',
+                                 use_se=True, last_conv_after_pooling=True)
+    net._initialize(force_reinit=True)
+    print(net)
+    test_data = nd.ones([5, 3, 224, 224])
+    for step in range(1):
+        _ = net(test_data)
+    net.summary(test_data)
+
+    net.hybridize()
+    if not os.path.exists('./symbols'):
             os.makedirs('./symbols')
-        net(test_data)
-        net.export("./symbols/ShuffleNas_fixArch", epoch=0)
-        flops, model_size = get_flops()
-        print("Last conv after pooling: {}, use se: {}".format(LAST_CONV_AFTER_POOLING, USE_SE))
-        print("FLOPS: {}M, # parameters: {}M".format(flops, model_size))
-    else:
-        if not os.path.exists('./params'):
-            os.makedirs('./params')
-        net.save_parameters('./params/ShuffleNasOneshot-imagenet-supernet.params')
-
-        """ Test generating random channels """
-        epoch_start_cs = 30
-        use_all_channels = True if epoch_start_cs != -1 else False
-        dtype = 'float16'
-
-        for epoch in range(120):
-            if epoch == epoch_start_cs:
-                use_all_channels = False
-            for batch in range(1):
-                full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=use_all_channels,
-                                                                             epoch_after_cs=epoch - epoch_start_cs,
-                                                                             dtype=dtype,
-                                                                             ignore_first_two_cs=True)
-                print("Epoch {}: {}".format(epoch, channel_choices))
+    net(test_data)
+    net.export("./symbols/ShuffleNas_fixArch", epoch=0)
+    flops, model_size = get_flops()
+    print("Last conv after pooling: {}, use se: {}".format(True, True))
+    print("FLOPS: {}M, # parameters: {}M".format(flops, model_size))
 
 
 if __name__ == '__main__':
