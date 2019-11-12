@@ -29,7 +29,7 @@ A customized model **Oneshot+**, with the block choices and channel choices prov
 |    NASNET-A|  564M |  5.3M |  74.0   |   91.6   | 3.28 | - | - |
 |    PNASNET|  588M |  5.1M |  74.2   |   91.9   | 3.29 | - | - |
 
-*According to [this issue](https://github.com/megvii-model/ShuffleNet-Series/issues/5), the official released model has been exhaustedly tuned and trained multiple times with the reported top-1 accuracy ranging `[74.1 ~ 74.9]`. Others using the official pytorch release have obtained accuracies ranging `[73.7 ~ 73.9]`. Our implementation has only been trained once and not been specifically tuned. 
+*According to [this issue](https://github.com/megvii-model/ShuffleNet-Series/issues/5), the official released model has been trained  multiple times with the reported top-1 accuracy ranging `[74.1 ~ 74.9]`. Others using the official pytorch release have obtained accuracies ranging `[73.7 ~ 73.9]`. Our implementation has only been trained once. 
 
 | Model                  | FLOPs | # of Params   | Top - 1 | Top - 5 | [Σ Normalized Scores](https://micronet-challenge.github.io/scoring_and_submission.html) | Scripts | Logs |
 | :--------------------- | :-----: | :------:  | :-----: | :-----: | :---------------------: | :-----: |  :-----: | 
