@@ -227,7 +227,7 @@ def do_test():
                     full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=use_all_channels,
                                                                                  epoch_after_cs=epoch - epoch_start_cs,
                                                                                  dtype=dtype,
-                                                                                 ignore_first_two_cs=True)
+                                                                                 ignore_first_two_cs=False)
                     print("Epoch {}: {}".format(epoch, channel_choices))
     else:
         raise ValueError("Unrecognized test case target: {}".format(args.target))
