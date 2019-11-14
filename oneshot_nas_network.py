@@ -170,7 +170,8 @@ class ShuffleNasOneShot(HybridBlock):
                     nn.Flatten()
                 )
 
-    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False, dtype='float32'):
+    def random_block_choices(self, num_of_block_choices=4, select_predefined_block=False, dtype='float32',
+                             return_choice_list=False):
         if select_predefined_block:
             block_choices = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         else:
@@ -178,7 +179,10 @@ class ShuffleNasOneShot(HybridBlock):
             block_choices = []
             for i in range(block_number):
                 block_choices.append(random.randint(0, num_of_block_choices - 1))
-        return nd.array(block_choices).astype(dtype, copy=False)
+        if return_choice_list:
+            return nd.array(block_choices).astype(dtype, copy=False), block_choices
+        else:
+            return nd.array(block_choices).astype(dtype, copy=False)
 
     def random_channel_mask(self, select_all_channels=False, dtype='float32', mode='sparse', epoch_after_cs=maxsize,
                             ignore_first_two_cs=False):
