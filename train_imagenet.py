@@ -1,11 +1,13 @@
-import argparse, time, logging, os, math
+import argparse, time, logging, os, math, sys
+import multiprocessing
+from multiprocessing import Value
+from ctypes import c_bool
 
 import numpy as np
 import mxnet as mx
 import gluoncv as gcv
 from mxnet import gluon, nd
 from mxnet import autograd as ag
-from mxnet.gluon import nn
 from mxnet.gluon.data.vision import transforms
 
 from gluoncv.data import imagenet
@@ -14,6 +16,10 @@ from gluoncv.utils import makedirs, LRSequential, LRScheduler
 
 from oneshot_nas_network import get_shufflenas_oneshot
 from oneshot_nas_blocks import NasBatchNorm
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path + '/utils')
+from get_supernet_distribution import get_flop_param_score
 
 
 # CLI
@@ -126,10 +132,14 @@ def parse_args():
     parser.add_argument('--reduced-dataset-scale', type=int, default=1,
                         help='How many times the dataset would be reduced, so that in each epoch '
                              'only num_batches / reduced_dataset_scale batches will be trained.')
-    parser.add_argument('--block-choices', type=str, 
+    parser.add_argument('--train-upper-constraints', type=str, default='',
+                        help="training constraints: 1) empty str: no constraint\n"
+                             "                      2) a str of 'flops-330-params-4.5', which means searching subnets\n"
+                             "                         with less than 330M FLOPs and less than 4.5M parameters.")
+    parser.add_argument('--block-choices', type=str,
                         default='0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2',
                         help='Block choices')
-    parser.add_argument('--channel-choices', type=str, 
+    parser.add_argument('--channel-choices', type=str,
                         default='6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3',
                         help='Channel choices')
 
@@ -150,6 +160,7 @@ def main():
 
     logger = logging.getLogger('')
     logger.setLevel(logging.INFO)
+    # logger.setLevel(logging.DEBUG)
     logger.addHandler(filehandler)
     logger.addHandler(streamhandler)
 
@@ -470,11 +481,12 @@ def main():
 
         best_val_score = 1
 
-        def train_epoch():
+        def train_epoch(pool=None, pool_lock=None, shared_finished_flag=None, use_pool=False):
             btic = time.time()
             for i, batch in enumerate(train_data):
                 if i == num_batches:
-                    return i
+                    shared_finished_flag.value = True
+                    return
                 data, label = batch_fn(batch, ctx)
 
                 if opt.mixup:
@@ -498,23 +510,43 @@ def main():
                                     for X in data]
 
                 with ag.record():
-                    if model_name == 'ShuffleNas':
+                    if model_name == 'ShuffleNas' and use_pool:
+                        cand = None
+                        while cand is None:
+                            if len(pool) > 0:
+                                with pool_lock:
+                                    cand = pool.pop()
+                                    logger.debug('[Trainer]' + '-' * 40)
+                                    logger.debug("Time: {}".format(time.time()))
+                                    logger.debug("Block choice: {}".format(cand['block_list']))
+                                    logger.debug("Channel choice: {}".format(cand['channel_list']))
+                                    logger.debug("Flop: {}M, param: {}M".format(cand['flops'], cand['model_size']))
+                            else:
+                                time.sleep(1)
+
+                        full_channel_masks = [cand['channel'].as_in_context(ctx_i) for ctx_i in ctx]
+                        outputs = [net(X.astype(opt.dtype, copy=False), cand['block'], channel_mask)
+                                   for X, channel_mask in zip(data, full_channel_masks)]
+                    elif model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
                         if opt.cs_warm_up:
-                            full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                           epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                           dtype=opt.dtype,
-                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
+                            full_channel_mask, channel_choices = net.random_channel_mask(
+                                select_all_channels=opt.use_all_channels,
+                                epoch_after_cs=epoch - opt.epoch_start_cs,
+                                dtype=opt.dtype,
+                                ignore_first_two_cs=opt.ignore_first_two_cs)
                         else:
-                            full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                           dtype=opt.dtype,
-                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
+                            full_channel_mask, channel_choices = net.random_channel_mask(
+                                select_all_channels=opt.use_all_channels,
+                                dtype=opt.dtype,
+                                ignore_first_two_cs=opt.ignore_first_two_cs)
 
                         full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
                         outputs = [net(X.astype(opt.dtype, copy=False), block_choices, channel_mask)
                                    for X, channel_mask in zip(data, full_channel_masks)]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+
                     if distillation:
                         loss = [L(yhat.astype('float32', copy=False),
                                   y.astype('float32', copy=False),
@@ -541,8 +573,52 @@ def main():
                                 epoch, i, batch_size*opt.log_interval/(time.time()-btic),
                                 train_metric_name, train_metric_score, trainer.learning_rate))
                     btic = time.time()
-            return i
+            return
 
+        def pool_maintainer(pool, pool_lock, shared_finished_flag, upper_flops=sys.maxsize, upper_params=sys.maxsize):
+            while True:
+                if shared_finished_flag.value:
+                    break
+                if len(pool) < 5:
+                    candidate = dict()
+                    block_choices, block_choices_list = net.random_block_choices(select_predefined_block=False,
+                                                                                 dtype=opt.dtype,
+                                                                                 return_choice_list=True)
+                    if opt.cs_warm_up:
+                        full_channel_mask, channel_choices_list = net.random_channel_mask(
+                            select_all_channels=opt.use_all_channels,
+                            epoch_after_cs=epoch - opt.epoch_start_cs,
+                            dtype=opt.dtype,
+                            ignore_first_two_cs=opt.ignore_first_two_cs,)
+                    else:
+                        full_channel_mask, channel_choices_list = net.random_channel_mask(
+                            select_all_channels=opt.use_all_channels,
+                            dtype=opt.dtype,
+                            ignore_first_two_cs=opt.ignore_first_two_cs)
+
+                    flops, model_size, flop_score, model_size_score = \
+                        get_flop_param_score(block_choices_list, channel_choices_list,
+                                             use_se=opt.use_se, last_conv_after_pooling=opt.last_conv_after_pooling,
+                                             channels_layout=opt.channels_layout)
+                    candidate['block'] = block_choices
+                    candidate['channel'] = full_channel_mask
+                    candidate['block_list'] = block_choices_list
+                    candidate['channel_list'] = channel_choices_list
+                    candidate['flops'] = flops
+                    candidate['model_size'] = model_size
+                    candidate['flop_score'] = flop_score
+                    candidate['model_size_score'] = model_size_score
+
+                    if flops > upper_flops or model_size > upper_params:
+                        continue
+
+                    with pool_lock:
+                        pool.append(candidate)
+                        logger.debug("[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
+
+        manager = multiprocessing.Manager()
+        cand_pool = manager.list()
+        p_lock = manager.Lock()
         for epoch in range(opt.resume_epoch, opt.num_epochs):
             if epoch >= opt.epoch_start_cs:
                 opt.use_all_channels = False
@@ -551,28 +627,47 @@ def main():
                 train_data.reset()
             train_metric.reset()
 
-            i = train_epoch()
+            if model_name == 'ShuffleNas' and opt.train_upper_constraints:
+                constraints = opt.train_upper_constraints.split('-')
+                # opt.train_upper_constraints = 'flops-300-params-4.5'
+                assert len(constraints) == 4 and constraints[0] == 'flops' and constraints[2] == 'params'
+                upper_flops = float(constraints[1]) if float(constraints[1]) != 0 else sys.maxsize
+                upper_params = float(constraints[3]) if float(constraints[3]) != 0 else sys.maxsize
+                finished = Value(c_bool, False)
+                logger.debug("===== DEBUG ======\n"
+                             "Train SuperNet with Flops less than {}, params less than {}"
+                             .format(upper_flops, upper_params))
+                pool_process = multiprocessing.Process(target=pool_maintainer,
+                                                       args=[cand_pool, p_lock, finished, upper_flops, upper_params])
+                pool_process.start()
+                train_epoch(pool=cand_pool, pool_lock=p_lock, shared_finished_flag=finished, use_pool=True)
+                pool_process.join()
+            else:
+                logger.debug("===== DEBUG ======\n"
+                             "Train SuperNet with no constraint")
+                train_epoch()
+
             train_metric_name, train_metric_score = train_metric.get()
-            throughput = int(batch_size * i / (time.time() - tic))
+            throughput = int(batch_size * num_batches / (time.time() - tic))
 
             err_top1_val, err_top5_val = test(ctx, val_data, epoch)
 
-            logger.info('[Epoch %d] training: %s=%f'%(epoch, train_metric_name, train_metric_score))
-            logger.info('[Epoch %d] speed: %d samples/sec\ttime cost: %f'%(epoch, throughput, time.time()-tic))
-            logger.info('[Epoch %d] validation: err-top1=%f err-top5=%f'%(epoch, err_top1_val, err_top5_val))
+            logger.info('[Epoch %d] training: %s=%f' % (epoch, train_metric_name, train_metric_score))
+            logger.info('[Epoch %d] speed: %d samples/sec\ttime cost: %f' % (epoch, throughput, time.time()-tic))
+            logger.info('[Epoch %d] validation: err-top1=%f err-top5=%f' % (epoch, err_top1_val, err_top5_val))
 
             if err_top1_val < best_val_score:
                 best_val_score = err_top1_val
-                net.save_parameters('%s/%.4f-imagenet-%s-%d-best.params'%(save_dir, best_val_score, model_name, epoch))
-                trainer.save_states('%s/%.4f-imagenet-%s-%d-best.states'%(save_dir, best_val_score, model_name, epoch))
+                net.save_parameters('%s/%.4f-imagenet-%s-%d-best.params' % (save_dir, best_val_score, model_name, epoch))
+                trainer.save_states('%s/%.4f-imagenet-%s-%d-best.states' % (save_dir, best_val_score, model_name, epoch))
 
             if save_frequency and save_dir and (epoch + 1) % save_frequency == 0:
-                net.save_parameters('%s/imagenet-%s-%d.params'%(save_dir, model_name, epoch))
-                trainer.save_states('%s/imagenet-%s-%d.states'%(save_dir, model_name, epoch))
+                net.save_parameters('%s/imagenet-%s-%d.params' % (save_dir, model_name, epoch))
+                trainer.save_states('%s/imagenet-%s-%d.states' % (save_dir, model_name, epoch))
 
         if save_frequency and save_dir:
-            net.save_parameters('%s/imagenet-%s-%d.params'%(save_dir, model_name, opt.num_epochs-1))
-            trainer.save_states('%s/imagenet-%s-%d.states'%(save_dir, model_name, opt.num_epochs-1))
+            net.save_parameters('%s/imagenet-%s-%d.params' % (save_dir, model_name, opt.num_epochs-1))
+            trainer.save_states('%s/imagenet-%s-%d.states' % (save_dir, model_name, opt.num_epochs-1))
 
     if opt.mode == 'hybrid':
         net.hybridize(static_alloc=True, static_shape=True)
