@@ -57,7 +57,8 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | Supernet Training - With Block Choices| √           | √          |
 | Supernet Training - With Channel Choices | ×           | √          |
 | FLOPs & Parameters Counting Tool      | √           | √          |
-| BN Statistics Update                  | ×           | √          |
+| BN Stat Update for Val Acc            | ×           | √          |
+| BN Stat Update for Supernet Searching | ×           | √          |
 | Random Search                         | ×           | √          |
 | Genetic Search - On Block Choices     | √           | √          |
 | Genetic Search - On Channel Choices   | ×           | √          |
