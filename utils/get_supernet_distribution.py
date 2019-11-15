@@ -1,9 +1,11 @@
 import os, random
 import sys
 import argparse
+import json
 import matplotlib.pyplot as plt
 from mxnet import nd
 from calculate_flops import get_flops
+from generate_flop_param_lookup_table import get_flop_params as lookup_flop_params
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_path = dir_path[:dir_path.rfind('/')]
@@ -29,6 +31,8 @@ epoch_delay_late = {0: 0,
                     9: 6, 10: 6, 11: 6, 12: 6,  # warm up epoch: 4 ...
                     13: 7, 14: 7, 15: 7, 16: 7, 17: 7,  # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
                     18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, after 17, use all scales
+FAST_LOOKUP = True
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Get supernet flop/param distribution.')
@@ -38,7 +42,7 @@ def parse_args():
                         help='whether to follow MobileNet V3 last conv after pooling style')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
-    parser.add_argument('--sample-count', type=int, default=20,
+    parser.add_argument('--sample-count', type=int, default=10000,
                         help='How many subnet to be sampled')
     parser.add_argument('--compare', action='store_true',
                         help='whether to plot the regular supernet and se supernet together to compare.')
@@ -109,10 +113,15 @@ def get_distribution():
     se_flop_list = []
     se_param_list = []
     pool = []
+    with open('../models/lookup_table_OneShot.json', 'r') as fp:
+        lookup_table = json.load(fp)
+    with open('../models/lookup_table_se_lastConvAfterPooling_OneShot.json', 'r') as fp:
+        se_lookup_table = json.load(fp)
+
     for i in range(args.sample_count):
         candidate = dict()
         if not args.use_evolution or len(pool) < 10:
-            block_choices = net.random_block_choices(select_predefined_block=False)
+            _, block_choices = net.random_block_choices(select_predefined_block=False, return_choice_list=True)
             _, channel_choices = net.random_channel_mask(select_all_channels=False)
 
         elif len(pool) < 20:
@@ -145,14 +154,20 @@ def get_distribution():
         candidate['channel'] = channel_choices
 
         if args.compare:
-            flops, model_size, _, _ = \
-                get_flop_param_score(block_choices, channel_choices, use_se=False, last_conv_after_pooling=False,
-                                     channels_layout=args.channels_layout)
+            if FAST_LOOKUP:
+                flops, model_size = lookup_flop_params(block_choices, channel_choices, lookup_table)
+                se_flops, se_model_size = lookup_flop_params(block_choices, channel_choices, se_lookup_table)
+            else:
+                flops, model_size, _, _ = \
+                    get_flop_param_score(block_choices, channel_choices, use_se=False, last_conv_after_pooling=False,
+                                         channels_layout=args.channels_layout)
+
+                se_flops, se_model_size, _, _ = \
+                    get_flop_param_score(block_choices, channel_choices, use_se=True, last_conv_after_pooling=True,
+                                         channels_layout=args.channels_layout)
+
             flop_list.append(flops)
             param_list.append(model_size)
-            se_flops, se_model_size, _, _ = \
-                get_flop_param_score(block_choices, channel_choices, use_se=True, last_conv_after_pooling=True,
-                                     channels_layout=args.channels_layout)
             se_flop_list.append(se_flops)
             se_param_list.append(se_model_size)
         else:
