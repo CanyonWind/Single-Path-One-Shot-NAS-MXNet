@@ -2,6 +2,7 @@ import argparse, time, logging, os, math, sys
 import multiprocessing
 from multiprocessing import Value
 from ctypes import c_bool
+import random
 
 import numpy as np
 import mxnet as mx
@@ -21,6 +22,25 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path + '/utils')
 from get_supernet_distribution import get_flop_param_score
 
+PARAM_DICT = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+              'block': [0, 1, 2, 3]}
+epoch_delay_early = {0: 0,  # 8
+                     1: 1, 2: 1,  # 7
+                     3: 2, 4: 2, 5: 2,  # 6
+                     6: 3, 7: 3, 8: 3, 9: 3,  # 5
+                     10: 4, 11: 4, 12: 4, 13: 4, 14: 4,
+                     15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
+                     21: 6, 22: 6, 23: 6, 24: 6, 25: 6, 27: 6, 28: 6,
+                     29: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6, 35: 6, 36: 7}
+epoch_delay_late = {0: 0,
+                    1: 1,
+                    2: 2,
+                    3: 3,
+                    4: 4, 5: 4,  # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                    6: 5, 7: 5, 8: 5,  # warm up epoch: 3 ...
+                    9: 6, 10: 6, 11: 6, 12: 6,  # warm up epoch: 4 ...
+                    13: 7, 14: 7, 15: 7, 16: 7, 17: 7,  # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
+                    18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, after 17, use all scales
 
 # CLI
 def parse_args():
@@ -159,8 +179,8 @@ def main():
     streamhandler = logging.StreamHandler()
 
     logger = logging.getLogger('')
-    logger.setLevel(logging.INFO)
-    # logger.setLevel(logging.DEBUG)
+    # logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(filehandler)
     logger.addHandler(streamhandler)
 
@@ -579,7 +599,8 @@ def main():
             while True:
                 if shared_finished_flag.value:
                     break
-                if len(pool) < 5:
+
+                if len(pool) < 10:
                     candidate = dict()
                     block_choices, block_choices_list = net.random_block_choices(select_predefined_block=False,
                                                                                  dtype=opt.dtype,
@@ -615,6 +636,94 @@ def main():
                     with pool_lock:
                         pool.append(candidate)
                         logger.debug("[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
+
+                elif len(pool) < 20:
+                    candidate = dict()
+
+                    # randomly select parents from current pool
+                    mother = random.choice(pool)
+                    father = random.choice(pool)
+
+                    # make sure mother and father are different
+                    while father is mother:
+                        mother = random.choice(pool)
+
+                    # breed block choice
+                    block_choices_list = [0] * len(father['block_list'])
+                    for i in range(len(block_choices_list)):
+                        block_choices_list[i] = random.choice([mother['block_list'][i], father['block_list'][i]])
+                        # Mutation: randomly mutate some of the children.
+                        if random.random() < 0.3:
+                            block_choices_list[i] = random.choice(PARAM_DICT['block'])
+
+                    # breed channel choice
+                    channel_choices_list = [0] * len(father['channel_list'])
+                    for i in range(len(channel_choices_list)):
+                        channel_choices_list[i] = random.choice([mother['channel_list'][i], father['channel_list'][i]])
+                        # Mutation: randomly mutate some of the children.
+                        if random.random() < 0.3:
+                            # warm up
+                            if opt.cs_warm_up:
+                                epoch_after_cs = epoch - opt.epoch_start_cs
+                                if 0 <= epoch_after_cs <= 23 and net.stage_out_channels[0] >= 64:
+                                    delayed_epoch_after_cs = epoch_delay_late[epoch_after_cs]
+                                elif 0 <= epoch_after_cs <= 36 and net.stage_out_channels[0] < 64:
+                                    delayed_epoch_after_cs = epoch_delay_early[epoch_after_cs]
+                                else:
+                                    delayed_epoch_after_cs = epoch_after_cs
+
+                                if opt.ignore_first_two_cs:
+                                    min_scale_id = 2
+                                else:
+                                    min_scale_id = 0
+
+                                channel_scale_start = max(min_scale_id,
+                                                          len(net.candidate_scales) - delayed_epoch_after_cs - 2)
+                                channel_choices_list[i] = random.randint(channel_scale_start,
+                                                                         len(net.candidate_scales) - 1)
+
+                            else:
+                                channel_choices_list[i] = random.choice(PARAM_DICT['channel'])
+
+                    flops, model_size, flop_score, model_size_score = \
+                        get_flop_param_score(block_choices_list, channel_choices_list,
+                                             use_se=opt.use_se, last_conv_after_pooling=opt.last_conv_after_pooling,
+                                             channels_layout=opt.channels_layout)
+
+                    # get block choices ndarray
+                    block_choices = nd.array(block_choices_list)
+
+                    # get channel mask
+                    channel_mask = []
+                    global_max_length = int(net.stage_out_channels[-1] // 2 * net.candidate_scales[-1])
+                    for i in range(len(net.stage_repeats)):
+                        for j in range(net.stage_repeats[i]):
+                            local_mask = [0] * global_max_length
+                            channel_choice_index = len(
+                                channel_mask)  # channel_choice index is equal to current channel_mask length
+                            channel_num = int(net.stage_out_channels[i] // 2 *
+                                              net.candidate_scales[channel_choices_list[channel_choice_index]])
+                            local_mask[:channel_num] = [1] * channel_num
+                            channel_mask.append(local_mask)
+                    full_channel_mask = nd.array(channel_mask).astype(net.dtype, copy=False)
+
+                    candidate['block'] = block_choices
+                    candidate['channel'] = full_channel_mask
+                    candidate['block_list'] = block_choices_list
+                    candidate['channel_list'] = channel_choices_list
+                    candidate['flops'] = flops
+                    candidate['model_size'] = model_size
+                    candidate['flop_score'] = flop_score
+                    candidate['model_size_score'] = model_size_score
+
+                    if flops > upper_flops or model_size > upper_params:
+                        continue
+
+                    with pool_lock:
+                        pool.append(candidate)
+                        logger.debug(
+                            "[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
+
 
         manager = multiprocessing.Manager()
         cand_pool = manager.list()

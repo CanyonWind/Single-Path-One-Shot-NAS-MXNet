@@ -1,4 +1,4 @@
-import os
+import os, random
 import sys
 import argparse
 import matplotlib.pyplot as plt
@@ -10,19 +10,40 @@ parent_path = dir_path[:dir_path.rfind('/')]
 sys.path.append(parent_path)
 from oneshot_nas_network import get_shufflenas_oneshot
 
+PARAM_DICT = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+              'block': [0, 1, 2, 3]}
+epoch_delay_early = {0: 0,  # 8
+                     1: 1, 2: 1,  # 7
+                     3: 2, 4: 2, 5: 2,  # 6
+                     6: 3, 7: 3, 8: 3, 9: 3,  # 5
+                     10: 4, 11: 4, 12: 4, 13: 4, 14: 4,
+                     15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
+                     21: 6, 22: 6, 23: 6, 24: 6, 25: 6, 27: 6, 28: 6,
+                     29: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6, 35: 6, 36: 7}
+epoch_delay_late = {0: 0,
+                    1: 1,
+                    2: 2,
+                    3: 3,
+                    4: 4, 5: 4,  # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                    6: 5, 7: 5, 8: 5,  # warm up epoch: 3 ...
+                    9: 6, 10: 6, 11: 6, 12: 6,  # warm up epoch: 4 ...
+                    13: 7, 14: 7, 15: 7, 16: 7, 17: 7,  # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
+                    18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, after 17, use all scales
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Get supernet flop/param distribution.')
-    parser.add_argument('--use-se', action='store_true',
+    parser.add_argument('--use-se', action='store_false',
                         help='use SE layers or not in resnext and ShuffleNas')
     parser.add_argument('--last-conv-after-pooling', action='store_true',
                         help='whether to follow MobileNet V3 last conv after pooling style')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
-    parser.add_argument('--sample-count', type=int, default=1000,
+    parser.add_argument('--sample-count', type=int, default=20,
                         help='How many subnet to be sampled')
     parser.add_argument('--compare', action='store_true',
                         help='whether to plot the regular supernet and se supernet together to compare.')
+    parser.add_argument('--use-evolution', type=bool, default=True,
+                        help='whether to use evolution search or random selection')
     opts = parser.parse_args('')
     return opts
 
@@ -87,9 +108,42 @@ def get_distribution():
     param_list = []
     se_flop_list = []
     se_param_list = []
-    for _ in range(args.sample_count):
-        block_choices = net.random_block_choices(select_predefined_block=False)
-        full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False)
+    pool = []
+    for i in range(args.sample_count):
+        candidate = dict()
+        if not args.use_evolution or len(pool) < 10:
+            block_choices = net.random_block_choices(select_predefined_block=False)
+            _, channel_choices = net.random_channel_mask(select_all_channels=False)
+
+        elif len(pool) < 20:
+            # randomly select parents from current pool
+            mother = random.choice(pool)
+            father = random.choice(pool)
+
+            # make sure mother and father are different
+            while father is mother:
+                mother = random.choice(pool)
+
+            # breed block choice
+            block_choices = [0] * len(father['block'])
+            for i in range(len(block_choices)):
+                block_choices[i] = random.choice([mother['block'][i], father['block'][i]])
+                # Mutation: randomly mutate some of the children.
+                if random.random() < 0.3:
+                    block_choices[i] = random.choice(PARAM_DICT['block'])
+
+            # breed channel choice
+            channel_choices = [0] * len(father['channel'])
+            for i in range(len(channel_choices)):
+                channel_choices[i] = random.choice([mother['channel'][i], father['channel'][i]])
+                # Mutation: randomly mutate some of the children.
+                if random.random() < 0.2:
+                    channel_choices[i] = random.choice(PARAM_DICT['channel'])
+            pool.pop(0)
+
+        candidate['block'] = block_choices
+        candidate['channel'] = channel_choices
+
         if args.compare:
             flops, model_size, _, _ = \
                 get_flop_param_score(block_choices, channel_choices, use_se=False, last_conv_after_pooling=False,
@@ -106,8 +160,13 @@ def get_distribution():
                 get_flop_param_score(block_choices, channel_choices, use_se=args.use_se,
                                      last_conv_after_pooling=args.last_conv_after_pooling,
                                      channels_layout=args.channels_layout)
+
             flop_list.append(flops)
             param_list.append(model_size)
+
+        if flops > 300 or model_size > 4.5 or not args.use_evolution:
+            continue
+        pool.append(candidate)
 
     # plot
     if args.compare:
