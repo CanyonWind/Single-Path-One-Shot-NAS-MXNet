@@ -16,9 +16,9 @@ from oneshot_nas_blocks import ShuffleNetBlock, Activation, SE
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Generate a flop and param lookup table.')
-    parser.add_argument('--use-se', action='store_false',
+    parser.add_argument('--use-se', action='store_true',
                         help='use SE layers or not in resnext and ShuffleNas')
-    parser.add_argument('--last-conv-after-pooling', action='store_false',
+    parser.add_argument('--last-conv-after-pooling', action='store_true',
                         help='whether to follow MobileNet V3 last conv after pooling style')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
@@ -198,7 +198,13 @@ def generate_lookup_table():
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(lookup_table)
 
-    with open('../models/lookup_table.json', 'w') as fp:
+    json_file = '../models/lookup_table'
+    if args.use_se:
+        json_file += '_se'
+    if args.last_conv_after_pooling:
+        json_file += '_lastConvAfterPooling'
+    json_file += '_' +args.channels_layout + '.json'
+    with open(json_file, 'w') as fp:
         json.dump(lookup_table, fp, indent=4)
 
 
@@ -218,8 +224,16 @@ def get_flop_params(block_list, channel_list, lookup_table):
 if __name__ == '__main__':
     args = parse_args()
     print(args)
-    # generate_lookup_table()
-    with open('../models/lookup_table.json', 'r') as fp:
+    generate_lookup_table()
+
+    json_file = '../models/lookup_table'
+    if args.use_se:
+        json_file += '_se'
+    if args.last_conv_after_pooling:
+        json_file += '_lastConvAfterPooling'
+    json_file += '_' + args.channels_layout + '.json'
+
+    with open(json_file, 'r') as fp:
         lookup_table = json.load(fp)
     block_list = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
     channel_list = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
