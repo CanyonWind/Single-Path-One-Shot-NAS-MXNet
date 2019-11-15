@@ -7,6 +7,7 @@ import numpy as np
 from mxnet import nd
 from mxnet.gluon import nn
 from calculate_flops import get_flops
+from progress_bar import Bar
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_path = dir_path[:dir_path.rfind('/')]
@@ -16,12 +17,14 @@ from oneshot_nas_blocks import ShuffleNetBlock, Activation, SE
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Generate a flop and param lookup table.')
-    parser.add_argument('--use-se', action='store_true',
+    parser.add_argument('--use-se', action='store_false',
                         help='use SE layers or not in resnext and ShuffleNas')
-    parser.add_argument('--last-conv-after-pooling', action='store_true',
+    parser.add_argument('--last-conv-after-pooling', action='store_false',
                         help='whether to follow MobileNet V3 last conv after pooling style')
     parser.add_argument('--channels-layout', type=str, default='OneShot',
                         help='The mode of channels layout: [\'ShuffleNetV2+\', \'OneShot\']')
+    parser.add_argument('--nas-root', type=str, default='..',
+                        help='root path of nas repo')
     opts = parser.parse_args('')
     return opts
 
@@ -46,11 +49,11 @@ def get_block_flop(block, input_data):
     return flops, model_size, output_data
 
 
-def generate_lookup_table():
+def generate_lookup_table(use_se, last_conv_after_pooling, channels_layout, nas_root):
     stage_repeats = [4, 4, 8, 4]
-    if args.channels_layout == 'OneShot':
+    if channels_layout == 'OneShot':
         stage_out_channels = [64, 160, 320, 640]
-    elif args.channels_layout == 'ShuffleNetV2+':
+    elif channels_layout == 'ShuffleNetV2+':
         stage_out_channels = [48, 128, 256, 512]
     else:
         raise ValueError('Unrecognized channel layout')
@@ -59,12 +62,14 @@ def generate_lookup_table():
     input_size = 224
     last_conv_out_channel = 1024
     input_data = nd.ones((1, 3, input_size, input_size))
-    lookup_table = dict()
+    bar = Bar(max_step=sum(stage_repeats) + 2, name='Building lookup table')
+    bar.start()
 
+    lookup_table = dict()
     lookup_table['config'] = dict()
-    lookup_table['config']['use_se'] = args.use_se
-    lookup_table['config']['last_conv_after_pooling'] = args.last_conv_after_pooling
-    lookup_table['config']['channels_layout'] = args.channels_layout
+    lookup_table['config']['use_se'] = use_se
+    lookup_table['config']['last_conv_after_pooling'] = last_conv_after_pooling
+    lookup_table['config']['channels_layout'] = channels_layout
     lookup_table['config']['stage_repeats'] = stage_repeats
     lookup_table['config']['stage_out_channels'] = stage_out_channels
     lookup_table['config']['channel_scales'] = channel_scales
@@ -73,12 +78,13 @@ def generate_lookup_table():
     lookup_table['config']['last_conv_out_channel'] = last_conv_out_channel
 
     # input block
+    bar.step()
     input_block = nn.HybridSequential()
     input_block.add(
         nn.Conv2D(first_conv_out_channel, in_channels=3, kernel_size=3, strides=2,
                   padding=1, use_bias=False, prefix='first_conv_'),
         nn.BatchNorm(momentum=0.1),
-        Activation('hard_swish' if args.use_se else 'relu')
+        Activation('hard_swish' if use_se else 'relu')
     )
     input_block_flops, input_block_model_size, input_data = get_block_flop(input_block, input_data)
     lookup_table['flops'] = dict()
@@ -94,7 +100,7 @@ def generate_lookup_table():
         numrepeat = stage_repeats[stage_id]
         output_channel = stage_out_channels[stage_id]
 
-        if args.use_se:
+        if use_se:
             act_name = 'hard_swish' if stage_id >= 1 else 'relu'
             block_use_se = True if stage_id >= 2 else False
         else:
@@ -102,6 +108,7 @@ def generate_lookup_table():
             block_use_se = False
         # create repeated blocks for current stage
         for i in range(numrepeat):
+            bar.step()
             stride = 2 if i == 0 else 1
             output_data = None
             block_flops = [[0] * len(channel_scales) for _ in range(4)]
@@ -146,8 +153,9 @@ def generate_lookup_table():
             input_channel = output_channel
 
     # output block
+    bar.step()
     output_block = nn.HybridSequential()
-    if args.last_conv_after_pooling:
+    if last_conv_after_pooling:
         # MobileNet V3 approach
         output_block.add(
             nn.GlobalAvgPool2D(),
@@ -155,24 +163,24 @@ def generate_lookup_table():
             nn.Conv2D(last_conv_out_channel, kernel_size=1, strides=1,
                       padding=0, use_bias=True, prefix='conv_fc_'),
             # No bn for the conv after pooling
-            Activation('hard_swish' if args.use_se else 'relu')
+            Activation('hard_swish' if use_se else 'relu')
         )
     else:
-        if args.use_se:
+        if use_se:
             # ShuffleNetV2+ approach
             output_block.add(
                 nn.Conv2D(make_divisible(last_conv_out_channel * 0.75), in_channels=input_channel,
                           kernel_size=1, strides=1,
                           padding=0, use_bias=False, prefix='last_conv_'),
                 nn.BatchNorm(momentum=0.1),
-                Activation('hard_swish' if args.use_se else 'relu'),
+                Activation('hard_swish' if use_se else 'relu'),
                 nn.GlobalAvgPool2D(),
                 SE(make_divisible(last_conv_out_channel * 0.75)),
                 nn.Conv2D(last_conv_out_channel, in_channels=make_divisible(last_conv_out_channel * 0.75),
                           kernel_size=1, strides=1,
                           padding=0, use_bias=True, prefix='conv_fc_'),
                 # No bn for the conv after pooling
-                Activation('hard_swish' if args.use_se else 'relu')
+                Activation('hard_swish' if use_se else 'relu')
             )
         else:
             # original Oneshot Nas approach
@@ -180,13 +188,13 @@ def generate_lookup_table():
                 nn.Conv2D(last_conv_out_channel, in_channels=input_channel, kernel_size=1, strides=1,
                           padding=0, use_bias=False, prefix='last_conv_'),
                 nn.BatchNorm(momentum=0.1),
-                Activation('hard_swish' if args.use_se else 'relu'),
+                Activation('hard_swish' if use_se else 'relu'),
                 nn.GlobalAvgPool2D()
             )
 
     # Dropout ratio follows ShuffleNetV2+ for se
     output_block.add(
-        nn.Dropout(0.2 if args.use_se else 0.1),
+        nn.Dropout(0.2 if use_se else 0.1),
         nn.Conv2D(1000, in_channels=last_conv_out_channel, kernel_size=1, strides=1,
                   padding=0, use_bias=True),
         nn.Flatten()
@@ -198,14 +206,31 @@ def generate_lookup_table():
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(lookup_table)
 
-    json_file = '../models/lookup_table'
-    if args.use_se:
+    json_file = os.path.join(nas_root, 'models/lookup_table')
+    if use_se:
         json_file += '_se'
-    if args.last_conv_after_pooling:
+    if last_conv_after_pooling:
         json_file += '_lastConvAfterPooling'
-    json_file += '_' +args.channels_layout + '.json'
+    json_file += '_' +channels_layout + '.json'
     with open(json_file, 'w') as fp:
         json.dump(lookup_table, fp, indent=4)
+
+
+def load_lookup_table(use_se=False, last_conv_after_pooling=False, channels_layout='OneShot', nas_root='../'):
+    json_file = os.path.join(nas_root, 'models/lookup_table')
+    if use_se:
+        json_file += '_se'
+    if last_conv_after_pooling:
+        json_file += '_lastConvAfterPooling'
+    json_file += '_' + channels_layout + '.json'
+
+    if not os.path.isfile(json_file):
+        print("Lookup table not found. Generating one...")
+        generate_lookup_table(use_se=use_se, last_conv_after_pooling=last_conv_after_pooling,
+                              channels_layout=channels_layout, nas_root=nas_root)
+    with open(json_file, 'r') as f:
+        table = json.load(f)
+    return table
 
 
 def get_flop_params(block_list, channel_list, lookup_table):
@@ -223,19 +248,10 @@ def get_flop_params(block_list, channel_list, lookup_table):
 
 if __name__ == '__main__':
     args = parse_args()
-    print(args)
-    generate_lookup_table()
-
-    json_file = '../models/lookup_table'
-    if args.use_se:
-        json_file += '_se'
-    if args.last_conv_after_pooling:
-        json_file += '_lastConvAfterPooling'
-    json_file += '_' + args.channels_layout + '.json'
-
-    with open(json_file, 'r') as fp:
-        lookup_table = json.load(fp)
+    lookup_table = load_lookup_table(args.use_se, args.last_conv_after_pooling,
+                                     args.channels_layout, nas_root=args.nas_root)
     block_list = [0, 0, 0, 1, 0, 0, 1, 0, 3, 2, 0, 1, 2, 2, 1, 2, 0, 0, 2, 0]
     channel_list = [8, 7, 6, 8, 5, 7, 3, 4, 2, 4, 2, 3, 4, 5, 6, 6, 3, 3, 4, 6]
     flops, params = get_flop_params(block_list, channel_list, lookup_table)
     print('FLOPs: {}, params: {}'.format(flops, params))
+
