@@ -209,8 +209,10 @@ def get_flops(norelubn=True, size_in_mb=False, mode='wild', micronet_include_bn=
         if op == 'Pooling':
             if "global_pool" in attrs and attrs['global_pool'] == 'True':
                 input_layer_name = nodes[node["inputs"][0][0]]["name"]
-
-                internal_sym = sym.get_internals()[input_layer_name + '_output']
+                if input_layer_name == 'data':
+                    internal_sym = sym.get_internals()[input_layer_name]
+                else:
+                    internal_sym = sym.get_internals()[input_layer_name + '_output']
                 internal_label_names, internal_label_shapes = get_internal_label_info(internal_sym, label_shapes)
 
                 shape_dict = {}
