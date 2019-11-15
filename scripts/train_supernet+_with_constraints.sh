@@ -9,4 +9,4 @@ python train_imagenet.py \
     --model ShuffleNas \
     --epoch-start-cs 0 --use-se --last-conv-after-pooling --channels-layout OneShot \
     --save-dir params_shufflenas_supernet+ --logging-file ./logs/shufflenas_supernet+.log \
-    --train-upper-constraints 'flops-330-params-4.5'
+    --train-upper-constraints flops-330-params-4.5 --flop-param-method lookup_table
