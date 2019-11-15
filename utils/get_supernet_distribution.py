@@ -5,7 +5,7 @@ import json
 import matplotlib.pyplot as plt
 from mxnet import nd
 from calculate_flops import get_flops
-from generate_flop_param_lookup_table import get_flop_params as lookup_flop_params
+from lookup_table import get_flop_params as lookup_flop_params
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_path = dir_path[:dir_path.rfind('/')]
