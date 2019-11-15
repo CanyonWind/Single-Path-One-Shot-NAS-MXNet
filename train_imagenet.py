@@ -1,11 +1,14 @@
-import argparse, time, logging, os, math
+import argparse, time, logging, os, math, sys
+import multiprocessing
+from multiprocessing import Value
+from ctypes import c_bool
+import random
 
 import numpy as np
 import mxnet as mx
 import gluoncv as gcv
 from mxnet import gluon, nd
 from mxnet import autograd as ag
-from mxnet.gluon import nn
 from mxnet.gluon.data.vision import transforms
 
 from gluoncv.data import imagenet
@@ -13,7 +16,31 @@ from gluoncv.model_zoo import get_model
 from gluoncv.utils import makedirs, LRSequential, LRScheduler
 
 from oneshot_nas_network import get_shufflenas_oneshot
+from oneshot_nas_blocks import NasBatchNorm
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path + '/utils')
+from get_supernet_distribution import get_flop_param_score
+
+PARAM_DICT = {'channel': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+              'block': [0, 1, 2, 3]}
+epoch_delay_early = {0: 0,  # 8
+                     1: 1, 2: 1,  # 7
+                     3: 2, 4: 2, 5: 2,  # 6
+                     6: 3, 7: 3, 8: 3, 9: 3,  # 5
+                     10: 4, 11: 4, 12: 4, 13: 4, 14: 4,
+                     15: 5, 16: 5, 17: 5, 18: 5, 19: 5, 20: 5,
+                     21: 6, 22: 6, 23: 6, 24: 6, 25: 6, 27: 6, 28: 6,
+                     29: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6, 35: 6, 36: 7}
+epoch_delay_late = {0: 0,
+                    1: 1,
+                    2: 2,
+                    3: 3,
+                    4: 4, 5: 4,  # warm up epoch: 2 [1.0, 1.2, ... 1.8, 2.0]
+                    6: 5, 7: 5, 8: 5,  # warm up epoch: 3 ...
+                    9: 6, 10: 6, 11: 6, 12: 6,  # warm up epoch: 4 ...
+                    13: 7, 14: 7, 15: 7, 16: 7, 17: 7,  # warm up epoch: 5 [0.4, 0.6, ... 1.8, 2.0]
+                    18: 8, 19: 8, 20: 8, 21: 8, 22: 8, 23: 8}  # warm up epoch: 6, after 17, use all scales
 
 # CLI
 def parse_args():
@@ -125,20 +152,26 @@ def parse_args():
     parser.add_argument('--reduced-dataset-scale', type=int, default=1,
                         help='How many times the dataset would be reduced, so that in each epoch '
                              'only num_batches / reduced_dataset_scale batches will be trained.')
-    parser.add_argument('--block-choices', type=str, 
+    parser.add_argument('--train-upper-constraints', type=str, default='',
+                        help="training constraints: 1) empty str: no constraint\n"
+                             "                      2) a str of 'flops-330-params-4.5', which means searching subnets\n"
+                             "                         with less than 330M FLOPs and less than 4.5M parameters.")
+    parser.add_argument('--block-choices', type=str,
                         default='0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2',
                         help='Block choices')
-    parser.add_argument('--channel-choices', type=str, 
+    parser.add_argument('--channel-choices', type=str,
                         default='6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3',
                         help='Channel choices')
 
     opt = parser.parse_args()
     return opt
 
+
 def parse_str_list(str_list):
     num_list = str_list.split(',')
     return list(map(int, num_list)) 
-    
+
+
 def main():
     opt = parse_args()
 
@@ -146,7 +179,8 @@ def main():
     streamhandler = logging.StreamHandler()
 
     logger = logging.getLogger('')
-    logger.setLevel(logging.INFO)
+    # logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(filehandler)
     logger.addHandler(streamhandler)
 
@@ -373,7 +407,51 @@ def main():
     def make_divisible(x, divisible_by=8):
         return int(np.ceil(x * 1. / divisible_by) * divisible_by)
 
+    def set_nas_bn(net, inference_update_stat=False):
+        if isinstance(net, NasBatchNorm):
+            net.inference_update_stat = inference_update_stat
+        elif len(net._children) != 0:
+            for k, v in net._children.items():
+                set_nas_bn(v, inference_update_stat=inference_update_stat)
+        else:
+            return
+
+    def update_bn(net, batch_fn, train_data, block_choices, full_channel_mask,
+                  ctx=[mx.cpu()], dtype='float32', batch_size=256, update_bn_images=20000):
+        train_data.reset()
+        # Updating bn needs the model to be float32
+        net.cast('float32')
+        full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
+        set_nas_bn(net, inference_update_stat=True)
+        for i, batch in enumerate(train_data):
+            if (i + 1) * batch_size * len(ctx) >= update_bn_images:
+                break
+            data, _ = batch_fn(batch, ctx)
+            _ = [net(X.astype('float32', copy=False), block_choices.astype('float32', copy=False),
+                     channel_mask.astype('float32', copy=False)) for X, channel_mask in zip(data, full_channel_masks)]
+        set_nas_bn(net, inference_update_stat=False)
+        net.cast(dtype)
+
     def test(ctx, val_data, epoch):
+        if model_name == 'ShuffleNas':
+            # For evaluating validation accuracy, random select block and channels and update bn stats
+            block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
+            if opt.cs_warm_up:
+                # TODO: edit in the issue, readme and medium article that
+                #  bn stat needs to be updated before verifying val acc
+                full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=False,
+                                                                             epoch_after_cs=epoch - opt.epoch_start_cs,
+                                                                             dtype=opt.dtype,
+                                                                             ignore_first_two_cs=opt.ignore_first_two_cs)
+            else:
+                full_channel_mask, _ = net.random_channel_mask(select_all_channels=False,
+                                                               dtype=opt.dtype,
+                                                               ignore_first_two_cs=opt.ignore_first_two_cs)
+            update_bn(net, batch_fn, train_data, block_choices, full_channel_mask, ctx,
+                      dtype=opt.dtype, batch_size=batch_size)
+        else:
+            block_choices, full_channel_mask = None, None
+
         if opt.use_rec:
             val_data.reset()
         acc_top1.reset()
@@ -381,41 +459,9 @@ def main():
         for i, batch in enumerate(val_data):
             data, label = batch_fn(batch, ctx)
             if model_name == 'ShuffleNas':
-                # For evaluating validation accuracy, random select block and channels.
-                block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
-                if opt.cs_warm_up:
-                    # TODO: edit in the issue, readme and medium article that all channels need to be selected in
-                    #       testing.
-                    full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=True,
-                                                                                 epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                                 dtype=opt.dtype,
-                                                                                 ignore_first_two_cs=opt.ignore_first_two_cs)
-
-                else:
-                    full_channel_mask, _ = net.random_channel_mask(select_all_channels=True,
-                                                                   dtype=opt.dtype,
-                                                                   ignore_first_two_cs=opt.ignore_first_two_cs)
-
-                # TODO: remove debug code
-                stage_repeats = net.stage_repeats
-                stage_out_channels = net.stage_out_channels
-                candidate_scales = net.candidate_scales
-                channel_scales = []
-                for c in range(len(channel_choices)):
-                    # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-                    channel_scales.append(candidate_scales[channel_choices[c]])
-                channels = [stage_out_channels[0]] * stage_repeats[0] + \
-                           [stage_out_channels[1]] * stage_repeats[1] + \
-                           [stage_out_channels[2]] * stage_repeats[2] + \
-                           [stage_out_channels[3]] * stage_repeats[3]
-                channels = [make_divisible(channel // 2 * channel_scales[j]) for (j, channel) in
-                            enumerate(channels)]
-                if i == 0:
-                    print("Val batch channel choices: {}".format(channel_choices))
-                    print("Val batch channels: {}".format(channels))
-                # TODO: end of debug code
-
-                outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+                full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
+                outputs = [net(X.astype(opt.dtype, copy=False), block_choices, channel_mask)
+                           for X, channel_mask in zip(data, full_channel_masks)]
             else:
                 outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
             acc_top1.update(label, outputs)
@@ -455,11 +501,12 @@ def main():
 
         best_val_score = 1
 
-        def train_epoch():
+        def train_epoch(pool=None, pool_lock=None, shared_finished_flag=None, use_pool=False):
             btic = time.time()
             for i, batch in enumerate(train_data):
                 if i == num_batches:
-                    return i
+                    shared_finished_flag.value = True
+                    return
                 data, label = batch_fn(batch, ctx)
 
                 if opt.mixup:
@@ -483,39 +530,43 @@ def main():
                                     for X in data]
 
                 with ag.record():
-                    if model_name == 'ShuffleNas':
+                    if model_name == 'ShuffleNas' and use_pool:
+                        cand = None
+                        while cand is None:
+                            if len(pool) > 0:
+                                with pool_lock:
+                                    cand = pool.pop()
+                                    logger.debug('[Trainer]' + '-' * 40)
+                                    logger.debug("Time: {}".format(time.time()))
+                                    logger.debug("Block choice: {}".format(cand['block_list']))
+                                    logger.debug("Channel choice: {}".format(cand['channel_list']))
+                                    logger.debug("Flop: {}M, param: {}M".format(cand['flops'], cand['model_size']))
+                            else:
+                                time.sleep(1)
+
+                        full_channel_masks = [cand['channel'].as_in_context(ctx_i) for ctx_i in ctx]
+                        outputs = [net(X.astype(opt.dtype, copy=False), cand['block'], channel_mask)
+                                   for X, channel_mask in zip(data, full_channel_masks)]
+                    elif model_name == 'ShuffleNas':
                         block_choices = net.random_block_choices(select_predefined_block=False, dtype=opt.dtype)
                         if opt.cs_warm_up:
-                            full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                           epoch_after_cs=epoch - opt.epoch_start_cs,
-                                                                           dtype=opt.dtype,
-                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
+                            full_channel_mask, channel_choices = net.random_channel_mask(
+                                select_all_channels=opt.use_all_channels,
+                                epoch_after_cs=epoch - opt.epoch_start_cs,
+                                dtype=opt.dtype,
+                                ignore_first_two_cs=opt.ignore_first_two_cs)
                         else:
-                            full_channel_mask, channel_choices = net.random_channel_mask(select_all_channels=opt.use_all_channels,
-                                                                           dtype=opt.dtype,
-                                                                           ignore_first_two_cs=opt.ignore_first_two_cs)
-                        # TODO: remove debug code
-                        stage_repeats = net.stage_repeats
-                        stage_out_channels = net.stage_out_channels
-                        candidate_scales = net.candidate_scales
-                        channel_scales = []
-                        for c in range(len(channel_choices)):
-                            # scale_ids = [6, 5, 3, 5, 2, 6, 3, 4, 2, 5, 7, 5, 4, 6, 7, 4, 4, 5, 4, 3]
-                            channel_scales.append(candidate_scales[channel_choices[c]])
-                        channels = [stage_out_channels[0]] * stage_repeats[0] + \
-                                   [stage_out_channels[1]] * stage_repeats[1] + \
-                                   [stage_out_channels[2]] * stage_repeats[2] + \
-                                   [stage_out_channels[3]] * stage_repeats[3]
-                        channels = [make_divisible(channel / 2 * channel_scales[j]) for (j, channel)
-                                    in enumerate(channels)]
-                        if i < 5:
-                            print("Train batch channel choices: {}".format(channel_choices))
-                            print("Train batch channels: {}".format(channels))
-                        # TODO: end of debug code
+                            full_channel_mask, channel_choices = net.random_channel_mask(
+                                select_all_channels=opt.use_all_channels,
+                                dtype=opt.dtype,
+                                ignore_first_two_cs=opt.ignore_first_two_cs)
 
-                        outputs = [net(X.astype(opt.dtype, copy=False), block_choices, full_channel_mask) for X in data]
+                        full_channel_masks = [full_channel_mask.as_in_context(ctx_i) for ctx_i in ctx]
+                        outputs = [net(X.astype(opt.dtype, copy=False), block_choices, channel_mask)
+                                   for X, channel_mask in zip(data, full_channel_masks)]
                     else:
                         outputs = [net(X.astype(opt.dtype, copy=False)) for X in data]
+
                     if distillation:
                         loss = [L(yhat.astype('float32', copy=False),
                                   y.astype('float32', copy=False),
@@ -542,8 +593,141 @@ def main():
                                 epoch, i, batch_size*opt.log_interval/(time.time()-btic),
                                 train_metric_name, train_metric_score, trainer.learning_rate))
                     btic = time.time()
-            return i
+            return
 
+        def pool_maintainer(pool, pool_lock, shared_finished_flag, upper_flops=sys.maxsize, upper_params=sys.maxsize):
+            while True:
+                if shared_finished_flag.value:
+                    break
+
+                if len(pool) < 10:
+                    candidate = dict()
+                    block_choices, block_choices_list = net.random_block_choices(select_predefined_block=False,
+                                                                                 dtype=opt.dtype,
+                                                                                 return_choice_list=True)
+                    if opt.cs_warm_up:
+                        full_channel_mask, channel_choices_list = net.random_channel_mask(
+                            select_all_channels=opt.use_all_channels,
+                            epoch_after_cs=epoch - opt.epoch_start_cs,
+                            dtype=opt.dtype,
+                            ignore_first_two_cs=opt.ignore_first_two_cs,)
+                    else:
+                        full_channel_mask, channel_choices_list = net.random_channel_mask(
+                            select_all_channels=opt.use_all_channels,
+                            dtype=opt.dtype,
+                            ignore_first_two_cs=opt.ignore_first_two_cs)
+
+                    flops, model_size, flop_score, model_size_score = \
+                        get_flop_param_score(block_choices_list, channel_choices_list,
+                                             use_se=opt.use_se, last_conv_after_pooling=opt.last_conv_after_pooling,
+                                             channels_layout=opt.channels_layout)
+                    candidate['block'] = block_choices
+                    candidate['channel'] = full_channel_mask
+                    candidate['block_list'] = block_choices_list
+                    candidate['channel_list'] = channel_choices_list
+                    candidate['flops'] = flops
+                    candidate['model_size'] = model_size
+                    candidate['flop_score'] = flop_score
+                    candidate['model_size_score'] = model_size_score
+
+                    if flops > upper_flops or model_size > upper_params:
+                        continue
+
+                    with pool_lock:
+                        pool.append(candidate)
+                        logger.debug("[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
+
+                elif len(pool) < 20:
+                    candidate = dict()
+
+                    # randomly select parents from current pool
+                    mother = random.choice(pool)
+                    father = random.choice(pool)
+
+                    # make sure mother and father are different
+                    while father is mother:
+                        mother = random.choice(pool)
+
+                    # breed block choice
+                    block_choices_list = [0] * len(father['block_list'])
+                    for i in range(len(block_choices_list)):
+                        block_choices_list[i] = random.choice([mother['block_list'][i], father['block_list'][i]])
+                        # Mutation: randomly mutate some of the children.
+                        if random.random() < 0.3:
+                            block_choices_list[i] = random.choice(PARAM_DICT['block'])
+
+                    # breed channel choice
+                    channel_choices_list = [0] * len(father['channel_list'])
+                    for i in range(len(channel_choices_list)):
+                        channel_choices_list[i] = random.choice([mother['channel_list'][i], father['channel_list'][i]])
+                        # Mutation: randomly mutate some of the children.
+                        if random.random() < 0.3:
+                            # warm up
+                            if opt.cs_warm_up:
+                                epoch_after_cs = epoch - opt.epoch_start_cs
+                                if 0 <= epoch_after_cs <= 23 and net.stage_out_channels[0] >= 64:
+                                    delayed_epoch_after_cs = epoch_delay_late[epoch_after_cs]
+                                elif 0 <= epoch_after_cs <= 36 and net.stage_out_channels[0] < 64:
+                                    delayed_epoch_after_cs = epoch_delay_early[epoch_after_cs]
+                                else:
+                                    delayed_epoch_after_cs = epoch_after_cs
+
+                                if opt.ignore_first_two_cs:
+                                    min_scale_id = 2
+                                else:
+                                    min_scale_id = 0
+
+                                channel_scale_start = max(min_scale_id,
+                                                          len(net.candidate_scales) - delayed_epoch_after_cs - 2)
+                                channel_choices_list[i] = random.randint(channel_scale_start,
+                                                                         len(net.candidate_scales) - 1)
+
+                            else:
+                                channel_choices_list[i] = random.choice(PARAM_DICT['channel'])
+
+                    flops, model_size, flop_score, model_size_score = \
+                        get_flop_param_score(block_choices_list, channel_choices_list,
+                                             use_se=opt.use_se, last_conv_after_pooling=opt.last_conv_after_pooling,
+                                             channels_layout=opt.channels_layout)
+
+                    # get block choices ndarray
+                    block_choices = nd.array(block_choices_list)
+
+                    # get channel mask
+                    channel_mask = []
+                    global_max_length = int(net.stage_out_channels[-1] // 2 * net.candidate_scales[-1])
+                    for i in range(len(net.stage_repeats)):
+                        for j in range(net.stage_repeats[i]):
+                            local_mask = [0] * global_max_length
+                            channel_choice_index = len(
+                                channel_mask)  # channel_choice index is equal to current channel_mask length
+                            channel_num = int(net.stage_out_channels[i] // 2 *
+                                              net.candidate_scales[channel_choices_list[channel_choice_index]])
+                            local_mask[:channel_num] = [1] * channel_num
+                            channel_mask.append(local_mask)
+                    full_channel_mask = nd.array(channel_mask).astype(net.dtype, copy=False)
+
+                    candidate['block'] = block_choices
+                    candidate['channel'] = full_channel_mask
+                    candidate['block_list'] = block_choices_list
+                    candidate['channel_list'] = channel_choices_list
+                    candidate['flops'] = flops
+                    candidate['model_size'] = model_size
+                    candidate['flop_score'] = flop_score
+                    candidate['model_size_score'] = model_size_score
+
+                    if flops > upper_flops or model_size > upper_params:
+                        continue
+
+                    with pool_lock:
+                        pool.append(candidate)
+                        logger.debug(
+                            "[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
+
+
+        manager = multiprocessing.Manager()
+        cand_pool = manager.list()
+        p_lock = manager.Lock()
         for epoch in range(opt.resume_epoch, opt.num_epochs):
             if epoch >= opt.epoch_start_cs:
                 opt.use_all_channels = False
@@ -552,28 +736,47 @@ def main():
                 train_data.reset()
             train_metric.reset()
 
-            i = train_epoch()
+            if model_name == 'ShuffleNas' and opt.train_upper_constraints:
+                constraints = opt.train_upper_constraints.split('-')
+                # opt.train_upper_constraints = 'flops-300-params-4.5'
+                assert len(constraints) == 4 and constraints[0] == 'flops' and constraints[2] == 'params'
+                upper_flops = float(constraints[1]) if float(constraints[1]) != 0 else sys.maxsize
+                upper_params = float(constraints[3]) if float(constraints[3]) != 0 else sys.maxsize
+                finished = Value(c_bool, False)
+                logger.debug("===== DEBUG ======\n"
+                             "Train SuperNet with Flops less than {}, params less than {}"
+                             .format(upper_flops, upper_params))
+                pool_process = multiprocessing.Process(target=pool_maintainer,
+                                                       args=[cand_pool, p_lock, finished, upper_flops, upper_params])
+                pool_process.start()
+                train_epoch(pool=cand_pool, pool_lock=p_lock, shared_finished_flag=finished, use_pool=True)
+                pool_process.join()
+            else:
+                logger.debug("===== DEBUG ======\n"
+                             "Train SuperNet with no constraint")
+                train_epoch()
+
             train_metric_name, train_metric_score = train_metric.get()
-            throughput = int(batch_size * i / (time.time() - tic))
+            throughput = int(batch_size * num_batches / (time.time() - tic))
 
             err_top1_val, err_top5_val = test(ctx, val_data, epoch)
 
-            logger.info('[Epoch %d] training: %s=%f'%(epoch, train_metric_name, train_metric_score))
-            logger.info('[Epoch %d] speed: %d samples/sec\ttime cost: %f'%(epoch, throughput, time.time()-tic))
-            logger.info('[Epoch %d] validation: err-top1=%f err-top5=%f'%(epoch, err_top1_val, err_top5_val))
+            logger.info('[Epoch %d] training: %s=%f' % (epoch, train_metric_name, train_metric_score))
+            logger.info('[Epoch %d] speed: %d samples/sec\ttime cost: %f' % (epoch, throughput, time.time()-tic))
+            logger.info('[Epoch %d] validation: err-top1=%f err-top5=%f' % (epoch, err_top1_val, err_top5_val))
 
             if err_top1_val < best_val_score:
                 best_val_score = err_top1_val
-                net.save_parameters('%s/%.4f-imagenet-%s-%d-best.params'%(save_dir, best_val_score, model_name, epoch))
-                trainer.save_states('%s/%.4f-imagenet-%s-%d-best.states'%(save_dir, best_val_score, model_name, epoch))
+                net.save_parameters('%s/%.4f-imagenet-%s-%d-best.params' % (save_dir, best_val_score, model_name, epoch))
+                trainer.save_states('%s/%.4f-imagenet-%s-%d-best.states' % (save_dir, best_val_score, model_name, epoch))
 
             if save_frequency and save_dir and (epoch + 1) % save_frequency == 0:
-                net.save_parameters('%s/imagenet-%s-%d.params'%(save_dir, model_name, epoch))
-                trainer.save_states('%s/imagenet-%s-%d.states'%(save_dir, model_name, epoch))
+                net.save_parameters('%s/imagenet-%s-%d.params' % (save_dir, model_name, epoch))
+                trainer.save_states('%s/imagenet-%s-%d.states' % (save_dir, model_name, epoch))
 
         if save_frequency and save_dir:
-            net.save_parameters('%s/imagenet-%s-%d.params'%(save_dir, model_name, opt.num_epochs-1))
-            trainer.save_states('%s/imagenet-%s-%d.states'%(save_dir, model_name, opt.num_epochs-1))
+            net.save_parameters('%s/imagenet-%s-%d.params' % (save_dir, model_name, opt.num_epochs-1))
+            trainer.save_states('%s/imagenet-%s-%d.states' % (save_dir, model_name, opt.num_epochs-1))
 
     if opt.mode == 'hybrid':
         net.hybridize(static_alloc=True, static_shape=True)
