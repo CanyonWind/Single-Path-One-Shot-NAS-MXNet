@@ -1,0 +1,480 @@
+[Epoch 0] training: accuracy=0.010154
+[Epoch 0] speed: 435 samples/sec	time cost: 3028.017839
+[Epoch 0] validation: err-top1=0.968950 err-top5=0.890805
+----------------------------------------
+[Epoch 1] training: accuracy=0.049808
+[Epoch 1] speed: 437 samples/sec	time cost: 3013.377325
+[Epoch 1] validation: err-top1=0.904169 err-top5=0.754641
+----------------------------------------
+[Epoch 2] training: accuracy=0.084904
+[Epoch 2] speed: 438 samples/sec	time cost: 3008.510698
+[Epoch 2] validation: err-top1=0.880242 err-top5=0.712248
+----------------------------------------
+[Epoch 3] training: accuracy=0.097591
+[Epoch 3] speed: 440 samples/sec	time cost: 2988.600462
+[Epoch 3] validation: err-top1=0.872339 err-top5=0.693782
+----------------------------------------
+[Epoch 4] training: accuracy=0.097688
+[Epoch 4] speed: 440 samples/sec	time cost: 2988.046611
+[Epoch 4] validation: err-top1=0.881554 err-top5=0.705283
+----------------------------------------
+[Epoch 5] training: accuracy=0.101938
+[Epoch 5] speed: 444 samples/sec	time cost: 2963.149972
+[Epoch 5] validation: err-top1=0.859935 err-top5=0.670034
+----------------------------------------
+[Epoch 6] training: accuracy=0.111262
+[Epoch 6] speed: 443 samples/sec	time cost: 2963.772202
+[Epoch 6] validation: err-top1=0.860635 err-top5=0.676376
+----------------------------------------
+[Epoch 7] training: accuracy=0.117610
+[Epoch 7] speed: 442 samples/sec	time cost: 2974.558048
+[Epoch 7] validation: err-top1=0.847211 err-top5=0.645987
+----------------------------------------
+[Epoch 8] training: accuracy=0.122861
+[Epoch 8] speed: 442 samples/sec	time cost: 2969.487379
+[Epoch 8] validation: err-top1=0.841632 err-top5=0.635910
+----------------------------------------
+[Epoch 9] training: accuracy=0.127078
+[Epoch 9] speed: 442 samples/sec	time cost: 2973.782248
+[Epoch 9] validation: err-top1=0.831066 err-top5=0.623199
+----------------------------------------
+[Epoch 10] training: accuracy=0.131082
+[Epoch 10] speed: 442 samples/sec	time cost: 2978.042745
+[Epoch 10] validation: err-top1=0.843450 err-top5=0.636744
+----------------------------------------
+[Epoch 11] training: accuracy=0.134029
+[Epoch 11] speed: 442 samples/sec	time cost: 2977.184075
+[Epoch 11] validation: err-top1=0.835027 err-top5=0.629742
+----------------------------------------
+[Epoch 12] training: accuracy=0.136167
+[Epoch 12] speed: 443 samples/sec	time cost: 2964.934461
+[Epoch 12] validation: err-top1=0.821691 err-top5=0.606298
+----------------------------------------
+[Epoch 13] training: accuracy=0.138422
+[Epoch 13] speed: 444 samples/sec	time cost: 2957.997738
+[Epoch 13] validation: err-top1=0.839689 err-top5=0.633463
+----------------------------------------
+[Epoch 14] training: accuracy=0.139758
+[Epoch 14] speed: 442 samples/sec	time cost: 2975.079484
+[Epoch 14] validation: err-top1=0.816781 err-top5=0.598612
+----------------------------------------
+[Epoch 15] training: accuracy=0.141808
+[Epoch 15] speed: 442 samples/sec	time cost: 2975.936494
+[Epoch 15] validation: err-top1=0.823544 err-top5=0.601933
+----------------------------------------
+[Epoch 16] training: accuracy=0.143565
+[Epoch 16] speed: 444 samples/sec	time cost: 2965.649320
+[Epoch 16] validation: err-top1=0.816816 err-top5=0.595788
+----------------------------------------
+[Epoch 17] training: accuracy=0.145094
+[Epoch 17] speed: 442 samples/sec	time cost: 2970.926395
+[Epoch 17] validation: err-top1=0.817061 err-top5=0.598131
+----------------------------------------
+[Epoch 18] training: accuracy=0.147465
+[Epoch 18] speed: 445 samples/sec	time cost: 2955.627783
+[Epoch 18] validation: err-top1=0.818782 err-top5=0.592990
+----------------------------------------
+[Epoch 19] training: accuracy=0.148606
+[Epoch 19] speed: 443 samples/sec	time cost: 2970.373664
+[Epoch 19] validation: err-top1=0.812120 err-top5=0.593050
+----------------------------------------
+[Epoch 20] training: accuracy=0.150443
+[Epoch 20] speed: 444 samples/sec	time cost: 2971.669577
+[Epoch 20] validation: err-top1=0.816896 err-top5=0.597646
+----------------------------------------
+[Epoch 21] training: accuracy=0.151899
+[Epoch 21] speed: 443 samples/sec	time cost: 2971.155486
+[Epoch 21] validation: err-top1=0.804137 err-top5=0.580546
+----------------------------------------
+[Epoch 22] training: accuracy=0.154405
+[Epoch 22] speed: 443 samples/sec	time cost: 2971.300011
+[Epoch 22] validation: err-top1=0.813980 err-top5=0.593430
+----------------------------------------
+[Epoch 23] training: accuracy=0.157023
+[Epoch 23] speed: 444 samples/sec	time cost: 2956.976977
+[Epoch 23] validation: err-top1=0.819462 err-top5=0.598492
+----------------------------------------
+[Epoch 24] training: accuracy=0.158085
+[Epoch 24] speed: 444 samples/sec	time cost: 2959.317923
+[Epoch 24] validation: err-top1=0.801091 err-top5=0.571571
+----------------------------------------
+[Epoch 25] training: accuracy=0.161361
+[Epoch 25] speed: 443 samples/sec	time cost: 2972.104673
+[Epoch 25] validation: err-top1=0.786912 err-top5=0.552697
+----------------------------------------
+[Epoch 26] training: accuracy=0.163035
+[Epoch 26] speed: 445 samples/sec	time cost: 2952.767865
+[Epoch 26] validation: err-top1=0.793814 err-top5=0.562960
+----------------------------------------
+[Epoch 27] training: accuracy=0.165187
+[Epoch 27] speed: 444 samples/sec	time cost: 2962.239138
+[Epoch 27] validation: err-top1=0.796355 err-top5=0.564821
+----------------------------------------
+[Epoch 28] training: accuracy=0.166321
+[Epoch 28] speed: 442 samples/sec	time cost: 2972.375349
+[Epoch 28] validation: err-top1=0.793119 err-top5=0.556586
+----------------------------------------
+[Epoch 29] training: accuracy=0.168554
+[Epoch 29] speed: 409 samples/sec	time cost: 3218.129940
+[Epoch 29] validation: err-top1=0.796935 err-top5=0.566501
+----------------------------------------
+[Epoch 30] training: accuracy=0.171176
+[Epoch 30] speed: 408 samples/sec	time cost: 3223.479574
+[Epoch 30] validation: err-top1=0.787112 err-top5=0.550876
+----------------------------------------
+[Epoch 31] training: accuracy=0.172523
+[Epoch 31] speed: 443 samples/sec	time cost: 2972.434188
+[Epoch 31] validation: err-top1=0.774848 err-top5=0.530670
+----------------------------------------
+[Epoch 32] training: accuracy=0.173765
+[Epoch 32] speed: 376 samples/sec	time cost: 3513.282629
+[Epoch 32] validation: err-top1=0.788203 err-top5=0.553569
+----------------------------------------
+[Epoch 33] training: accuracy=0.176261
+[Epoch 33] speed: 443 samples/sec	time cost: 2965.969714
+[Epoch 33] validation: err-top1=0.778909 err-top5=0.542754
+----------------------------------------
+[Epoch 34] training: accuracy=0.178251
+[Epoch 34] speed: 444 samples/sec	time cost: 2967.700576
+[Epoch 34] validation: err-top1=0.772387 err-top5=0.530530
+----------------------------------------
+[Epoch 35] training: accuracy=0.179716
+[Epoch 35] speed: 445 samples/sec	time cost: 2958.056867
+[Epoch 35] validation: err-top1=0.781510 err-top5=0.546795
+----------------------------------------
+[Epoch 36] training: accuracy=0.181572
+[Epoch 36] speed: 442 samples/sec	time cost: 2981.500091
+[Epoch 36] validation: err-top1=0.775835 err-top5=0.537644
+----------------------------------------
+[Epoch 37] training: accuracy=0.184208
+[Epoch 37] speed: 443 samples/sec	time cost: 2964.757421
+[Epoch 37] validation: err-top1=0.769806 err-top5=0.526548
+----------------------------------------
+[Epoch 38] training: accuracy=0.185709
+[Epoch 38] speed: 444 samples/sec	time cost: 2962.631668
+[Epoch 38] validation: err-top1=0.779970 err-top5=0.536352
+----------------------------------------
+[Epoch 39] training: accuracy=0.188289
+[Epoch 39] speed: 444 samples/sec	time cost: 2957.850516
+[Epoch 39] validation: err-top1=0.770367 err-top5=0.528009
+----------------------------------------
+[Epoch 40] training: accuracy=0.190065
+[Epoch 40] speed: 444 samples/sec	time cost: 2965.115705
+[Epoch 40] validation: err-top1=0.771399 err-top5=0.529352
+----------------------------------------
+[Epoch 41] training: accuracy=0.192281
+[Epoch 41] speed: 444 samples/sec	time cost: 2964.805619
+[Epoch 41] validation: err-top1=0.758223 err-top5=0.514065
+----------------------------------------
+[Epoch 42] training: accuracy=0.195021
+[Epoch 42] speed: 443 samples/sec	time cost: 2970.759800
+[Epoch 42] validation: err-top1=0.757622 err-top5=0.506962
+----------------------------------------
+[Epoch 43] training: accuracy=0.196166
+[Epoch 43] speed: 442 samples/sec	time cost: 2978.936772
+[Epoch 43] validation: err-top1=0.760763 err-top5=0.515365
+----------------------------------------
+[Epoch 44] training: accuracy=0.199349
+[Epoch 44] speed: 443 samples/sec	time cost: 2975.728351
+[Epoch 44] validation: err-top1=0.755994 err-top5=0.510290
+----------------------------------------
+[Epoch 45] training: accuracy=0.202163
+[Epoch 45] speed: 445 samples/sec	time cost: 2956.761578
+[Epoch 45] validation: err-top1=0.752601 err-top5=0.503121
+----------------------------------------
+[Epoch 46] training: accuracy=0.204364
+[Epoch 46] speed: 442 samples/sec	time cost: 2981.135937
+[Epoch 46] validation: err-top1=0.753121 err-top5=0.504261
+----------------------------------------
+[Epoch 47] training: accuracy=0.206634
+[Epoch 47] speed: 442 samples/sec	time cost: 2973.299680
+[Epoch 47] validation: err-top1=0.746099 err-top5=0.492278
+----------------------------------------
+[Epoch 48] training: accuracy=0.209554
+[Epoch 48] speed: 444 samples/sec	time cost: 2962.105549
+[Epoch 48] validation: err-top1=0.752178 err-top5=0.502438
+----------------------------------------
+[Epoch 49] training: accuracy=0.212421
+[Epoch 49] speed: 444 samples/sec	time cost: 2961.153728
+[Epoch 49] validation: err-top1=0.742137 err-top5=0.486556
+----------------------------------------
+[Epoch 50] training: accuracy=0.215508
+[Epoch 50] speed: 444 samples/sec	time cost: 2961.584632
+[Epoch 50] validation: err-top1=0.724572 err-top5=0.471371
+----------------------------------------
+[Epoch 51] training: accuracy=0.217341
+[Epoch 51] speed: 444 samples/sec	time cost: 2972.149000
+[Epoch 51] validation: err-top1=0.731674 err-top5=0.477913
+----------------------------------------
+[Epoch 52] training: accuracy=0.221490
+[Epoch 52] speed: 443 samples/sec	time cost: 2966.383327
+[Epoch 52] validation: err-top1=0.730379 err-top5=0.477422
+----------------------------------------
+[Epoch 53] training: accuracy=0.223731
+[Epoch 53] speed: 444 samples/sec	time cost: 2958.432864
+[Epoch 53] validation: err-top1=0.729493 err-top5=0.473311
+----------------------------------------
+[Epoch 54] training: accuracy=0.226759
+[Epoch 54] speed: 444 samples/sec	time cost: 2960.043150
+[Epoch 54] validation: err-top1=0.719610 err-top5=0.461168
+----------------------------------------
+[Epoch 55] training: accuracy=0.230567
+[Epoch 55] speed: 445 samples/sec	time cost: 2963.035091
+[Epoch 55] validation: err-top1=0.717350 err-top5=0.465149
+----------------------------------------
+[Epoch 56] training: accuracy=0.233814
+[Epoch 56] speed: 443 samples/sec	time cost: 2969.852223
+[Epoch 56] validation: err-top1=0.713835 err-top5=0.453585
+----------------------------------------
+[Epoch 57] training: accuracy=0.236906
+[Epoch 57] speed: 443 samples/sec	time cost: 2971.451936
+[Epoch 57] validation: err-top1=0.704645 err-top5=0.442262
+----------------------------------------
+[Epoch 58] training: accuracy=0.240223
+[Epoch 58] speed: 432 samples/sec	time cost: 3046.951940
+[Epoch 58] validation: err-top1=0.702445 err-top5=0.443662
+----------------------------------------
+[Epoch 59] training: accuracy=0.243332
+[Epoch 59] speed: 424 samples/sec	time cost: 3099.535538
+[Epoch 59] validation: err-top1=0.701344 err-top5=0.444582
+----------------------------------------
+[Epoch 60] training: accuracy=0.247042
+[Epoch 60] speed: 443 samples/sec	time cost: 2975.085566
+[Epoch 60] validation: err-top1=0.701447 err-top5=0.439098
+----------------------------------------
+[Epoch 61] training: accuracy=0.250245
+[Epoch 61] speed: 358 samples/sec	time cost: 3656.832702
+[Epoch 61] validation: err-top1=0.688520 err-top5=0.425636
+----------------------------------------
+[Epoch 62] training: accuracy=0.254009
+[Epoch 62] speed: 442 samples/sec	time cost: 2980.729925
+[Epoch 62] validation: err-top1=0.698909 err-top5=0.436401
+----------------------------------------
+[Epoch 63] training: accuracy=0.257624
+[Epoch 63] speed: 435 samples/sec	time cost: 3017.815907
+[Epoch 63] validation: err-top1=0.685499 err-top5=0.420234
+----------------------------------------
+[Epoch 64] training: accuracy=0.260930
+[Epoch 64] speed: 434 samples/sec	time cost: 3032.840317
+[Epoch 64] validation: err-top1=0.697143 err-top5=0.436940
+----------------------------------------
+[Epoch 65] training: accuracy=0.265773
+[Epoch 65] speed: 434 samples/sec	time cost: 3033.858336
+[Epoch 65] validation: err-top1=0.675356 err-top5=0.409751
+----------------------------------------
+[Epoch 66] training: accuracy=0.268618
+[Epoch 66] speed: 432 samples/sec	time cost: 3040.688226
+[Epoch 66] validation: err-top1=0.665022 err-top5=0.402054
+----------------------------------------
+[Epoch 67] training: accuracy=0.273339
+[Epoch 67] speed: 436 samples/sec	time cost: 3016.988241
+[Epoch 67] validation: err-top1=0.668974 err-top5=0.399968
+----------------------------------------
+[Epoch 68] training: accuracy=0.276811
+[Epoch 68] speed: 433 samples/sec	time cost: 3042.854070
+[Epoch 68] validation: err-top1=0.676977 err-top5=0.413732
+----------------------------------------
+[Epoch 69] training: accuracy=0.280890
+[Epoch 69] speed: 431 samples/sec	time cost: 3051.614694
+[Epoch 69] validation: err-top1=0.647447 err-top5=0.379661
+----------------------------------------
+[Epoch 70] training: accuracy=0.285425
+[Epoch 70] speed: 431 samples/sec	time cost: 3048.206118
+[Epoch 70] validation: err-top1=0.662144 err-top5=0.392243
+----------------------------------------
+[Epoch 71] training: accuracy=0.289346
+[Epoch 71] speed: 431 samples/sec	time cost: 3054.686532
+[Epoch 71] validation: err-top1=0.647127 err-top5=0.380862
+----------------------------------------
+[Epoch 72] training: accuracy=0.293676
+[Epoch 72] speed: 432 samples/sec	time cost: 3044.188747
+[Epoch 72] validation: err-top1=0.654089 err-top5=0.384483
+----------------------------------------
+[Epoch 73] training: accuracy=0.298219
+[Epoch 73] speed: 431 samples/sec	time cost: 3055.427529
+[Epoch 73] validation: err-top1=0.641705 err-top5=0.370999
+----------------------------------------
+[Epoch 74] training: accuracy=0.303375
+[Epoch 74] speed: 431 samples/sec	time cost: 3056.741211
+[Epoch 74] validation: err-top1=0.640805 err-top5=0.370904
+----------------------------------------
+[Epoch 75] training: accuracy=0.306459
+[Epoch 75] speed: 433 samples/sec	time cost: 3036.877523
+[Epoch 75] validation: err-top1=0.639225 err-top5=0.369758
+----------------------------------------
+[Epoch 76] training: accuracy=0.312021
+[Epoch 76] speed: 430 samples/sec	time cost: 3056.763729
+[Epoch 76] validation: err-top1=0.625540 err-top5=0.357074
+----------------------------------------
+[Epoch 77] training: accuracy=0.316702
+[Epoch 77] speed: 432 samples/sec	time cost: 3049.294681
+[Epoch 77] validation: err-top1=0.614997 err-top5=0.347611
+----------------------------------------
+[Epoch 78] training: accuracy=0.320828
+[Epoch 78] speed: 433 samples/sec	time cost: 3033.050086
+[Epoch 78] validation: err-top1=0.609055 err-top5=0.340353
+----------------------------------------
+[Epoch 79] training: accuracy=0.326039
+[Epoch 79] speed: 431 samples/sec	time cost: 3046.217575
+[Epoch 79] validation: err-top1=0.616737 err-top5=0.351733
+----------------------------------------
+[Epoch 80] training: accuracy=0.331126
+[Epoch 80] speed: 433 samples/sec	time cost: 3048.684407
+[Epoch 80] validation: err-top1=0.607895 err-top5=0.337788
+----------------------------------------
+[Epoch 81] training: accuracy=0.335965
+[Epoch 81] speed: 432 samples/sec	time cost: 3046.848571
+[Epoch 81] validation: err-top1=0.595511 err-top5=0.327765
+----------------------------------------
+[Epoch 82] training: accuracy=0.340960
+[Epoch 82] speed: 432 samples/sec	time cost: 3051.251860
+[Epoch 82] validation: err-top1=0.580003 err-top5=0.314778
+----------------------------------------
+[Epoch 83] training: accuracy=0.346441
+[Epoch 83] speed: 422 samples/sec	time cost: 3153.330616
+[Epoch 83] validation: err-top1=0.589749 err-top5=0.326885
+----------------------------------------
+[Epoch 84] training: accuracy=0.352274
+[Epoch 84] speed: 427 samples/sec	time cost: 3084.411265
+[Epoch 84] validation: err-top1=0.586328 err-top5=0.323444
+----------------------------------------
+[Epoch 85] training: accuracy=0.357114
+[Epoch 85] speed: 432 samples/sec	time cost: 3045.156292
+[Epoch 85] validation: err-top1=0.583667 err-top5=0.314421
+----------------------------------------
+[Epoch 86] training: accuracy=0.362924
+[Epoch 86] speed: 419 samples/sec	time cost: 3137.396279
+[Epoch 86] validation: err-top1=0.569154 err-top5=0.307805
+----------------------------------------
+[Epoch 87] training: accuracy=0.366483
+[Epoch 87] speed: 444 samples/sec	time cost: 2965.800857
+[Epoch 87] validation: err-top1=0.551570 err-top5=0.291600
+----------------------------------------
+[Epoch 88] training: accuracy=0.371708
+[Epoch 88] speed: 442 samples/sec	time cost: 2980.311056
+[Epoch 88] validation: err-top1=0.545415 err-top5=0.282650
+----------------------------------------
+[Epoch 89] training: accuracy=0.377705
+[Epoch 89] speed: 442 samples/sec	time cost: 2976.993921
+[Epoch 89] validation: err-top1=0.549476 err-top5=0.283691
+----------------------------------------
+[Epoch 90] training: accuracy=0.383507
+[Epoch 90] speed: 434 samples/sec	time cost: 3032.946492
+[Epoch 90] validation: err-top1=0.539353 err-top5=0.275428
+----------------------------------------
+[Epoch 91] training: accuracy=0.389950
+[Epoch 91] speed: 440 samples/sec	time cost: 2989.416326
+[Epoch 91] validation: err-top1=0.529592 err-top5=0.269501
+----------------------------------------
+[Epoch 92] training: accuracy=0.395579
+[Epoch 92] speed: 443 samples/sec	time cost: 2974.890331
+[Epoch 92] validation: err-top1=0.536792 err-top5=0.274288
+----------------------------------------
+[Epoch 93] training: accuracy=0.401986
+[Epoch 93] speed: 440 samples/sec	time cost: 2990.798174
+[Epoch 93] validation: err-top1=0.526729 err-top5=0.269586
+----------------------------------------
+[Epoch 94] training: accuracy=0.408158
+[Epoch 94] speed: 439 samples/sec	time cost: 2994.721235
+[Epoch 94] validation: err-top1=0.531110 err-top5=0.268506
+----------------------------------------
+[Epoch 95] training: accuracy=0.414033
+[Epoch 95] speed: 439 samples/sec	time cost: 3007.268467
+[Epoch 95] validation: err-top1=0.515205 err-top5=0.256634
+----------------------------------------
+[Epoch 96] training: accuracy=0.421402
+[Epoch 96] speed: 433 samples/sec	time cost: 3042.718396
+[Epoch 96] validation: err-top1=0.514004 err-top5=0.256042
+----------------------------------------
+[Epoch 97] training: accuracy=0.427811
+[Epoch 97] speed: 440 samples/sec	time cost: 2987.508720
+[Epoch 97] validation: err-top1=0.492298 err-top5=0.239157
+----------------------------------------
+[Epoch 98] training: accuracy=0.434303
+[Epoch 98] speed: 439 samples/sec	time cost: 2999.189473
+[Epoch 98] validation: err-top1=0.485475 err-top5=0.234035
+----------------------------------------
+[Epoch 99] training: accuracy=0.441109
+[Epoch 99] speed: 440 samples/sec	time cost: 2994.602911
+[Epoch 99] validation: err-top1=0.482896 err-top5=0.231917
+----------------------------------------
+[Epoch 100] training: accuracy=0.448866
+[Epoch 100] speed: 443 samples/sec	time cost: 2976.146640
+[Epoch 100] validation: err-top1=0.477993 err-top5=0.226833
+----------------------------------------
+[Epoch 101] training: accuracy=0.456456
+[Epoch 101] speed: 435 samples/sec	time cost: 3026.882625
+[Epoch 101] validation: err-top1=0.474652 err-top5=0.223371
+----------------------------------------
+[Epoch 102] training: accuracy=0.463631
+[Epoch 102] speed: 441 samples/sec	time cost: 2984.144011
+[Epoch 102] validation: err-top1=0.458267 err-top5=0.213508
+----------------------------------------
+[Epoch 103] training: accuracy=0.471091
+[Epoch 103] speed: 443 samples/sec	time cost: 2971.573568
+[Epoch 103] validation: err-top1=0.453165 err-top5=0.210698
+----------------------------------------
+[Epoch 104] training: accuracy=0.478755
+[Epoch 104] speed: 440 samples/sec	time cost: 2985.103450
+[Epoch 104] validation: err-top1=0.448504 err-top5=0.204065
+----------------------------------------
+[Epoch 105] training: accuracy=0.485845
+[Epoch 105] speed: 443 samples/sec	time cost: 2968.980253
+[Epoch 105] validation: err-top1=0.438760 err-top5=0.199324
+----------------------------------------
+[Epoch 106] training: accuracy=0.493400
+[Epoch 106] speed: 442 samples/sec	time cost: 2981.797807
+[Epoch 106] validation: err-top1=0.439281 err-top5=0.198464
+----------------------------------------
+[Epoch 107] training: accuracy=0.501768
+[Epoch 107] speed: 441 samples/sec	time cost: 2983.376994
+[Epoch 107] validation: err-top1=0.434523 err-top5=0.197470
+----------------------------------------
+[Epoch 108] training: accuracy=0.509141
+[Epoch 108] speed: 439 samples/sec	time cost: 2992.970305
+[Epoch 108] validation: err-top1=0.425496 err-top5=0.190581
+----------------------------------------
+[Epoch 109] training: accuracy=0.517704
+[Epoch 109] speed: 440 samples/sec	time cost: 2995.576653
+[Epoch 109] validation: err-top1=0.413072 err-top5=0.182318
+----------------------------------------
+[Epoch 110] training: accuracy=0.524810
+[Epoch 110] speed: 441 samples/sec	time cost: 2980.327732
+[Epoch 110] validation: err-top1=0.411852 err-top5=0.179738
+----------------------------------------
+[Epoch 111] training: accuracy=0.531965
+[Epoch 111] speed: 441 samples/sec	time cost: 2983.105276
+[Epoch 111] validation: err-top1=0.390905 err-top5=0.167839
+----------------------------------------
+[Epoch 112] training: accuracy=0.537537
+[Epoch 112] speed: 439 samples/sec	time cost: 2997.790413
+[Epoch 112] validation: err-top1=0.399268 err-top5=0.172755
+----------------------------------------
+[Epoch 113] training: accuracy=0.544159
+[Epoch 113] speed: 444 samples/sec	time cost: 2967.932980
+[Epoch 113] validation: err-top1=0.409031 err-top5=0.179237
+----------------------------------------
+[Epoch 114] training: accuracy=0.549720
+[Epoch 114] speed: 441 samples/sec	time cost: 2989.062608
+[Epoch 114] validation: err-top1=0.388204 err-top5=0.165393
+----------------------------------------
+[Epoch 115] training: accuracy=0.553893
+[Epoch 115] speed: 440 samples/sec	time cost: 2992.390329
+[Epoch 115] validation: err-top1=0.381993 err-top5=0.161205
+----------------------------------------
+[Epoch 116] training: accuracy=0.558146
+[Epoch 116] speed: 439 samples/sec	time cost: 2994.790189
+[Epoch 116] validation: err-top1=0.385843 err-top5=0.161272
+----------------------------------------
+[Epoch 117] training: accuracy=0.560501
+[Epoch 117] speed: 439 samples/sec	time cost: 2992.179402
+[Epoch 117] validation: err-top1=0.406910 err-top5=0.176356
+----------------------------------------
+[Epoch 118] training: accuracy=0.561592
+[Epoch 118] speed: 442 samples/sec	time cost: 2977.517705
+[Epoch 118] validation: err-top1=0.388684 err-top5=0.165313
+----------------------------------------
+[Epoch 119] training: accuracy=0.562416
+[Epoch 119] speed: 439 samples/sec	time cost: 2996.178755
+[Epoch 119] validation: err-top1=0.377418 err-top5=0.158887
+----------------------------------------
