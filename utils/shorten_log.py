@@ -5,7 +5,8 @@ def main(file_name, output_file):
     count = 1
     with open(output_file, 'w') as f:
         for line in content:
-            if line[0] == '[':
+            if line[0] == '[' and line[:len('[Trainer]')] != '[Trainer]' and \
+                    line[:len('[Maintainer]')] != '[Maintainer]':
                 f.write(line)
                 if count % 3 == 0:
                     f.write('-' * 40 + '\n')
@@ -13,4 +14,4 @@ def main(file_name, output_file):
 
 
 if __name__ == '__main__':
-    main('../shufflenas_supernet.log', '../condensed_shufflenas_supernet.log')
+    main('../shufflenas_supernet+.log', '../condensed_shufflenas_supernet+.log')
