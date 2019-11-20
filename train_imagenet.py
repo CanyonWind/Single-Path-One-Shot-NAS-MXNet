@@ -19,7 +19,7 @@ from oneshot_nas_blocks import NasBatchNorm
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path + '/utils')
-from get_supernet_distribution import get_flop_param_score as get_flop_param_forward
+from get_distribution import get_shufflenas_flop_param as get_flop_param_forward
 from lookup_table import get_flop_params as get_flop_param_lookup
 from lookup_table import load_lookup_table
 
