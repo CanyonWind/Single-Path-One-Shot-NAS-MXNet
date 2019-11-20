@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--old-ver', action='store_true', help='Whether the log is old version.')
     args = vars(parser.parse_args())
     return args
-    
+
 
 def plot(rows, iter):
     if 'accuracy' in args['mode']:
@@ -25,6 +25,10 @@ def plot(rows, iter):
         for row in rows:
             if row[0] != '[':
                 continue
+            elif row[:len('[Trainer]')] == '[Trainer]' or \
+                row[:len('[Maintainer]')] == '[Maintainer]':
+                continue
+
             epoch = int(row[row.find(' ') + 1: row.find(']')])
 
             if 'training' in row:
