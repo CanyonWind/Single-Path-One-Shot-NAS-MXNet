@@ -20,6 +20,7 @@ from oneshot_nas_blocks import NasBatchNorm
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path + '/utils')
 from get_distribution import get_shufflenas_flop_param as get_flop_param_forward
+from get_distribution import Maintainer
 from lookup_table import get_flop_params as get_flop_param_lookup
 from lookup_table import load_lookup_table
 
@@ -138,9 +139,16 @@ def parse_args():
                         help="training constraints: 1) empty str: no constraint\n"
                              "                      2) a str of 'flops-330-params-4.5', which means searching subnets\n"
                              "                         with less than 330M FLOPs and less than 4.5M parameters.")
+    parser.add_argument('--train-bottom-constraints', type=str, default='',
+                        help="training constraints: 1) empty str: no constraint\n"
+                             "                      2) a str of 'flops-190-params-2.8', which means searching subnets\n"
+                             "                         with greater than 190M FLOPs and greater than 2.8M parameters.")
     parser.add_argument('--flop-param-method', type=str, default='lookup_table',
                         help='How to calculate flops and params. Choose from [symbol, lookup_table].'
                              'The last one runs hundreds faster than the former one.')
+    parser.add_argument('--train-constraint-method', type=str, default='',
+                        help="How to meet the training constraints. Choices from ['', 'random', 'evolution']. Empty"
+                             "str means do not set constraints during training.")
     parser.add_argument('--block-choices', type=str,
                         default='0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2',
                         help='Block choices')
@@ -522,11 +530,12 @@ def main():
                             if len(pool) > 0:
                                 with pool_lock:
                                     cand = pool.pop()
-                                    logger.debug('[Trainer]' + '-' * 40)
-                                    logger.debug("Time: {}".format(time.time()))
-                                    logger.debug("Block choice: {}".format(cand['block_list']))
-                                    logger.debug("Channel choice: {}".format(cand['channel_list']))
-                                    logger.debug("Flop: {}M, param: {}M".format(cand['flops'], cand['model_size']))
+                                    if i % opt.log_interval == 0:
+                                        logger.debug('[Trainer] ' + '-' * 40)
+                                        logger.debug("[Trainer] Time: {}".format(time.time()))
+                                        logger.debug("[Trainer] Block choice: {}".format(cand['block_list']))
+                                        logger.debug("[Trainer] Channel choice: {}".format(cand['channel_list']))
+                                        logger.debug("[Trainer] Flop: {}M, param: {}M".format(cand['flops'], cand['model_size']))
                             else:
                                 time.sleep(1)
 
@@ -581,7 +590,8 @@ def main():
                     btic = time.time()
             return
 
-        def pool_maintainer(pool, pool_lock, shared_finished_flag, upper_flops=sys.maxsize, upper_params=sys.maxsize):
+        def maintain_random_pool(pool, pool_lock, shared_finished_flag, upper_flops=sys.maxsize, upper_params=sys.maxsize,
+                            bottom_flops=0, bottom_params=0):
             lookup_table = None
             if opt.flop_param_method == 'lookup_table':
                 lookup_table = load_lookup_table(opt.use_se, opt.last_conv_after_pooling,
@@ -623,16 +633,23 @@ def main():
                     candidate['flops'] = flops
                     candidate['model_size'] = model_size
 
-                    if flops > upper_flops or model_size > upper_params:
+                    if flops > upper_flops or model_size > upper_params or \
+                        flops < bottom_flops or model_size < bottom_params:
                         continue
 
                     with pool_lock:
                         pool.append(candidate)
                         logger.debug("[Maintainer] Add one good candidate. currently pool size: {}".format(len(pool)))
 
+        if opt.train_constraint_method == 'evolution':
+
+            evolve_maintainer = Maintainer(net, num_batches=num_batches, nas_root='./')
+        else:
+            evolve_maintainer = None
         manager = multiprocessing.Manager()
         cand_pool = manager.list()
         p_lock = manager.Lock()
+
         for epoch in range(opt.resume_epoch, opt.num_epochs):
             if epoch >= opt.epoch_start_cs:
                 opt.use_all_channels = False
@@ -641,25 +658,50 @@ def main():
                 train_data.reset()
             train_metric.reset()
 
-            if model_name == 'ShuffleNas' and opt.train_upper_constraints:
-                constraints = opt.train_upper_constraints.split('-')
-                # opt.train_upper_constraints = 'flops-300-params-4.5'
-                assert len(constraints) == 4 and constraints[0] == 'flops' and constraints[2] == 'params'
-                upper_flops = float(constraints[1]) if float(constraints[1]) != 0 else sys.maxsize
-                upper_params = float(constraints[3]) if float(constraints[3]) != 0 else sys.maxsize
-                finished = Value(c_bool, False)
-                logger.debug("===== DEBUG ======\n"
-                             "Train SuperNet with Flops less than {}, params less than {}"
-                             .format(upper_flops, upper_params))
-                pool_process = multiprocessing.Process(target=pool_maintainer,
-                                                       args=[cand_pool, p_lock, finished, upper_flops, upper_params])
-                pool_process.start()
-                train_epoch(pool=cand_pool, pool_lock=p_lock, shared_finished_flag=finished, use_pool=True)
-                pool_process.join()
-            else:
+            if opt.train_constraint_method is None:
                 logger.debug("===== DEBUG ======\n"
                              "Train SuperNet with no constraint")
                 train_epoch()
+            else:
+                upper_constraints = opt.train_upper_constraints.split('-')
+                # opt.train_upper_constraints = 'flops-330-params-5.0'
+                assert len(upper_constraints) == 4 and upper_constraints[0] == 'flops' \
+                       and upper_constraints[2] == 'params'
+                upper_flops = float(upper_constraints[1]) if float(upper_constraints[1]) != 0 else sys.maxsize
+                upper_params = float(upper_constraints[3]) if float(upper_constraints[3]) != 0 else sys.maxsize
+
+                bottom_constraints = opt.train_bottom_constraints.split('-')
+                assert len(bottom_constraints) == 4 and bottom_constraints[0] == 'flops' \
+                       and bottom_constraints[2] == 'params'
+                bottom_flops = float(bottom_constraints[1]) if float(bottom_constraints[1]) != 0 else 0
+                bottom_params = float(bottom_constraints[3]) if float(bottom_constraints[3]) != 0 else 0
+
+                if opt.train_constraint_method == 'random':
+                    finished = Value(c_bool, False)
+                    logger.debug("===== DEBUG ======\n"
+                                 "Train SuperNet with Flops less than {}, greater than {}, "
+                                 "params less than {}, greater than {}\n Random sample."
+                                 .format(upper_flops, bottom_flops, upper_params, bottom_params))
+                    pool_process = multiprocessing.Process(target=maintain_random_pool,
+                                                           args=[cand_pool, p_lock, finished,
+                                                                 upper_flops, upper_params,
+                                                                 bottom_flops, bottom_params])
+                    pool_process.start()
+                    train_epoch(pool=cand_pool, pool_lock=p_lock, shared_finished_flag=finished, use_pool=True)
+                    pool_process.join()
+                elif opt.train_constraint_method == 'evolution':
+                    finished = Value(c_bool, False)
+                    logger.debug("===== DEBUG ======\n"
+                                 "Train SuperNet with Flops less than {}, greater than {}, "
+                                 "params less than {}, greater than {}\n Using strolling evolution to sample."
+                                 .format(upper_flops, bottom_flops, upper_params, bottom_params))
+                    pool_process = multiprocessing.Process(target=evolve_maintainer.maintain,
+                                                           args=[cand_pool, p_lock, finished, opt.dtype, logger])
+                    pool_process.start()
+                    train_epoch(pool=cand_pool, pool_lock=p_lock, shared_finished_flag=finished, use_pool=True)
+                    pool_process.join()
+                else:
+                    raise ValueError("Unrecognized training constraint method: {}".format(opt.train_constraint_method))
 
             train_metric_name, train_metric_score = train_metric.get()
             throughput = int(batch_size * num_batches / (time.time() - tic))
