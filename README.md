@@ -57,6 +57,7 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | Supernet Training - With Block Choices| √           | √          |
 | Supernet Training - With Channel Choices | ×           | √          |
 | Supernet Training - With FLOP/Param Constraints  | ×           | √          |
+| Supernet Training - With [Strolling Evolution Constraints](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet#train-with-constraints)  | ×           | √          |
 | General FLOPs & Parameters Counting Tool | √           | √          |
 | Fast Counting Tool with pre-calculated lookup table  | ×           | √          |
 | BN Stat Update for Val Acc            | ×           | √          |
@@ -132,6 +133,15 @@ The reason why we did this in the supernet training is that during our experimen
 
 ![alt text](./images/distribution.gif)
 
+Another thing we need to consider is that **the subnet sample space during training might not be aligned with where the space being searched on during the searching stage**. For instance, if we are searching for the top performance models within `(190m ~ 330m)` FLOPs and `(2.8m ~ 5.0m)` # params, the target subnet FLOPs & Params should locate within the blue dotted rectangle shown above. 5000 subnet distributions are drawn here to compare the differences between three training settings: `1)` No constraint `2)` meet constraints with random sampling and `3)` meet constraints with strolling evolution.
+
+If the supernet is **trained without constraints** (the left plot), about `2/3` of the trained subnets are not located in the target space and these samples might disturbe the final supernet's credibility. The sampled subnet performance from the supernet might not be able to accurately indicate each subnet's real performance.
+
+If the supernet is **trained with constraints and these constraints are met by random samlping** (the middle plot), although all `5000` subnets are located in the target area now, the distribution is not even. Subnets in top left corner can possibly not even be trained once. Since that part hasn't been trained, their sampled performances from supernet can be misguidingly inaccurate neither.
+
+If the supernet is **trained with constraints and these constraints are met by a controllable evolution method** (the right plot), named as strolling evolution since it's walking around in the target area, all `5000` subnets are now evenly distributed within the target space. Because most of the cases have been uniformly considered during the training, the supernet trained with this strolling evolution method could be more trustworthy when using it to sample the subnet's performance.
+
+
 ## Subnet Searching
 
 Different from the paper, we **jointly searched** for the Block choices and Channel Choices in the supernet at the same time. It means that for each instance in the population of our genetic algorithm it contains `20` Block choice genes and `20` Channel choice genes. We were aiming to find a combination of these two which optimizing for each other and being complementary.
@@ -183,38 +193,6 @@ We tried both random search, randomly selecting 250 qualified instances to evalu
 
 A detailed op to op profiling can be found [here](https://github.com/CanyonWind/MXNet-Single-Path-One-Shot-NAS/blob/master/MicroNetChallenge/detailed_profiling.md). The calculation here follows MicroNet Challenge way. It's slightly different from how most paper reported FLOPs.
 
-|op_name                                 |  quantizable      |   inp_size|   kernel_size|           Cin|          Cout|       params(M)|   mults(M)|    adds(M)|     MFLOPS|
-|:-----                                   | :-----: | :-----:  | :-----:   | :-----:|  :-----: |  :-----: |   :-----:  |   :-----: |   :-----:| 
-|First conv                                   | True          |        224|            3|             3|            16|           0.000|      5.419|      5.218|     10.637|
-|HSwish                                   | False          |        112|            -1|            16|            16|           0.000|      0.603|      0.201|      0.804|
-|SNB-3x3                                   | Mixed          |        112|            3|            16|            64|           0.005|     23.800|     21.739|     45.539|
-|SNB-3x3                                   | Mixed          |         56|            3|            64|            64|           0.004|     12.136|     11.255|     23.391|
-|SNB-3x3                                   | Mixed          |         56|            3|            64|            64|           0.002|     10.511|      9.697|     20.208|
-|SNB-5x5                                   | Mixed          |         56|            5|            64|            64|           0.005|     16.389|     15.451|     31.840|
-|SNB-3x3                                   | Mixed          |         56|            3|            64|            160|           0.021|     32.111|     30.707|     62.818|
-|SNB-3x3                                   | Mixed          |         28|            3|           160|            160|           0.023|     17.573|     16.859|     34.432|
-|SNB-5x5                                   | Mixed          |         28|            5|           160|            160|           0.014|      9.746|      9.232|     18.978|
-|SNB-3x3                                   | Mixed          |         28|            3|           160|            160|           0.015|     11.103|     10.538|     21.641|
-|SXB-3x3                                   | Mixed          |         28|            3|           160|           320|           0.082|     14.060|     13.692|     27.752|
-|SNB-7x7                                   | Mixed          |         14|            7|           320|           320|           0.080|     11.834|     11.582|     23.416|
-|SNB-3x3                                   | Mixed          |         14|            3|           320|           320|           0.051|      6.416|      6.215|     12.631|
-|SNB-5x5                                   | Mixed          |         14|            5|           320|           320|           0.063|      8.898|      8.673|     17.571|
-|SNB-7x7                                   | Mixed          |         14|            7|           320|           320|           0.080|     11.834|     11.582|     23.416|
-|SNB-7x7                                   | Mixed          |         14|            7|           320|           320|           0.091|     14.168|     13.891|     28.059|
-|SNB-5x5                                   | Mixed          |         14|            5|           320|           320|           0.098|     15.448|     15.146|     30.594|
-|SNB-7x7                                   | Mixed          |         14|            7|           320|           320|           0.103|     16.501|     16.199|     32.700|
-|SNB-3x3                                   | Mixed          |         14|            3|           320|           320|           0.323|     25.640|     25.380|     51.020|
-|SNB-3x3                                   | Mixed          |          7|            3|           640|           640|           0.244|      8.311|      8.196|     16.507|
-|SNB-7x7                                   | Mixed          |          7|            7|           640|           640|           0.298|     10.983|     10.856|     21.839|
-|SNB-3x3                                   | Mixed          |          7|            3|           640|           640|           0.368|     14.445|     14.293|     28.738|
-|GAP                                   | False          |          7|            -1|           640|             640|           0.000|      0.001|      0.031|      0.032|
-|Last conv                                   | True          |          1|            1|           640|          1024|           0.656|      0.655|      0.655|      1.310|
-|HSwish                                   | False          |          1|            -1|          1024|          1024|           0.000|      0.003|      0.001|      0.004|
-|Classifier                                   | True          |          1|            1|          1024|          1000|           1.025|      1.024|      1.024|      2.048|
-|total_quant                             | True           |           |              |              |              |           3.520|    292.820|    286.218|    579.038|
-|total_no_quant                          | False          |           |              |              |              |           0.132|      6.801|      2.105|      8.905|
-|total                                   | False          |           |              |              |              |           3.652|    299.621|    288.323|    587.943|
-
 # Roadmap
 - [x] Implement the fixed architecture model from the official pytorch release.
 - [x] Implement the random block selection and channel selection.
@@ -257,7 +235,7 @@ A detailed op to op profiling can be found [here](https://github.com/CanyonWind/
 
 
 # Summary
-In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2, V2+`. This implementation can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the model structures to meet different hardware constraits can be avoided.
+In this work, we provided a state-of-the-art open-sourced weight sharing Neural Architecture Search (NAS) pipeline, which can be trained and searched on ImageNet totally within `60` GPU hours (on 4 V100 GPUS) and the exploration space is about `32^20`. The model searched by this implementation outperforms the other NAS searched models, such as `Single Path One Shot, FBNet, MnasNet, DARTS, NASNET, PNASNET` by a good margin in all factors of FLOPS, # of parameters and Top-1 accuracy. Also for considering the MicroNet Challenge Σ score, without any quantization, it outperforms `MobileNet V2, V3, ShuffleNet V1, V2`. This implementation can benefit to many pratical senarios where a neural network model needs to be deployed across platforms. With the aid of this approach, manually tuning the model structures to meet different hardware constraits can be avoided.
 
 
 # Citation
