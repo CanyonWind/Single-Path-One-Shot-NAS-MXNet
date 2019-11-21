@@ -57,7 +57,7 @@ Single Path One Shot NAS provides an elegent idea to effortlessly search for opt
 | Supernet Training - With Block Choices| √           | √          |
 | Supernet Training - With Channel Choices | ×           | √          |
 | Supernet Training - With FLOP/Param Constraints  | ×           | √          |
-| Supernet Training - With [Strolling Evolution Constraints](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet#train-with-constraints)  | ×           | √          |
+| Supernet Training - With [Strolling Evolution Constraints](https://github.com/CanyonWind/Single-Path-One-Shot-NAS-MXNet#train-with-constraints)  | -           | √          |
 | General FLOPs & Parameters Counting Tool | √           | √          |
 | Fast Counting Tool with pre-calculated lookup table  | ×           | √          |
 | BN Stat Update for Val Acc            | ×           | √          |
