@@ -167,7 +167,7 @@ As for the hyperparameters. We modified the GluonCV official ImageNet training s
 ## Supernet Searching
 ![alt text](./images/search_supernet.gif)
 
-We tried both random search, randomly selecting 250 qualified instances to evaluate their performance, and genetic search. The genetic method easily found a better subnet structure over the random selection.
+Two identical supernets have been trained and searched to verify whether we can directly search for the Block and Channel choices on the supernet trained without Channel Selection. **On the left**, the supernet is trained only with Block Selection but no Channel Selection. **On the right**, it is trained with both Block and Channel selections. These two supernets are searched with the same Block & Channel joint evolution method. The evolution method is indeed able to gradually find good candidates from the left supernet, with Block Selection alone. But the subnets sampled from the right supernet, trained with Block & Channel Selection, clearly contain higher accuracy range `(0.6 ~ 0.63)` than the left one `(0.2 ~ 0.6)`. 
 
 ## Searched Models Performance
 
